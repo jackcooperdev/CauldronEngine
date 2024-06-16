@@ -1,0 +1,16 @@
+{
+  "arguments" : {
+    "game":[],
+    "jvm":[]
+  },
+  "assetIndex": {},
+  "assets": "",
+  "downloads": {},
+  "id": "",
+  "javaVersion": {},
+  "libraries": [],
+  "logging": {
+  },
+  "mainClass": "",
+  "type": "release"
+}

@@ -1,0 +1,10 @@
+{
+  "client-1.12.xml": {
+    "url": "https://api.mcweblauncher.tech/files/client-1.12.xml",
+    "sha1": "77a5bf4e4b55779ede880c29c4c76f28a5f048a6"
+  },
+  "client-1.7.xml": {
+    "url": "https://api.mcweblauncher.tech/files/client-1.7.xml",
+    "sha1": "0e46d60f432dc5fbc42b70b8b0f4b2f9c085dbc6"
+  }
+}
