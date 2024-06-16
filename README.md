@@ -1,2 +1,2 @@
-# CauldronEngine
-Authentication and Launch Controller for Cauldron
+# Cauldron Engine
+## NodeJS Based Minecraft Launcher
