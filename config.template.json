@@ -1,0 +1,8 @@
+{
+    "WORKING_DIR":".cauldron",
+    "auth": {
+        "CLIENT_ID":"AZURE_CLIENT_ID",
+        "REDIRECT_URI":"AUTH_REDIRECT_URL",
+        "VERIFY_CODE":"VERIFICATION CODE"
+    }
+}

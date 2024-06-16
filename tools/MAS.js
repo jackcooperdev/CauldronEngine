@@ -30,7 +30,6 @@ async function refreshToken(identifier, refresh_token) {
             maxBodyLength: Infinity,
             url: 'https://login.microsoftonline.com/consumers/oauth2/v2.0/token',
             headers: {
-                // 'Origin': appConfig.auth.REDIRECT_URI,
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
             data: data
@@ -116,7 +115,7 @@ async function redeemToken(token, identifier) {
         'code': token,
         'redirect_uri': appConfig.auth.REDIRECT_URI,
         'grant_type': 'authorization_code',
-        'code_verifier': 'fiqJYJKLDdzNBVwA7ixJA4LadXnQGmoJKwZ8kCz838U'
+        'code_verifier': appConfig.auth.VERIFY_CODE
     });
 
     let config = {
@@ -124,9 +123,7 @@ async function redeemToken(token, identifier) {
         maxBodyLength: Infinity,
         url: 'https://login.microsoftonline.com/consumers/oauth2/v2.0/token',
         headers: {
-            // 'Origin': appConfig.auth.REDIRECT_URI,
             'Content-Type': 'application/x-www-form-urlencoded',
-            'Cookie': 'fpc=AsoddCI7LZ1Lg09Jcl1mOArNBc4SAwAAACJN2d0OAAAA; stsservicecookie=estsfd; x-ms-gateway-slice=estsfd'
         },
         data: data
     };
@@ -150,7 +147,6 @@ async function authenticateXboxLive(access_token) {
         url: 'https://user.auth.xboxlive.com/user/authenticate',
         headers: {
             'Content-Type': 'application/json',
-            // 'Origin': appConfig.auth.REDIRECT_URI
         },
         data: data
     };
