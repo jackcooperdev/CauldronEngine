@@ -17,7 +17,12 @@ var loaderVersionsFun = {
 };
 
 function grabLoaderVersion(loader, version) {
-    return loaderVersionsFun[loader](version);
+    try {
+        var loaderVersion = loaderVersionsFun[loader](version);
+        return loaderVersion;
+    } catch (err) {
+        return false;
+    };
 };
 
 module.exports = {grabBlockedVersions,grabLoaderVersion}
