@@ -5,12 +5,11 @@ const { getLibraries } = require("./libraries");
 const { whatIsThis, verifiyAndFindManifest, getCache } = require("./versions");
 const osCurrent = require('os').platform();
 const path = require('path')
-const configMain = require('../config.json');
 const fs = require('fs');
 const { exec } = require('child_process');
 const shell = require('shelljs');
 const { attemptToConvert, buildJVMRules, buildGameRules, buildFile } = require("../tools/launchBuilder");
-const { grabPath } = require('../tools/compatibility');
+const { grabPath, getConfig } = require('../tools/compatibility');
 const { cauldronLogger } = require('../tools/logger');
 const { downloadVersionManifests } = require("../tools/downloader");
 const { grabForgeProcs, postProcessing } = require("../plugins/forge");
@@ -18,6 +17,8 @@ const { createSession, destroySession } = require("../tools/sessionManager");
 var CAULDRON_PATH = grabPath();
 const homedir = require('os').homedir()
 const MAIN_MANIFEST = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
+
+const configMain = getConfig();
 
 var game_status = false;
 

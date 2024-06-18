@@ -4,15 +4,15 @@ const path = require('path');
 const shell = require('shelljs');
 const osCurrent = require('os').platform();
 const machineCurrent = require('os').machine();
-const configMain = require('../config.json');
 const { exec } = require('child_process');
 const homedir = require('os').homedir()
-const { grabPath } = require('../tools/compatibility');
+const { grabPath, getConfig } = require('../tools/compatibility');
 var forceComp = require('../plugins/forge-files/force_compat.json');
 var requiresLibPatch = require('./requiresLibPatch.json');
 const { getSession } = require('./sessionManager');
 var CAULDRON_PATH = grabPath();
 var osConvert = { 'win32': 'windows', 'linux': 'linux' };
+const configMain = getConfig();
 // TODO Sort 
 
 // Varible Injector

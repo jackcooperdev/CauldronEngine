@@ -4,11 +4,12 @@ const fs = require('fs');
 const homedir = require('os').homedir();
 const { cauldronLogger } = require('../tools/logger');
 const path = require('path');
-const appConfig = require('../config.json');
+
 const jwt = require('jsonwebtoken');
 const MAS = require('../tools/MAS')
 
-const { grabPath } = require('../tools/compatibility');
+const { grabPath, getConfig } = require('../tools/compatibility');
+const appConfig = getConfig();
 var CAULDRON_PATH = grabPath();
 
 // Grab Array of Authenticated Users

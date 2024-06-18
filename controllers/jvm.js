@@ -3,14 +3,16 @@ const shelljs = require('shelljs');
 const path = require('path');
 const homedir = require('os').homedir();
 const { cauldronLogger } = require('../tools/logger');
-const conifgMain = require('../config.json');
+
 const {  extract, checkForValidFiles,downloadVersionManifests } = require('../tools/downloader');
 const { processQueue } = require('./queue');
 const JVM_CORE = "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json";
 const platform_convert = { 'win32': 'windows-x64','linux':'linux' };
-const { grabPath } = require('../tools/compatibility');
+const { grabPath, getConfig } = require('../tools/compatibility');
 var CAULDRON_PATH = grabPath();
 var jvmData = "";
+
+const conifgMain = getConfig();
 
 
 async function aquireJVMMeta() {

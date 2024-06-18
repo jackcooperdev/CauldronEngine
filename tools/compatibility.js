@@ -1,14 +1,18 @@
 const osCurrent = require('os').platform();
 const path = require('path')
-const configMain = require('../config.json');
 const homedir = require('os').homedir();
 const fs = require('fs');
 const shell = require('shelljs');
 
 
+function getConfig() {
+    var cFile = JSON.parse(fs.readFileSync(path.join(__dirname,'config.json')));
+    return cFile;
+}
 
 
 function grabPath() { 
+    const configMain = getConfig();
     if (osCurrent == 'win32') {
         pathReturn = path.join(homedir, 'AppData', 'Roaming', configMain.WORKING_DIR)
     } else if (osCurrent == 'linux') {
@@ -21,4 +25,4 @@ function grabPath() {
 
 
 
-module.exports = { grabPath }
+module.exports = { grabPath,getConfig }

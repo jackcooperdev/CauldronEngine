@@ -3,11 +3,11 @@ const qs = require('qs');
 const fs = require('fs');
 const homedir = require('os').homedir();
 const path = require('path');
-const appConfig = require('../config.json');
 const jwt = require('jsonwebtoken');
 const { cauldronLogger } = require('../tools/logger');
-const { grabPath } = require('../tools/compatibility');
+const { grabPath, getConfig } = require('../tools/compatibility');
 var CAULDRON_PATH = grabPath();
+const appConfig = getConfig();
 
 // Auth Code Varible (Defaults: unset)
 var auth_code = "unset";
