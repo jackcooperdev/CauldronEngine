@@ -9,7 +9,6 @@ const { processQueue } = require('./queue');
 const JVM_CORE = "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json";
 const platform_convert = { 'win32': 'windows-x64','linux':'linux' };
 const { grabPath, getConfig } = require('../tools/compatibility');
-var CAULDRON_PATH = grabPath();
 var jvmData = "";
 
 const conifgMain = getConfig();
@@ -31,6 +30,7 @@ async function checkCompat(platform, jVersion) {
 
 async function checkJVM(url, name) {
     return new Promise(async (resolve) => {
+        var CAULDRON_PATH = grabPath();
         var jvmMani = await downloadVersionManifests(url, false, false);
         shelljs.mkdir('-p', path.join(CAULDRON_PATH, 'jvm', name));
         fs.writeFileSync(path.join(CAULDRON_PATH, 'jvm', name + '.json'), JSON.stringify(jvmMani));

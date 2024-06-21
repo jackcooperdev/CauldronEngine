@@ -3,7 +3,6 @@ const path = require('path');
 const shell = require('shelljs');
 const homedir = require('os').homedir()
 const { grabPath, getConfig } = require('../tools/compatibility');
-var CAULDRON_PATH = grabPath();
 const { checkForValidFiles, downloadVersionManifests } = require('../tools/downloader');
 const { processQueue } = require('./queue');
 const StreamZip = require('node-stream-zip');
@@ -15,6 +14,7 @@ const conifgMain = getConfig();
 
 async function getLibraries(libData, os, versionData) {
     return new Promise(async (resolve, reject) => {
+        var CAULDRON_PATH = grabPath();
         try {
             if (versionData.loader == 'vanilla') {
                 version = versionData.version;

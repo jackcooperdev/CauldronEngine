@@ -17,7 +17,6 @@ const { checkForValidFiles, downloadVersionManifests } = require('../tools/downl
 const { grabPath } = require('../tools/compatibility');
 
 // Global Cauldron Path
-var CAULDRON_PATH = grabPath();
 
 
 // Important Links
@@ -133,6 +132,7 @@ async function getForgeVersion(version, type) {
 // Generate Forge Manifest
 async function getForgeManifest(fVersion, version, versionCache) {
     return new Promise(async (resolve, reject) => {
+        var CAULDRON_PATH = grabPath();
         try {
             var grabForgeInstaller = await getForgeInstallerURL(version, fVersion);
             cauldronLogger.info("Forge Installer Path: " + grabForgeInstaller);
@@ -374,6 +374,7 @@ async function getForgeManifest(fVersion, version, versionCache) {
 
 async function postProcessing(versionData, manifest) {
     return new Promise(async (resolve,reject) => {
+        var CAULDRON_PATH = grabPath();
         var version = versionData.version;
         var fVersion = versionData.loaderVersion;
         const installer = new StreamZip.async({ file: path.join(CAULDRON_PATH, 'bin', `forge-${versionData.version}-${versionData.loaderVersion}-installer.jar`) });

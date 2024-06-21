@@ -20,7 +20,6 @@ const { getForgeVersion, getForgeManifest, grabForgeProcs, checkInstaller } = re
 // Declare Variables
 var local_manifest = "";
 var versionCache = "";
-var CAULDRON_PATH = grabPath();
 
 // Important Links
 const MAIN_MANIFEST = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
@@ -80,6 +79,7 @@ async function whatIsThis(version, loader, lVersion) {
 
 async function verifiyAndFindManifest(version, loader, lVersion) {
     return new Promise(async (resolve,reject) => {
+        var CAULDRON_PATH = grabPath();
         try {
             const MANIFEST = await downloadVersionManifests(MAIN_MANIFEST, true, false);
             // Aquire URL for Individual Manifest

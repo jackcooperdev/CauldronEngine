@@ -1,7 +1,7 @@
 const fs = require('fs');
 const { grabPath } = require('./compatibility');
 const path = require('path');
-var CAULDRON_PATH = grabPath()
+
 
 var CURRENT_SESSION_ID = "";
 
@@ -21,6 +21,7 @@ function getSession() {
 };
 
 async function destroySession() {
+    var CAULDRON_PATH = grabPath()
     const destroy = await fs.promises.rm(path.join(CAULDRON_PATH,'bin',CURRENT_SESSION_ID), { recursive: true, force: true });
     CURRENT_SESSION_ID = "";
 };

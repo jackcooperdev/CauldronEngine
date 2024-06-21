@@ -10,11 +10,12 @@ const MAS = require('../tools/MAS')
 
 const { grabPath, getConfig } = require('../tools/compatibility');
 const appConfig = getConfig();
-var CAULDRON_PATH = grabPath();
+
 
 // Grab Array of Authenticated Users
 function getAuthedUsers() {
     try {
+        var CAULDRON_PATH = grabPath();
         var authFile = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'cauldron_auth.json')));
         if (authFile) {
             var sessions = authFile.sessions;

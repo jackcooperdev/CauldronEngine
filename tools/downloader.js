@@ -6,7 +6,6 @@ const crypto = require('crypto');
 const shelljs = require('shelljs');
 const path = require('path');
 const { grabPath } = require('../tools/compatibility');
-var CAULDRON_PATH = grabPath();
 
 async function download(url, location, fileName) {
     return new Promise(async (resolve) => {
@@ -37,6 +36,7 @@ async function download(url, location, fileName) {
 
 async function downloadVersionManifests(manifestUrl, save, dir, id) {
     return new Promise(async (resolve, reject) => {
+        var CAULDRON_PATH = grabPath();
         try {
             var config = {
                 method: 'get',

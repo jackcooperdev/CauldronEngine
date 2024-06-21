@@ -6,7 +6,7 @@ const path = require('path');
 const jwt = require('jsonwebtoken');
 const { cauldronLogger } = require('../tools/logger');
 const { grabPath, getConfig } = require('../tools/compatibility');
-var CAULDRON_PATH = grabPath();
+
 const appConfig = getConfig();
 
 // Auth Code Varible (Defaults: unset)
@@ -54,6 +54,7 @@ async function refreshToken(identifier, refresh_token) {
     If found skips to step 3
 */
 async function attemptToRefresh(identifier) {
+    var CAULDRON_PATH = grabPath();
     return new Promise(async (resolve) => {
         if (fs.existsSync(path.join(CAULDRON_PATH, 'cauldron_auth.json'))) {
             var fileData = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'cauldron_auth.json')));
@@ -265,6 +266,7 @@ async function getProfileData(access_token, email) {
 // Write to Authentication File
 
 async function writeToAuthFile(identifier, data, clear) {
+    var CAULDRON_PATH = grabPath();
     var defaultBody = {
         "sessions": {}
     };
@@ -290,6 +292,7 @@ async function writeToAuthFile(identifier, data, clear) {
 // Grab Access Token
 
 async function grabAccessToken(email) {
+    var CAULDRON_PATH = grabPath();
 
     if (fs.existsSync(path.join(CAULDRON_PATH, 'cauldron_auth.json'))) {
         var auth = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'cauldron_auth.json')));

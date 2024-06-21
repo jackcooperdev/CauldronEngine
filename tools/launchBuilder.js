@@ -10,7 +10,7 @@ const { grabPath, getConfig } = require('../tools/compatibility');
 var forceComp = require('../plugins/forge-files/force_compat.json');
 var requiresLibPatch = require('./requiresLibPatch.json');
 const { getSession } = require('./sessionManager');
-var CAULDRON_PATH = grabPath();
+
 var osConvert = { 'win32': 'windows', 'linux': 'linux' };
 const configMain = getConfig();
 // TODO Sort 
@@ -31,6 +31,7 @@ var injector = {
 
 async function buildJVMRules(manifest, libraryList, versionData) {
     return new Promise(async (resolve) => {
+        var CAULDRON_PATH = grabPath();
         // Aquire Set Version
         var setVersion = versionData.version;
         if (versionData.loader != 'vanilla') {
@@ -118,6 +119,7 @@ async function buildJVMRules(manifest, libraryList, versionData) {
 
 async function buildGameRules(manifest, loggedUser) {
     return new Promise(async (resolve) => {
+        var CAULDRON_PATH = grabPath();
         var gameRules = new Array();
         allGameRules = manifest.arguments.game;
 
@@ -156,6 +158,7 @@ async function buildGameRules(manifest, loggedUser) {
 };
 
 async function buildFile(manifest, jreVersion, validRules, gameRules) {
+    var CAULDRON_PATH = grabPath();
     var mainClass = manifest.mainClass;
     var javaPath = path.join(CAULDRON_PATH, 'jvm', jreVersion, 'bin', 'java');
     var launchCommand = `${javaPath} ${validRules.join(" ")} ${mainClass} ${gameRules.join(" ")}`;

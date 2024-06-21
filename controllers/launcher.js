@@ -14,7 +14,7 @@ const { cauldronLogger } = require('../tools/logger');
 const { downloadVersionManifests } = require("../tools/downloader");
 const { grabForgeProcs, postProcessing } = require("../plugins/forge");
 const { createSession, destroySession } = require("../tools/sessionManager");
-var CAULDRON_PATH = grabPath();
+
 const homedir = require('os').homedir()
 const MAIN_MANIFEST = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
 
@@ -47,6 +47,7 @@ async function launchGame(version, email, dry, loader,lVersion) {
         loader = 'vanilla';
     };
     return new Promise(async (resolve) => {
+        var CAULDRON_PATH = grabPath();
         try {
             var sessionID = createSession();
             cauldronLogger.info("Session ID: " + sessionID);
