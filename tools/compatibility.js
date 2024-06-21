@@ -3,10 +3,15 @@ const path = require('path')
 const homedir = require('os').homedir();
 const fs = require('fs');
 const shell = require('shelljs');
+var configData = {};
+
+function setConfig(config) {
+    configData = config;
+};
 
 
 function getConfig() {
-    var cFile = JSON.parse(fs.readFileSync(path.join(process.cwd(),'config.json')));
+    var cFile = configData;
     return cFile;
 }
 
@@ -25,4 +30,4 @@ function grabPath() {
 
 
 
-module.exports = { grabPath,getConfig }
+module.exports = { grabPath,getConfig,setConfig }
