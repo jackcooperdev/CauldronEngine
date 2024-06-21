@@ -84,6 +84,9 @@ async function verifiyAndFindManifest(version, loader, lVersion) {
             const MANIFEST = await downloadVersionManifests(MAIN_MANIFEST, true, false);
             // Aquire URL for Individual Manifest
             const foundVersionData = MANIFEST.versions.find(versionName => versionName.id === version);
+            if (!foundVersionData) {
+                reject('Version Does Not Exist')
+            }
             // Get Indivdual Manifest
             const foundVersion = await downloadVersionManifests(foundVersionData.url, true, path.join('versions', foundVersionData.id), foundVersionData.id);
 
@@ -117,6 +120,7 @@ async function verifiyAndFindManifest(version, loader, lVersion) {
             //Process Queue
             var checkForFiles = await processQueue(dQueue, 2, 'checksum')
                 while (checkForFiles.length != 0) {
+                    console.log(checkForFiles)
                     cauldronLogger.info(`Total Files (${dQueue.length}) Files to Download (${checkForFiles.length})`);
                     cauldronLogger.info('Downloading Files');
                     const handleDownload = await processQueue(checkForFiles, 2, 'download');
@@ -132,7 +136,6 @@ async function verifiyAndFindManifest(version, loader, lVersion) {
 
             resolve(createdManifest);
         } catch (err) {
-            console.log(err);
             reject(err);
         };
 

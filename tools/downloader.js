@@ -24,7 +24,7 @@ async function download(url, location, fileName) {
                 const { filePath, downloadStatus } = await downloader.download(); //Downloader.download() resolves with some useful properties.
                 resolve(true);
             } catch (error) {
-                
+                console.log(error.message)
                 //IMPORTANT: Handle a possible error. An error is thrown in case of network errors, or status codes of 400 and above.
                 //Note that if the maxAttempts is set to higher than 1, the error is thrown only if all attempts fail.
                 resolve(false);
@@ -35,27 +35,27 @@ async function download(url, location, fileName) {
 
 //Grab Main Manifest and Download / Store
 
-async function downloadVersionManifests(manifestUrl,save,dir,id) {
-    try {
-        var config = {
-            method:'get',
-            url:manifestUrl
-        };
-        const getManifest = await axios(config);
-        if (save && !dir) {
-            local_manifest = getManifest.data;
-            fs.writeFileSync(path.join(CAULDRON_PATH,'cauldron_version_manifest.json'),JSON.stringify(local_manifest))
-            return local_manifest;
-        } else if (save && dir) {
-            shelljs.mkdir('-p',path.join(CAULDRON_PATH,dir));
-            fs.writeFileSync(path.join(CAULDRON_PATH,dir,`${id}.json`),JSON.stringify(getManifest.data));
-        };
-        return getManifest.data;
-    } catch (err) {
-        console.log(err)
-        throw new Error('INVALIDMANIFEST')
-    }
-   
+async function downloadVersionManifests(manifestUrl, save, dir, id) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            var config = {
+                method: 'get',
+                url: manifestUrl
+            };
+            const getManifest = await axios(config);
+            if (save && !dir) {
+                local_manifest = getManifest.data;
+                fs.writeFileSync(path.join(CAULDRON_PATH, 'cauldron_version_manifest.json'), JSON.stringify(local_manifest))
+                resolve(local_manifest)
+            } else if (save && dir) {
+                shelljs.mkdir('-p', path.join(CAULDRON_PATH, dir));
+                fs.writeFileSync(path.join(CAULDRON_PATH, dir, `${id}.json`), JSON.stringify(getManifest.data));
+            };
+            resolve(getManifest.data)
+        } catch (err) {
+            reject('Version Does Not Exist')
+        }
+    })
 };
 
 
@@ -87,15 +87,15 @@ async function validate(file) {
         if (file.destination == 'no path') {
             resolve(true);
         } else {
-            if (fs.existsSync(path.join(file.destination,file.fileName))) {
-                var fileFound = fs.readFileSync(path.join(file.destination,file.fileName));
+            if (fs.existsSync(path.join(file.destination, file.fileName))) {
+                var fileFound = fs.readFileSync(path.join(file.destination, file.fileName));
                 var sha1sum = crypto.createHash('sha1').update(fileFound).digest("hex");
                 if (sha1sum != file.sha1) {
                     if (file.sha1 == 'NONE') {
                         resolve(true);
                     } else {
 
-                    resolve(file);
+                        resolve(file);
                     }
                 } else {
                     resolve(true)

@@ -17,7 +17,8 @@ async function attemptToConvert(original) {
     if (original.minecraftArguments) {
         arguments['game'] = original.minecraftArguments.split(" ");
     };
-    if (!newTemplate['arguments'].jvm || newTemplate['arguments'].jvm.length == 0) {
+    
+    if (!newTemplate['arguments'] || !newTemplate['arguments'].jvm || newTemplate['arguments'].jvm.length == 0) {
         var arguments = [
                 "-Djava.library.path=${natives_directory}",
                 "-Dminecraft.launcher.brand=${launcher_name}",
@@ -39,6 +40,9 @@ async function attemptToConvert(original) {
         } else if (osCurrent == 'darwin') {
             arguments.push("-XstartOnFirstThread")
         };
+        if (!newTemplate['arguments']) {
+            newTemplate['arguments'] = {};
+        }
         newTemplate['arguments']['jvm'] = arguments;
     };
     return newTemplate;

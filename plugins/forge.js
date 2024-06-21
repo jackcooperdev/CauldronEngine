@@ -58,13 +58,13 @@ async function getForgeInstallerURL(version, forgeVersion) {
         url = `${FORGE_REPO}/forge/${version}-${forgeVersion}/forge-${version}-${forgeVersion}-installer.jar`;
     };
     if (!url) {
-        throw new Error(`Sorry but Cauldron does not support ${version} forge yet. CODE: URLNFOUND`);
+        throw new Error(`Sorry but Cauldron does not support ${version} - ${forgeVersion} forge yet. CODE: URLNFOUND`);
     };
     var verifyInstaller = await checkInstaller(url);
     if (verifyInstaller) {
         return url;
     } else {
-        throw new Error(`Sorry but Cauldron does not support ${version} forge yet. CODE: URLNFOUND`);
+        throw new Error(`Sorry but Cauldron does not support ${version} - ${forgeVersion} forge yet. CODE: URLNFOUND`);
     };
 
 };
@@ -106,22 +106,24 @@ var injector = {
 // Attempts to find recommended version else forces latest
 // Fails if in blacklist or version does not exist
 async function getForgeVersion(version, type) {
+    return new Promise(async (resolve, reject) => {
     if (!type) {
         type = 'recommended';
     };
     if (unsupportedVersions.includes(version)) {
-        throw new Error(`Sorry but Cauldron does not support ${version} forge yet. CODE: BLVER`);
+        reject(`Sorry but Cauldron does not support ${version} forge yet. CODE: BLVER`)
     };
     var forgePromos = await downloadVersionManifests(FORGE_PROMO, false, false);
     var forgeVersion = forgePromos.promos[`${version}-${type}`];
     if (!forgeVersion) {
         forgeVersion = forgePromos.promos[`${version}-latest`];
         if (!forgeVersion) {
-            throw new Error('Version Does Not Exist')
+            reject('Version Does Not Exist')
         }
     };
     cauldronLogger.warn("Forge is still experimental. Expect Crashes");
-    return forgeVersion;
+    resolve(forgeVersion);
+    })
 };
 
 
@@ -152,7 +154,7 @@ async function getForgeManifest(fVersion, version, versionCache) {
                 // Download LegacyJavaFixer (Gets Data from requires_legacy_mod.json)
                 if (reqLegMod.includes(version)) {
                     var obj = {
-                        origin: "https://api.mcweblauncher.tech/files/legacyjavafixer-1.0.jar",
+                        origin: "http://localhost:3000/files/legacyjavafixer-1.0.jar",
                         sha1: 'a11b502bef19f49bfc199722b94da5f3d7b470a8',
                         destination: path.join(CAULDRON_PATH, 'mods'),
                         fileName: 'legacyjavafixer-1.0.jar'
@@ -363,7 +365,7 @@ async function getForgeManifest(fVersion, version, versionCache) {
             };
 
         } catch (err) {
-            console.log(err)
+            //console.log(err)
             reject(err)
         }
     })
@@ -510,7 +512,7 @@ async function postProcessing(versionData, manifest) {
                     };
                 } catch (err) {
                     installer.close();
-                    console.log(err)
+                    //console.log(err)
                     reject(err);
                 }
             };

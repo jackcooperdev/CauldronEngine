@@ -6,7 +6,7 @@ const shell = require('shelljs');
 
 
 function getConfig() {
-    var cFile = JSON.parse(fs.readFileSync(path.join(__dirname,'config.json')));
+    var cFile = JSON.parse(fs.readFileSync(path.join(process.cwd(),'config.json')));
     return cFile;
 }
 
