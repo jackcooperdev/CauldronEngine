@@ -13,7 +13,7 @@ async function verifyAccessToken(access_token) {
     return new Promise(async (resolve,reject) => {
         try {
             const verify = await verifyMinecraft(access_token);
-            return true;
+            resolve(true);
         } catch (err) {
             reject(err);
         };

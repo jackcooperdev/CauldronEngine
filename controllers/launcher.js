@@ -88,7 +88,6 @@ async function launchGame(version, dry, loader,lVersion,authData) {
                 var launchPath = await buildFile(convertedManifest, jreVersion, validRules, gameRules);
                 cauldronLogger.info('Starting Game');
                 const exe = exec(`cd ${CAULDRON_PATH} && ${launchPath}`);
-                exe.disconnect();
             } else {
                 destroySession();
                 cauldronLogger.info("Game Installed");
