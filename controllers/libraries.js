@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const shell = require('shelljs');
 const homedir = require('os').homedir()
-const { grabPath, getConfig } = require('../tools/compatibility');
+const { grabPath } = require('../tools/compatibility');
 const { checkForValidFiles, downloadVersionManifests } = require('../tools/downloader');
 const { processQueue } = require('./queue');
 const StreamZip = require('node-stream-zip');
@@ -10,7 +10,7 @@ const { cauldronLogger } = require('../tools/logger');
 const { getSession } = require('../tools/sessionManager');
 var osConvert = { 'win32': 'windows', 'linux': 'linux' }
 
-const conifgMain = getConfig();
+
 
 async function getLibraries(libData, os, versionData) {
     return new Promise(async (resolve, reject) => {

@@ -3,11 +3,10 @@ const path = require('path');
 const shell = require('shelljs');
 const homedir = require('os').homedir()
 const { cauldronLogger } = require('../tools/logger');
-const { grabPath, getConfig } = require('../tools/compatibility');
+const { grabPath } = require('../tools/compatibility');
 const { checkForValidFiles,downloadVersionManifests } = require('../tools/downloader');
 const { processQueue } = require('./queue');
 
-const conifgMain = getConfig();
 
 async function getAssets(assetsIndex, assetUrl) {
     var CAULDRON_PATH = grabPath();

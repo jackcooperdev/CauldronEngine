@@ -6,13 +6,13 @@ const osCurrent = require('os').platform();
 const machineCurrent = require('os').machine();
 const { exec } = require('child_process');
 const homedir = require('os').homedir()
-const { grabPath, getConfig } = require('../tools/compatibility');
+const { grabPath } = require('../tools/compatibility');
 var forceComp = require('../plugins/forge-files/force_compat.json');
 var requiresLibPatch = require('./requiresLibPatch.json');
 const { getSession } = require('./sessionManager');
 
 var osConvert = { 'win32': 'windows', 'linux': 'linux' };
-const configMain = getConfig();
+
 // TODO Sort 
 
 // Varible Injector

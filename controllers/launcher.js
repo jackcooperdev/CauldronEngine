@@ -1,5 +1,5 @@
 const { getAssets } = require("./assets");
-const { login, authenticate } = require("./auth");
+const { login, authenticate, verifyAccessToken } = require("./auth");
 const { checkJVM, checkCompat, downloadJVM } = require("./jvm");
 const { getLibraries } = require("./libraries");
 const { whatIsThis, verifiyAndFindManifest, getCache } = require("./versions");
@@ -9,7 +9,7 @@ const fs = require('fs');
 const { exec } = require('child_process');
 const shell = require('shelljs');
 const { attemptToConvert, buildJVMRules, buildGameRules, buildFile } = require("../tools/launchBuilder");
-const { grabPath, getConfig } = require('../tools/compatibility');
+const { grabPath } = require('../tools/compatibility');
 const { cauldronLogger } = require('../tools/logger');
 const { downloadVersionManifests } = require("../tools/downloader");
 const { grabForgeProcs, postProcessing } = require("../plugins/forge");
@@ -18,7 +18,6 @@ const { createSession, destroySession } = require("../tools/sessionManager");
 const homedir = require('os').homedir()
 const MAIN_MANIFEST = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
 
-const configMain = getConfig();
 
 var game_status = false;
 
@@ -39,7 +38,7 @@ var additFun = {
 }
 
 
-async function launchGame(version, email, dry, loader,lVersion) {
+async function launchGame(version, dry, loader,lVersion,authData) {
     if (!dry) {
         dry = false;
     };
@@ -53,8 +52,7 @@ async function launchGame(version, email, dry, loader,lVersion) {
             cauldronLogger.info("Session ID: " + sessionID);
             cauldronLogger.info(`Version Verified and Manifest Found`);
             if (!dry) {
-                cauldronLogger.info(`Starting Auth Flow For User ${email}`);
-                loggedUser = await authenticate(email);
+                verify = await verifyAccessToken(authData.access_token);
                 cauldronLogger.info('Authentication Passed');
             };
             const updateLocalManififest = await downloadVersionManifests(MAIN_MANIFEST, true, false);
@@ -86,7 +84,7 @@ async function launchGame(version, email, dry, loader,lVersion) {
                 cauldronLogger.info('Creating JVM Arguments');
                 var validRules = await buildJVMRules(convertedManifest, libGet, setVersion);
                 cauldronLogger.info('Generating Game Arguments')
-                var gameRules = await buildGameRules(convertedManifest, loggedUser, setVersion);
+                var gameRules = await buildGameRules(convertedManifest, authData, setVersion);
                 var launchPath = await buildFile(convertedManifest, jreVersion, validRules, gameRules);
                 cauldronLogger.info('Starting Game');
                 const exe = exec(`cd ${CAULDRON_PATH} && ${launchPath}`);

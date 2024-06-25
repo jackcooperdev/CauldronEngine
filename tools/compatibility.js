@@ -5,23 +5,15 @@ const fs = require('fs');
 const shell = require('shelljs');
 var configData = {};
 
-function setConfig(config) {
-    configData = config;
-};
 
-
-function getConfig() {
-    var cFile = configData;
-    return cFile;
-}
 
 
 function grabPath() { 
-    const configMain = getConfig();
+    const WORKING_DIR = '.cauldron';
     if (osCurrent == 'win32') {
-        pathReturn = path.join(homedir, 'AppData', 'Roaming', configMain.WORKING_DIR)
+        pathReturn = path.join(homedir, 'AppData', 'Roaming', WORKING_DIR)
     } else if (osCurrent == 'linux') {
-        pathReturn = path.join(homedir, configMain.WORKING_DIR);
+        pathReturn = path.join(homedir, WORKING_DIR);
     }
     shell.mkdir('-p',path.join(pathReturn))
    return pathReturn
@@ -30,4 +22,4 @@ function grabPath() {
 
 
 
-module.exports = { grabPath,getConfig,setConfig }
+module.exports = { grabPath  }

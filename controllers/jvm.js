@@ -8,10 +8,8 @@ const {  extract, checkForValidFiles,downloadVersionManifests } = require('../to
 const { processQueue } = require('./queue');
 const JVM_CORE = "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json";
 const platform_convert = { 'win32': 'windows-x64','linux':'linux' };
-const { grabPath, getConfig } = require('../tools/compatibility');
+const { grabPath } = require('../tools/compatibility');
 var jvmData = "";
-
-const conifgMain = getConfig();
 
 
 async function aquireJVMMeta() {
