@@ -154,7 +154,7 @@ async function getForgeManifest(fVersion, version, versionCache) {
                 // Download LegacyJavaFixer (Gets Data from requires_legacy_mod.json)
                 if (reqLegMod.includes(version)) {
                     var obj = {
-                        origin: "http://localhost:3000/files/legacyjavafixer-1.0.jar",
+                        origin: "https://files.jackcooper.me/legacyjavafixer-1.0.jar",
                         sha1: 'a11b502bef19f49bfc199722b94da5f3d7b470a8',
                         destination: path.join(CAULDRON_PATH, 'mods'),
                         fileName: 'legacyjavafixer-1.0.jar'

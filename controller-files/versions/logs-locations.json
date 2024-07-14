@@ -1,10 +1,10 @@
 {
   "client-1.12.xml": {
-    "url": "https://api.mcweblauncher.tech/files/client-1.12.xml",
-    "sha1": "77a5bf4e4b55779ede880c29c4c76f28a5f048a6"
+    "url": "https://files.jackcooper.me/client-1.12.xml",
+    "sha1": "639644152b89097fa955bf1dff02bd644fc95099"
   },
   "client-1.7.xml": {
-    "url": "https://api.mcweblauncher.tech/files/client-1.7.xml",
-    "sha1": "0e46d60f432dc5fbc42b70b8b0f4b2f9c085dbc6"
+    "url": "https://files.jackcooper.me/client-1.7.xml",
+    "sha1": "69d90af8128d6a2acc76965c6278196a1164bcc0"
   }
 }
