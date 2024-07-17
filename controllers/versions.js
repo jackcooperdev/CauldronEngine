@@ -68,6 +68,7 @@ async function whatIsThis(version, loader, lVersion) {
             rObject.loaderVersion = lVersion;
         };
     } catch (err) {
+        //console.log(err)
         throw new Error(err)
     };
     return rObject;
@@ -126,7 +127,7 @@ async function verifiyAndFindManifest(version, loader, lVersion) {
                     const handleDownload = await processQueue(checkForFiles, 2, 'download');
                     var checkForFiles = await processQueue(checkForFiles, 100, 'checksum');
                 };
-            cauldronLogger.info(`Checksums Passed Install is Valid!`);
+            cauldronLogger.info(`Checksums Passed Install is Valid1!`);
 
             // Check for Duplicates
             var libs = createdManifest.libraries;

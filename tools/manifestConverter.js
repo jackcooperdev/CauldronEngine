@@ -14,9 +14,6 @@ async function attemptToConvert(original) {
         javaVersion = { component: 'jre-legacy' };
         newTemplate['javaVersion'] = javaVersion;
     };
-    if (original.minecraftArguments) {
-        arguments['game'] = original.minecraftArguments.split(" ");
-    };
     
     if (!newTemplate['arguments'] || !newTemplate['arguments'].jvm || newTemplate['arguments'].jvm.length == 0) {
         var arguments = [
@@ -44,6 +41,10 @@ async function attemptToConvert(original) {
             newTemplate['arguments'] = {};
         }
         newTemplate['arguments']['jvm'] = arguments;
+        if (original.minecraftArguments) {
+            //gameArguments['game'] = 
+            newTemplate['arguments']['game'] = original.minecraftArguments.split(" ");
+        };
     };
     return newTemplate;
 };

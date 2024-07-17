@@ -30,26 +30,28 @@ server.on('connection', function (sock) {
         for (idx in firstSplit) {
             if (firstSplit[idx] != '') {
                 var dataMessage = firstSplit[idx].split("]: ");
-                var state = dataMessage[0].split("/")[1];
-                switch (state) {
-                    case 'INFO':
-                        mcLogger.info(dataMessage[1])
-                        break;
-                    case 'DEBUG':
-                        mcLogger.debug(dataMessage[1])
-                        break;
-                    case 'TRACE':
-                        mcLogger.trace(dataMessage[1])
-                        break;
-                    case 'WARN':
-                        mcLogger.warn(dataMessage[1])
-                        break;
-                    case 'ERROR':
-                        mcLogger.error(dataMessage[1])
-                        break;
-                    default:
-                        mcLogger.error(dataMessage[1])
-                        break;
+                if (dataMessage[1]) {
+                    var state = dataMessage[0].split("/")[1];
+                    switch (state) {
+                        case 'INFO':
+                            mcLogger.info(dataMessage[1])
+                            break;
+                        case 'DEBUG':
+                            mcLogger.debug(dataMessage[1])
+                            break;
+                        case 'TRACE':
+                            mcLogger.trace(dataMessage[1])
+                            break;
+                        case 'WARN':
+                            mcLogger.warn(dataMessage[1])
+                            break;
+                        case 'ERROR':
+                            mcLogger.error(dataMessage[1])
+                            break;
+                        default:
+                            mcLogger.error(dataMessage[1])
+                            break;
+                    };
                 };
             };
         };

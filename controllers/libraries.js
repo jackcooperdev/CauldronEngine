@@ -8,6 +8,7 @@ const { processQueue } = require('./queue');
 const StreamZip = require('node-stream-zip');
 const { cauldronLogger } = require('../tools/logger');
 const { getSession } = require('../tools/sessionManager');
+const { isOffline } = require('../tools/isClientOffline');
 var osConvert = { 'win32': 'windows', 'linux': 'linux' }
 
 
@@ -56,7 +57,8 @@ async function getLibraries(libData, os, versionData) {
                         dQueue.push(obj);
                         libArray.push(path.join(obj.destination, obj.fileName));
                     };
-                    if (libData[idx].downloads.classifiers) {
+                    var nativeLock = true;
+                    if (libData[idx].downloads.classifiers && !isOffline() && !nativeLock) {
                         var natives = libData[idx].downloads.classifiers[libData[idx].natives[acutalOS]];
                         
                         if (!natives) {
@@ -70,7 +72,7 @@ async function getLibraries(libData, os, versionData) {
                             var obj = {
                                 origin: natives.url,
                                 sha1: natives.sha1,
-                                destination: path.join(CAULDRON_PATH, 'bin', getSession()),
+                                destination: path.join(CAULDRON_PATH, 'versions', version,'natives'),
                                 fileName: natives.path.split("/")[natives.path.split("/").length - 1]
                             };
                             var checkForNative = await processQueue([obj], 1, 'checksum');
@@ -86,28 +88,29 @@ async function getLibraries(libData, os, versionData) {
                                 const entries = await zip.entries();
                                 for (const entry of Object.values(entries)) {
                                     if (!entry.name.includes("META-INF") && !entry.name.includes(".git") && !entry.name.includes(".sha1")) {
-                                        await zip.extract(entry.name, path.join(CAULDRON_PATH,'bin',getSession()));
+                                        await zip.extract(entry.name, path.join(CAULDRON_PATH, 'versions', version,'natives'));
                                     };
                                 };
                                 zip.close();
-                                fs.rmSync(path.join(CAULDRON_PATH, 'bin', getSession(), obj.fileName))
+                                fs.rmSync(path.join(CAULDRON_PATH, 'versions', version,'natives', obj.fileName))
                             }
                         };
                     };
                 };
             };
-
-            var checkForFiles = await processQueue(dQueue, 1000, 'checksum');
-            var tryCount = 0;
-            while (checkForFiles.length != 0 && tryCount < 4) {
-                cauldronLogger.info(`Total Files (${dQueue.length}) Files to Download (${checkForFiles.length})`);
-                cauldronLogger.info('Downloading Files');
-                const handleDownload = await processQueue(checkForFiles, 5, 'download');
-                checkForFiles = await processQueue(dQueue, 1000, 'checksum');
-                //console.log(checkForFiles)
-                tryCount++;
+            if (!isOffline()){
+                var checkForFiles = await processQueue(dQueue, 1000, 'checksum');
+                var tryCount = 0;
+                while (checkForFiles.length != 0 && tryCount < 4) {
+                    cauldronLogger.info(`Total Files (${dQueue.length}) Files to Download (${checkForFiles.length})`);
+                    cauldronLogger.info('Downloading Files');
+                    const handleDownload = await processQueue(checkForFiles, 5, 'download');
+                    checkForFiles = await processQueue(dQueue, 1000, 'checksum');
+                    //console.log(checkForFiles)
+                    tryCount++;
+                };
             };
-            cauldronLogger.info(`Checksums Passed Install is Valid!`);
+            cauldronLogger.info(`Checksums Passed Install is Valid!2`);
             resolve(libArray);
         } catch (err) {
             reject(err);

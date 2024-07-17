@@ -3,17 +3,19 @@ const { login, authenticate, verifyAccessToken } = require("./auth");
 const { checkJVM, checkCompat, downloadJVM } = require("./jvm");
 const { getLibraries } = require("./libraries");
 const { whatIsThis, verifiyAndFindManifest, getCache } = require("./versions");
-const osCurrent = require('os').platform();
 const path = require('path')
 const fs = require('fs');
 const { exec } = require('child_process');
+const osCurrent = require('os').platform();
 const shell = require('shelljs');
 const { attemptToConvert, buildJVMRules, buildGameRules, buildFile } = require("../tools/launchBuilder");
 const { grabPath } = require('../tools/compatibility');
 const { cauldronLogger } = require('../tools/logger');
 const { downloadVersionManifests } = require("../tools/downloader");
 const { grabForgeProcs, postProcessing } = require("../plugins/forge");
-const { createSession, destroySession } = require("../tools/sessionManager");
+const { createSession, destroySession, getSession } = require("../tools/sessionManager");
+const { isOffline } = require("../tools/isClientOffline");
+const { getManifests } = require('./manifest')
 
 const homedir = require('os').homedir()
 const MAIN_MANIFEST = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
@@ -38,67 +40,71 @@ var additFun = {
 }
 
 
-async function launchGame(version, dry, loader,lVersion,authData) {
+async function launchGame(version, dry, loader, lVersion, authData, sessionID) {
     if (!dry) {
         dry = false;
     };
     if (!loader) {
         loader = 'vanilla';
     };
-    return new Promise(async (resolve) => {
+    return new Promise(async (resolve, reject) => {
         var CAULDRON_PATH = grabPath();
         try {
-            var sessionID = createSession();
-            cauldronLogger.info("Session ID: " + sessionID);
-            cauldronLogger.info(`Version Verified and Manifest Found`);
-            if (!dry) {
-                verify = await verifyAccessToken(authData.access_token);
-                cauldronLogger.info('Authentication Passed');
+            // Check If SessionID matches current session if not fail
+            // If none exists create
+            if (sessionID) {
+                console.log('sessionID COnfirm')
+                var actualCurrentSess = getSession().id;
+                if (actualCurrentSess != sessionID) {
+                    console.log('dup')
+                    reject('Session Already Active');
+                }
+            } else {
+                if (!getSession().id) {
+                    createSession();
+                } else {
+                    reject('Session Already Active');
+                };
             };
-            const updateLocalManififest = await downloadVersionManifests(MAIN_MANIFEST, true, false);
-            cauldronLogger.info('Version Requested: ' + version);
-            cauldronLogger.info('Loader Requested: ' + loader)
-            const setVersion = await whatIsThis(version, loader,lVersion);
-            cauldronLogger.info(`Finding Info for loader ${loader} for version ${version}`)
-            if (loader != 'vanilla') {
-                cauldronLogger.info(`${loader} version ${setVersion.loaderVersion} found`);
+            cauldronLogger.info("Session ID: "+getSession().id)
+            //Aquire Manifests (All)
+            // Finds ALL Manifests Required for version. Offline Failsafe
+            const manifests = await getManifests(version, loader, lVersion);
+            cauldronLogger.info("Manifests Got!")
+            cauldronLogger.info(`Getting JVM: ${manifests.jvmComp}`);
+            const jvmDown = await checkJVM(manifests.jvmComp,manifests.jvmMani);
+            cauldronLogger.info('JVM Passed!');
+            
+            if (!manifests.assetsDownloaded) {
+                cauldronLogger.info('Starting Asset Download');
+                cauldronLogger.info(`Index No: ${manifests.spec.assets}`);
+                cauldronLogger.info(`Index URL: ${manifests.spec.assetIndex.url}`)
+                const assetGet = await getAssets(manifests.spec.assets, manifests.assets);
+            } else {
+                cauldronLogger.info("Skipping Assets");
             };
-            const convertedManifest = await verifiyAndFindManifest(setVersion.version, loader, setVersion.loaderVersion);
-            cauldronLogger.info(`Checking JVM Version Needed For ${setVersion.version} on ${osCurrent}`);
-            jreVersion = convertedManifest.javaVersion.component;
-            cauldronLogger.info(`Version Needed is ${jreVersion}`);
-            const checkCompatRes = await checkCompat(osCurrent, jreVersion)
-            cauldronLogger.info('Checking For Install and Downloading if Missing')
-            const jvmDown = await checkJVM(checkCompatRes[0].manifest.url, jreVersion);
-            if (loader != 'vanilla') {
-                var addit = await additFun[loader](setVersion, convertedManifest);
-            };
-            cauldronLogger.info('Starting Asset Download');
-            cauldronLogger.info(`Index No: ${convertedManifest.assets}`);
-            cauldronLogger.info(`Index URL: ${convertedManifest.assetIndex.url}`)
-            const assetGet = await getAssets(convertedManifest.assets, convertedManifest.assetIndex.url)
+            
             cauldronLogger.info('Starting Library Download')
-            const libGet = await getLibraries(convertedManifest.libraries, osCurrent, setVersion);
+            const libGet = await getLibraries(manifests.spec.libraries, osCurrent, manifests.versionData);
             if (!dry) {
                 cauldronLogger.info('All Files Aquired Building Launch File');
                 cauldronLogger.info('Creating JVM Arguments');
-                var validRules = await buildJVMRules(convertedManifest, libGet, setVersion);
+                var validRules = await buildJVMRules(manifests.spec, libGet, manifests.versionData);
                 cauldronLogger.info('Generating Game Arguments')
-                var gameRules = await buildGameRules(convertedManifest, authData, setVersion);
-                var launchPath = await buildFile(convertedManifest, jreVersion, validRules, gameRules);
+                var gameRules = await buildGameRules(manifests.spec, authData, manifests.version);
+                var launchPath = await buildFile(manifests.spec, manifests.jvmComp, validRules, gameRules);
                 cauldronLogger.info('Starting Game');
                 const exe = exec(`cd ${CAULDRON_PATH} && ${launchPath}`);
+                resolve(true);
             } else {
                 destroySession();
                 cauldronLogger.info("Game Installed");
             }
-            resolve(true)
 
         } catch (err) {
-            cauldronLogger.error(err.message);
+            cauldronLogger.error(err);
             resolve(false)
         }
-
     })
 
 };

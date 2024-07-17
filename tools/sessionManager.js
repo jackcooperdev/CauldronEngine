@@ -1,9 +1,7 @@
 const fs = require('fs');
-const { grabPath } = require('./compatibility');
-const path = require('path');
-
 
 var CURRENT_SESSION_ID = "";
+var CURRENT_SESSION_DATA = {};
 
 function uuidv4() {
     return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
@@ -11,19 +9,22 @@ function uuidv4() {
     );
 };
 
-function createSession() {
+function createSession(data) {
     CURRENT_SESSION_ID = uuidv4();
+    CURRENT_SESSION_DATA = data;
     return CURRENT_SESSION_ID;
 };
 
+
+
 function getSession() {
-    return CURRENT_SESSION_ID;
+    return {data:CURRENT_SESSION_DATA,id:CURRENT_SESSION_ID};
 };
 
 async function destroySession() {
-    var CAULDRON_PATH = grabPath()
-    const destroy = await fs.promises.rm(path.join(CAULDRON_PATH,'bin',CURRENT_SESSION_ID), { recursive: true, force: true });
-    CURRENT_SESSION_ID = "";
+    CURRENT_SESSION_DATA = {};
+    console.log('session dest')
+    CURRENT_SESSION_ID = undefined;
 };
 
 

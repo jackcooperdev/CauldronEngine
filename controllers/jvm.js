@@ -13,11 +13,11 @@ var jvmData = "";
 
 
 async function aquireJVMMeta() {
-    jvmData = await downloadVersionManifests(JVM_CORE, false, false);
+    jvmData = await downloadVersionManifests(JVM_CORE, true, 'jvm','jvm-core');
 };
 
-async function checkCompat(platform, jVersion) {
-    await aquireJVMMeta();
+async function checkCompat(platform, jVersion,jvmData) {
+    //await aquireJVMMeta();
     var actualPlatform = platform_convert[platform];
     if (jvmData[actualPlatform][jVersion] != undefined) {
         return jvmData[actualPlatform][jVersion];
@@ -26,13 +26,11 @@ async function checkCompat(platform, jVersion) {
     }
 };
 
-async function checkJVM(url, name) {
+async function checkJVM(name, jvmMani) {
     return new Promise(async (resolve) => {
         var CAULDRON_PATH = grabPath();
-        var jvmMani = await downloadVersionManifests(url, false, false);
         shelljs.mkdir('-p', path.join(CAULDRON_PATH, 'jvm', name));
         fs.writeFileSync(path.join(CAULDRON_PATH, 'jvm', name + '.json'), JSON.stringify(jvmMani));
-        (jvmMani)
         var files = jvmMani.files;
         // Build Dir Structure
         for (idx in files) {
@@ -58,7 +56,7 @@ async function checkJVM(url, name) {
                 dQueue.push({ origin: downUrl, destination: path.join(downloadPath, '../',),sha1: files[sIdx].downloads.raw.sha1,fileName:sIdx.split("/")[sIdx.split("/").length - 1] });
             }
         };
-        var checkForFiles = await processQueue(dQueue, 1000, 'checksum');
+        var checkForFiles = await processQueue(dQueue, 10000, 'checksum');
         var test = false;
         while (checkForFiles.length != 0) {
             cauldronLogger.info(`Total Files (${dQueue.length}) Files to Download (${checkForFiles.length})`);
@@ -75,4 +73,4 @@ async function checkJVM(url, name) {
 
 
 
-module.exports = { aquireJVMMeta, checkCompat, checkJVM }
+module.exports = { checkCompat, checkJVM }

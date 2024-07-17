@@ -99,7 +99,7 @@ async function buildJVMRules(manifest, libraryList, versionData) {
         };
 
         var relVaribles = {
-            natives_directory: path.join(CAULDRON_PATH, 'bin', getSession()),
+            natives_directory: path.join(CAULDRON_PATH, 'versions', manifest.id,'natives'),
             launcher_name: 'cauldron',
             launcher_version: '0.0.1',
             client_jar: path.join(CAULDRON_PATH, 'versions', manifest.id, manifest.id + ".jar"),
@@ -122,12 +122,17 @@ async function buildGameRules(manifest, loggedUser) {
         var CAULDRON_PATH = grabPath();
         var gameRules = new Array();
         allGameRules = manifest.arguments.game;
-
+        //console.log(manifest)
         for (gRules in allGameRules) {
             if (!allGameRules[gRules].rules) {
                 gameRules.push(allGameRules[gRules])
             }
         };
+        //console.log(gameRules)
+        if (gameRules.length == 0) {
+            //Defaults
+            //gameRules = ["--clientId=${clientid}","--xuid=${auth_xuid}","--username=${auth_player_name}","--version ${version_name}","--gameDir ${game_directory}","--assetsDir ${assets_root}","--assetsIndex ${assets_index_name}","--uuid ${auth_uuid}","--accessToken ${auth_access_token}"]
+        }
         var gameVariables = {
             auth_player_name: loggedUser.profile.username,
             version_name: manifest.id,

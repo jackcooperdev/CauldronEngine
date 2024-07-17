@@ -24,7 +24,8 @@
     "./compat": "./tools/compatibility.js",
     "./versionChecker" :"./tools/versionChecker.js",
     "./downloader":"./tools/downloader.js",
-    "./queue":"./controllers/queue.js"
+    "./queue":"./controllers/queue.js",
+    "./session":"./tools/sessionManager.js"
   },
   "author": "JackCooper",
   "license": "GPL-3.0-only",

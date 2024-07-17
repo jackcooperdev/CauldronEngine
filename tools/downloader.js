@@ -6,6 +6,8 @@ const crypto = require('crypto');
 const shelljs = require('shelljs');
 const path = require('path');
 const { grabPath } = require('../tools/compatibility');
+const { isOffline } = require("./isClientOffline");
+const { cauldronLogger } = require("./logger");
 
 async function download(url, location, fileName) {
     return new Promise(async (resolve) => {
@@ -13,21 +15,26 @@ async function download(url, location, fileName) {
         if (url == "no file") {
             resolve("NOFILE")
         } else {
-            const downloader = new Downloader({
-                url: url, //If the file name already exists, a new file with the name 200MB1.zip is created.
-                directory: location, //This folder will be created, if it doesn't exist.   
-                cloneFiles: false,
-                fileName: fileName
-            });
-            try {
-                const { filePath, downloadStatus } = await downloader.download(); //Downloader.download() resolves with some useful properties.
+            if (!isOffline()){
+                const downloader = new Downloader({
+                    url: url, //If the file name already exists, a new file with the name 200MB1.zip is created.
+                    directory: location, //This folder will be created, if it doesn't exist.   
+                    cloneFiles: false,
+                    fileName: fileName
+                });
+                try {
+                    const { filePath, downloadStatus } = await downloader.download(); //Downloader.download() resolves with some useful properties.
+                    resolve(true);
+                } catch (error) {
+                    console.log(error.message)
+                    console.log(url)
+                    //IMPORTANT: Handle a possible error. An error is thrown in case of network errors, or status codes of 400 and above.
+                    //Note that if the maxAttempts is set to higher than 1, the error is thrown only if all attempts fail.
+                    resolve(false);
+                };
+            } else {
                 resolve(true);
-            } catch (error) {
-                console.log(error.message)
-                //IMPORTANT: Handle a possible error. An error is thrown in case of network errors, or status codes of 400 and above.
-                //Note that if the maxAttempts is set to higher than 1, the error is thrown only if all attempts fail.
-                resolve(false);
-            };
+            }
         };
     });
 };
@@ -53,7 +60,31 @@ async function downloadVersionManifests(manifestUrl, save, dir, id) {
             };
             resolve(getManifest.data)
         } catch (err) {
-            reject('Version Does Not Exist')
+            if (isOffline()) {
+                if (manifestUrl == 'https://launchermeta.mojang.com/mc/game/version_manifest.json') {
+                    //cauldronLogger.warn("Client is Offline! Using saved copy of Version Manifest!");
+                    var savedManifest = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'cauldron_version_manifest.json')));
+                    resolve(savedManifest);
+                } else {
+                    console.log(manifestUrl)
+                    console.log(id)
+                    if (id.includes('java') || id.includes('jvm') || id.includes('jre')) {
+                        console.log('jaba')
+                            var specVersionMani = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'jvm',id+'.json' )));
+                            resolve(specVersionMani)
+                        
+                    } else {
+                        var specVersionMani = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'versions', manifestUrl.split("/").pop().split(".json")[0], manifestUrl.split("/").pop())));
+                        resolve(specVersionMani);
+                    }
+
+
+                }
+
+            } else {
+                reject('Version Does Not Exist')
+            }
+
         }
     })
 };

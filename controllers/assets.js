@@ -8,13 +8,12 @@ const { checkForValidFiles,downloadVersionManifests } = require('../tools/downlo
 const { processQueue } = require('./queue');
 
 
-async function getAssets(assetsIndex, assetUrl) {
+async function getAssets(assetsIndex, assetFiles) {
     var CAULDRON_PATH = grabPath();
     return new Promise(async (resolve) => {
         if (assetsIndex != "legacy") {
             var createIndexsFolder = shell.mkdir('-p', path.join(CAULDRON_PATH, 'assets', 'indexes'))
             var createObjectsFolder = shell.mkdir('-p', path.join(CAULDRON_PATH, 'assets', 'objects'))
-            const assetFiles = await downloadVersionManifests(assetUrl, true, path.join('assets', 'indexes'), assetsIndex);
             var objects = assetFiles.objects;
             var dQueue = new Array();
             for (idx in objects) {
@@ -28,9 +27,7 @@ async function getAssets(assetsIndex, assetUrl) {
                 };
                 dQueue.push(obj);
             };
-            (dQueue)
-            var checkForFiles = await processQueue(dQueue, 1000, 'checksum');
-            (checkForFiles)
+            var checkForFiles = await processQueue(dQueue, 10000, 'checksum');
             while (checkForFiles.length != 0) {
                 cauldronLogger.info(`Total Files (${dQueue.length}) Files to Download (${checkForFiles.length})`);
                 cauldronLogger.info('Downloading Files');
@@ -40,7 +37,6 @@ async function getAssets(assetsIndex, assetUrl) {
             cauldronLogger.info(`Checksums Passed Install is Valid!`);
         } else if (assetsIndex == "legacy") {
             cauldronLogger.info('Handling Legacy Assets');
-            const assetFiles = await downloadVersionManifests(assetUrl, true, path.join('assets', 'indexes'), assetsIndex);
             var createVirtualFolder = shell.mkdir('-p', path.join(CAULDRON_PATH, 'assets', 'virtual', 'legacy'))
             var objects = assetFiles.objects;
             var dQueue = new Array();
@@ -70,7 +66,6 @@ async function getAssets(assetsIndex, assetUrl) {
         if (assetsIndex == 'pre-1.6') {
             // Pre 1.6 (Stream To Resources)
             cauldronLogger.info('Pre 1.6 Assets');
-            const assetFiles = await downloadVersionManifests(assetUrl, true, path.join('assets', 'indexes'), assetsIndex);
             var createResources  = shell.mkdir('-p', path.join(CAULDRON_PATH, 'resources'))
             var objects = assetFiles.objects;
             var dQueue = new Array();
@@ -98,6 +93,12 @@ async function getAssets(assetsIndex, assetUrl) {
             cauldronLogger.info(`Checksums Passed Install is Valid!`);
             resolve(true);
         } else {
+            // Mark AssetFile As Downloaded
+            var currentAssetFile = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH,'assets.json')));
+            currentAssetFile[assetsIndex] = true;
+            fs.writeFileSync(path.join(CAULDRON_PATH,'assets.json'),JSON.stringify(currentAssetFile));
+            
+
             resolve(true)
         }
 
