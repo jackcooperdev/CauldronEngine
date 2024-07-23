@@ -1,5 +1,4 @@
 const fs = require('fs');
-const template = require('./manifestTemplate.json');
 const path = require('path');
 const shell = require('shelljs');
 const osCurrent = require('os').platform();
@@ -8,12 +7,12 @@ const { exec } = require('child_process');
 const homedir = require('os').homedir()
 const { grabPath } = require('../tools/compatibility');
 var forceComp = require('../plugins/forge-files/force_compat.json');
-var requiresLibPatch = require('./requiresLibPatch.json');
+var requiresLibPatch = require('../files/requiresLibPatch.json');
 const { getSession } = require('./sessionManager');
 const { getGameVars } = require('./defaultGameArgs')
 
 
-const defaultJVM = require('./defaultJVMArguments.json');
+const defaultJVM = require('../files/defaultJVMArguments.json');
 var osConvert = { 'win32': 'windows', 'linux': 'linux' };
 
 // TODO Sort 
@@ -30,6 +29,13 @@ var injector = {
         }
     })()
 };
+
+async function logInjector(logFile,sessionID) {
+    var CAULDRON_PATH = grabPath();
+    var logFileCont = fs.readFileSync(logFile).toString();
+    logFileCont = injector.create(logFileCont, {'log_loc':path.join(CAULDRON_PATH,'sessionLogs',sessionID,'mcLogs.log')});
+    fs.writeFileSync(path.join(logFile,'../','log_config.xml'),logFileCont)
+}
 
 
 async function buildJVMRules(manifest, libraryList, versionData, overides) {
@@ -131,7 +137,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overides) {
             launcher_version: '0.0.1',
             client_jar: path.join(CAULDRON_PATH, 'versions', manifest.id, manifest.id + ".jar"),
             classpath: classPath,
-            path: logPath,
+            path: path.join(CAULDRON_PATH,'assets','log_configs','log_config.xml'),
             ram: cusJVM.ram,
             classpath_separator: classPathSep,
             library_directory: path.join(CAULDRON_PATH, 'libraries').split("\\").join("/")
@@ -222,4 +228,4 @@ async function buildFile(manifest, jreVersion, validRules, gameRules) {
 
 };
 
-module.exports = { buildJVMRules, buildGameRules, buildFile }
+module.exports = { buildJVMRules, buildGameRules, buildFile,logInjector }

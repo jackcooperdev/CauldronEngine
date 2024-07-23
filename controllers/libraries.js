@@ -2,15 +2,14 @@ const fs = require('fs');
 const path = require('path');
 const shell = require('shelljs');
 const homedir = require('os').homedir()
-const { grabPath } = require('../tools/compatibility');
-const { processQueue, verifyInstallation } = require('./queue');
 const StreamZip = require('node-stream-zip');
+
+const { grabPath } = require('../tools/compatibility');
+const { verifyInstallation } = require('./queue');
 const { cauldronLogger } = require('../tools/logger');
-const { getSession } = require('../tools/sessionManager');
-const { isOffline, checkInternet } = require('../tools/isClientOffline');
-var osConvert = { 'win32': 'windows', 'linux': 'linux' }
+const { checkInternet } = require('../tools/isClientOffline');
 
-
+var osConvert = { 'win32': 'windows', 'linux': 'linux' };
 
 async function getLibraries(libData, os, versionData) {
     return new Promise(async (resolve, reject) => {
@@ -78,13 +77,8 @@ async function getLibraries(libData, os, versionData) {
                                 destination: path.join(CAULDRON_PATH, 'versions', version, 'natives'),
                                 fileName: natives.path.split("/")[natives.path.split("/").length - 1]
                             };
-                            var checkForNative = await verifyInstallation([obj], 1, 'checksum');
+                            var checkForNative = await verifyInstallation([obj]);
                             var extractFile = false;
-                            // while (checkForNative.length != 0) {
-                            //     const handleDownload = await processQueue(checkForNative, 1, 'download');
-                            //     checkForNative = await processQueue(checkForNative, 1, 'checksum');
-                            //     extractFile = true
-                            // };
                             if (needsExtracting) {
                                 const zip = new StreamZip.async({ file: path.join(obj.destination, obj.fileName) });
                                 const entriesCount = await zip.entriesCount;

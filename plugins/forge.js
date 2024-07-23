@@ -26,7 +26,7 @@ const LIBRARY_PATH = "https://libraries.minecraft.net/"
 
 // Require Files
 var suffixes = require('./forge-files/suffixes.json');
-var template = require('../tools/manifestTemplate.json');
+var template = require('../files/manifestTemplate.json');
 var reqLegMod = require('./forge-files/requires_legacy_mod.json');
 //MODIFY THIS FILE WITH CAUTION THE VERSIONS IN THIS FILE HAVE NOT BEEN TESTED OR DO NOT WORK
 var unsupportedVersions = require('./forge-files/blocked_versions.json');

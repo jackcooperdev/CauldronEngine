@@ -1,31 +1,36 @@
 const fs = require('fs');
+const path = require('path');
+const shelljs = require('shelljs');
+const { grabPath } = require('./compatibility');
 
-var CURRENT_SESSION_ID = "";
-var CURRENT_SESSION_DATA = {};
+var currentSessions = {};
 
-function uuidv4() {
+
+function createUUID() {
     return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
         (+c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> +c / 4).toString(16)
     );
 };
 
 function createSession(data) {
-    CURRENT_SESSION_ID = uuidv4();
-    CURRENT_SESSION_DATA = data;
-    return CURRENT_SESSION_ID;
+    var newSession = data;
+    var sessionID = createUUID();
+    currentSessions[sessionID] = newSession;
+    shelljs.mkdir('-p', path.join(grabPath(), 'sessionLogs', sessionID));
+    return sessionID;
 };
 
 
 
-function getSession() {
-    return {data:CURRENT_SESSION_DATA,id:CURRENT_SESSION_ID};
+function getSession(sessionID) {
+    return currentSessions[sessionID];
 };
 
-async function destroySession() {
-    CURRENT_SESSION_DATA = {};
-    console.log('session dest')
-    CURRENT_SESSION_ID = undefined;
+async function destroySession(sessionID) {
+    fs.writeFileSync(path.join(grabPath(), 'sessionLogs', sessionID, 'info.json'), JSON.stringify(currentSessions[sessionID]));
+
+    delete currentSessions[sessionID];
 };
 
 
-module.exports = { createSession,getSession, destroySession };
+module.exports = { createSession, getSession, destroySession, createUUID };

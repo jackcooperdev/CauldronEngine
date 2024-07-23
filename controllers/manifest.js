@@ -13,7 +13,7 @@ const { grabPath } = require('../tools/compatibility');
 const { attemptToConvert, convertAssets, convertLegacyAssets, convertPre16Assets } = require('../tools/manifestConverter');
 const { cauldronLogger } = require('../tools/logger');
 const { checkInternet } = require('../tools/isClientOffline');
-const NEW_LOGS = require('../controller-files/versions/logs-locations.json');
+const NEW_LOGS = require('../files/logs-locations.json');
 const { checkCompat } = require('./jvm');
 const { destroySession } = require('../tools/sessionManager');
 
@@ -149,10 +149,10 @@ async function getManifests(v, l, lv) {
         var CAULDRON_PATH = grabPath();
         try {
             // Check for asset file
-            if (!fs.existsSync(path.join(CAULDRON_PATH, 'assets.json'))) {
-                fs.writeFileSync(path.join(CAULDRON_PATH, 'assets.json'), '{}');
+            if (!fs.existsSync(path.join(CAULDRON_PATH, 'assets_installed.json'))) {
+                fs.writeFileSync(path.join(CAULDRON_PATH, 'assets_installed.json'), '{}');
             };
-            const assetDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'assets.json')));
+            const assetDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'assets_installed.json')));
             const getMain = await checkManifest('cauldron_version_manifest.json', 'https://launchermeta.mojang.com/mc/game/version_manifest.json', false, 'main');
             // Convert to Actual Values
             const { version, loaderVersion, loader } = await whatIsThis(v, l, lv, getMain);
@@ -200,6 +200,12 @@ async function getManifests(v, l, lv) {
             };
             const assetsConverted = await checkManifest(path.join('assets', 'indexes', createdManifest.assets + '-cauldron.json'), createdManifest.assetIndex.url, true, specCond);
 
+            // TODO: Add verification expiratition (Session Based???)
+            var haveAssetsBeenDownloaded = false;
+            if (assetDict[createdManifest.assets]) {
+                haveAssetsBeenDownloaded = true;
+            };
+
             var allManifiests = {
                 main: getMain,
                 spec: createdManifest,
@@ -212,7 +218,7 @@ async function getManifests(v, l, lv) {
                 version: version,
                 versionData: { loader: loader, version: version, loaderVersion: loaderVersion },
                 loader: loader,
-                assetsDownloaded: assetDict[createdManifest.assets],
+                assetsDownloaded: haveAssetsBeenDownloaded,
                 loaderVersion: loaderVersion
             };
             resolve(allManifiests);

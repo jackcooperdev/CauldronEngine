@@ -1,20 +1,14 @@
 const fs = require('fs');
 const shelljs = require('shelljs');
 const path = require('path');
-const homedir = require('os').homedir();
+
 const { cauldronLogger } = require('../tools/logger');
-
-const {  extract, checkForValidFiles } = require('../tools/fileTools');
-const { processQueue, verifyInstallation } = require('./queue');
-const JVM_CORE = "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json";
-const platform_convert = { 'win32': 'windows-x64','linux':'linux' };
+const { verifyInstallation } = require('./queue');
 const { grabPath } = require('../tools/compatibility');
-var jvmData = "";
 
-
+const platform_convert = { 'win32': 'windows-x64','linux':'linux' };
 
 async function checkCompat(platform, jVersion,jvmData) {
-    //await aquireJVMMeta();
     var actualPlatform = platform_convert[platform];
     if (jvmData[actualPlatform][jVersion] != undefined) {
         return jvmData[actualPlatform][jVersion];
@@ -54,15 +48,7 @@ async function checkJVM(name, jvmMani) {
             }
         };
         var checkForFiles = await verifyInstallation(dQueue);
-        // while (checkForFiles.length != 0) {
-        //     cauldronLogger.info(`Total Files (${dQueue.length}) Files to Download (${checkForFiles.length})`);
-        //     cauldronLogger.info('Downloading Files');
-        //     const handleDownload = await processQueue(checkForFiles, 3, 'download');
-        //     cauldronLogger.info('Files Downloaded! Decompressing');
-        //     const unzipFiles = await processQueue(compressedFiles, 3, 'unzip')
-        //     checkForFiles = await processQueue(checkForFiles, 1000, 'checksum');
-        // };
-        cauldronLogger.info(`Checksums Passed Install is Valid!`);
+        cauldronLogger.info(`Java Installation Verified`);
         resolve(true);
     })
 };

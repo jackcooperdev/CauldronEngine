@@ -5,14 +5,13 @@
     "type": "git",
     "url": "https://github.com/jackcooper04/CauldronEngine.git"
   },
-  "description": "Authentication and Launch Controller for Cauldron",
+  "description": "Launch Controller for Cauldron",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\""
   },
   "exports": {
-    ".": "./index.js",
-    "./auth": "./controllers/auth.js",
+    "./auth": "./tools/authVerifier.js",
     "./launcher": "./controllers/launcher.js",
     "./MAS": "./tools/MAS.js",
     "./assets": "./controllers/assets.js",
@@ -25,11 +24,13 @@
     "./fileTools": "./tools/fileTools.js",
     "./queue": "./controllers/queue.js",
     "./session": "./tools/sessionManager.js",
-    "./manifest": "./controllers/manifest.js"
+    "./manifest": "./controllers/manifest.js",
+    "./online": "./tools/isClientOffline.js"
   },
   "author": "JackCooper",
   "license": "GPL-3.0-only",
   "dependencies": {
+    "archiver": "^7.0.1",
     "await-spawn": "^4.0.2",
     "axios": "^1.6.8",
     "bluebird": "^3.7.2",

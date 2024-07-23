@@ -1,5 +1,5 @@
 const { grabPath } = require('./compatibility');
-const template = require('./manifestTemplate.json');
+const template = require('../files/manifestTemplate.json');
 const osCurrent = require('os').platform();
 const path = require('path')
 
