@@ -62,9 +62,7 @@ server.on('connection', function (sock) {
         })
         if (index !== -1) sockets.splice(index, 1);
         cauldronLogger.info('Minecraft Disconnected');
-        setTimeout(function(){
             destroySession();
-       }, 5000);
         
     });
 });

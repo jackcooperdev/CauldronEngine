@@ -4,8 +4,8 @@ const shell = require('shelljs');
 const homedir = require('os').homedir()
 const { cauldronLogger } = require('../tools/logger');
 const { grabPath } = require('../tools/compatibility');
-const { checkForValidFiles,downloadVersionManifests } = require('../tools/downloader');
-const { processQueue } = require('./queue');
+const { checkForValidFiles } = require('../tools/fileTools');
+const { processQueue, handleDownloadQueue, handleChecksumQueue, verifyInstallation } = require('./queue');
 
 
 async function getAssets(assetsIndex, assetFiles) {
@@ -15,81 +15,23 @@ async function getAssets(assetsIndex, assetFiles) {
             var createIndexsFolder = shell.mkdir('-p', path.join(CAULDRON_PATH, 'assets', 'indexes'))
             var createObjectsFolder = shell.mkdir('-p', path.join(CAULDRON_PATH, 'assets', 'objects'))
             var objects = assetFiles.objects;
-            var dQueue = new Array();
-            for (idx in objects) {
-                // Create Dirs and Create Dirs
-                shell.mkdir('-p', path.join(CAULDRON_PATH, 'assets', 'objects', objects[idx].hash.substring(0, 2)));
-                var obj = {
-                    origin: `https://resources.download.minecraft.net/${objects[idx].hash.substring(0, 2)}/${objects[idx].hash}`,
-                    sha1: objects[idx].hash,
-                    destination: path.join(CAULDRON_PATH, 'assets', 'objects', objects[idx].hash.substring(0, 2)),
-                    fileName: objects[idx].hash
-                };
-                dQueue.push(obj);
-            };
-            var checkForFiles = await processQueue(dQueue, 10000, 'checksum');
-            while (checkForFiles.length != 0) {
-                cauldronLogger.info(`Total Files (${dQueue.length}) Files to Download (${checkForFiles.length})`);
-                cauldronLogger.info('Downloading Files');
-                const handleDownload = await processQueue(checkForFiles, 2000, 'download');
-                checkForFiles = await processQueue(checkForFiles, 1000, 'checksum');
-            };
+            var dQueue = assetFiles;
+            var checkForFiles = await verifyInstallation(dQueue);
             cauldronLogger.info(`Checksums Passed Install is Valid!`);
         } else if (assetsIndex == "legacy") {
             cauldronLogger.info('Handling Legacy Assets');
             var createVirtualFolder = shell.mkdir('-p', path.join(CAULDRON_PATH, 'assets', 'virtual', 'legacy'))
             var objects = assetFiles.objects;
-            var dQueue = new Array();
-            for (idx in objects) {
-                // Create Dirs and Create Dirs
-                var cutPath = idx.split("/");
-                popped = cutPath.pop();
-                shell.mkdir('-p', path.join(CAULDRON_PATH, 'assets', 'virtual', 'legacy', cutPath.join("/")));
-                var obj = {
-                    origin: `https://resources.download.minecraft.net/${objects[idx].hash.substring(0, 2)}/${objects[idx].hash}`,
-                    sha1: objects[idx].hash,
-                    destination: path.join(CAULDRON_PATH, 'assets', 'virtual', 'legacy', cutPath.join("/")),
-                    fileName: popped
-                };
-                dQueue.push(obj);
-            };
-            var checkForFiles = await processQueue(dQueue, 1000, 'checksum');
-            (checkForFiles)
-            while (checkForFiles.length != 0) {
-                cauldronLogger.info(`Total Files (${dQueue.length}) Files to Download (${checkForFiles.length})`);
-                cauldronLogger.info('Downloading Files');
-                const handleDownload = await processQueue(checkForFiles, 2000, 'download');
-                checkForFiles = await processQueue(checkForFiles, 1000, 'checksum');
-            };
+            var dQueue = assetFiles
+            var checkForFiles = await verifyInstallation(dQueue)
             cauldronLogger.info(`Checksums Passed Install is Valid!`);
         };
         if (assetsIndex == 'pre-1.6') {
             // Pre 1.6 (Stream To Resources)
             cauldronLogger.info('Pre 1.6 Assets');
             var createResources  = shell.mkdir('-p', path.join(CAULDRON_PATH, 'resources'))
-            var objects = assetFiles.objects;
-            var dQueue = new Array();
-            for (idx in objects) {
-                // Create Dirs and Create Dirs
-                var cutPath = idx.split("/");
-                popped = cutPath.pop();
-                shell.mkdir('-p', path.join(CAULDRON_PATH, 'resources', cutPath.join("/")));
-                var obj = {
-                    origin: `https://resources.download.minecraft.net/${objects[idx].hash.substring(0, 2)}/${objects[idx].hash}`,
-                    sha1: objects[idx].hash,
-                    destination: path.join(CAULDRON_PATH, 'resources', cutPath.join("/")),
-                    fileName: popped
-                };
-                dQueue.push(obj);
-            };
-            var checkForFiles = await processQueue(dQueue, 1000, 'checksum');
-            (checkForFiles)
-            while (checkForFiles.length != 0) {
-                cauldronLogger.info(`Total Files (${dQueue.length}) Files to Download (${checkForFiles.length})`);
-                cauldronLogger.info('Downloading Files');
-                const handleDownload = await processQueue(checkForFiles, 2000, 'download');
-                checkForFiles = await processQueue(checkForFiles, 1000, 'checksum');
-            };
+            var dQueue = assetFiles
+            var checkForFiles = await verifyInstallation(dQueue);
             cauldronLogger.info(`Checksums Passed Install is Valid!`);
             resolve(true);
         } else {
@@ -97,8 +39,6 @@ async function getAssets(assetsIndex, assetFiles) {
             var currentAssetFile = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH,'assets.json')));
             currentAssetFile[assetsIndex] = true;
             fs.writeFileSync(path.join(CAULDRON_PATH,'assets.json'),JSON.stringify(currentAssetFile));
-            
-
             resolve(true)
         }
 

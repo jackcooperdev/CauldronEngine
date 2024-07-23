@@ -13,7 +13,7 @@ const { getLibraries } = require('../controllers/libraries');
 
 // Tools
 const { cauldronLogger } = require('../tools/logger');
-const { checkForValidFiles, downloadVersionManifests } = require('../tools/downloader');
+const { checkForValidFiles, downloadVersionManifests } = require('../tools/fileTools');
 const { grabPath } = require('../tools/compatibility');
 
 // Global Cauldron Path

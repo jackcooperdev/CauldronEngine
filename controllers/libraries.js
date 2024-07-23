@@ -3,12 +3,11 @@ const path = require('path');
 const shell = require('shelljs');
 const homedir = require('os').homedir()
 const { grabPath } = require('../tools/compatibility');
-const { checkForValidFiles, downloadVersionManifests } = require('../tools/downloader');
-const { processQueue } = require('./queue');
+const { processQueue, verifyInstallation } = require('./queue');
 const StreamZip = require('node-stream-zip');
 const { cauldronLogger } = require('../tools/logger');
 const { getSession } = require('../tools/sessionManager');
-const { isOffline } = require('../tools/isClientOffline');
+const { isOffline, checkInternet } = require('../tools/isClientOffline');
 var osConvert = { 'win32': 'windows', 'linux': 'linux' }
 
 
@@ -25,7 +24,11 @@ async function getLibraries(libData, os, versionData) {
             var acutalOS = osConvert[os];
             var dQueue = new Array();
             var libArray = new Array();
-            cauldronLogger.info(`Operating System: ${acutalOS}`)
+            cauldronLogger.info(`Operating System: ${acutalOS}`);
+            var nativeLock = false;
+            if (fs.existsSync(path.join(CAULDRON_PATH, 'versions', version, 'natives'))) {
+                nativeLock = true;
+            };
             for (idx in libData) {
                 libAllowed = true;
                 if (libData[idx].rules) {
@@ -57,10 +60,9 @@ async function getLibraries(libData, os, versionData) {
                         dQueue.push(obj);
                         libArray.push(path.join(obj.destination, obj.fileName));
                     };
-                    var nativeLock = true;
-                    if (libData[idx].downloads.classifiers && !isOffline() && !nativeLock) {
+                    if (libData[idx].downloads.classifiers && checkInternet() && !nativeLock) {
                         var natives = libData[idx].downloads.classifiers[libData[idx].natives[acutalOS]];
-                        
+                        console.log(libData[idx].natives)
                         if (!natives) {
                             if (libData[idx].natives[acutalOS].includes("arch")) {
                                 var newOS = `natives-${acutalOS}-64`
@@ -68,47 +70,39 @@ async function getLibraries(libData, os, versionData) {
                             }
                         }
                         if (natives) {
+                            // /console.log(natives)
                             var needsExtracting = libData[idx].extract;
                             var obj = {
                                 origin: natives.url,
                                 sha1: natives.sha1,
-                                destination: path.join(CAULDRON_PATH, 'versions', version,'natives'),
+                                destination: path.join(CAULDRON_PATH, 'versions', version, 'natives'),
                                 fileName: natives.path.split("/")[natives.path.split("/").length - 1]
                             };
-                            var checkForNative = await processQueue([obj], 1, 'checksum');
+                            var checkForNative = await verifyInstallation([obj], 1, 'checksum');
                             var extractFile = false;
-                            while (checkForNative.length != 0) {
-                                const handleDownload = await processQueue(checkForNative, 1, 'download');
-                                checkForNative = await processQueue(checkForNative, 1, 'checksum');
-                                extractFile = true
-                            };
-                            if (extractFile) {
+                            // while (checkForNative.length != 0) {
+                            //     const handleDownload = await processQueue(checkForNative, 1, 'download');
+                            //     checkForNative = await processQueue(checkForNative, 1, 'checksum');
+                            //     extractFile = true
+                            // };
+                            if (needsExtracting) {
                                 const zip = new StreamZip.async({ file: path.join(obj.destination, obj.fileName) });
                                 const entriesCount = await zip.entriesCount;
                                 const entries = await zip.entries();
                                 for (const entry of Object.values(entries)) {
                                     if (!entry.name.includes("META-INF") && !entry.name.includes(".git") && !entry.name.includes(".sha1")) {
-                                        await zip.extract(entry.name, path.join(CAULDRON_PATH, 'versions', version,'natives'));
+                                        await zip.extract(entry.name, path.join(CAULDRON_PATH, 'versions', version, 'natives'));
                                     };
                                 };
                                 zip.close();
-                                fs.rmSync(path.join(CAULDRON_PATH, 'versions', version,'natives', obj.fileName))
+                                fs.rmSync(path.join(CAULDRON_PATH, 'versions', version, 'natives', obj.fileName))
                             }
                         };
                     };
                 };
             };
-            if (!isOffline()){
-                var checkForFiles = await processQueue(dQueue, 1000, 'checksum');
-                var tryCount = 0;
-                while (checkForFiles.length != 0 && tryCount < 4) {
-                    cauldronLogger.info(`Total Files (${dQueue.length}) Files to Download (${checkForFiles.length})`);
-                    cauldronLogger.info('Downloading Files');
-                    const handleDownload = await processQueue(checkForFiles, 5, 'download');
-                    checkForFiles = await processQueue(dQueue, 1000, 'checksum');
-                    //console.log(checkForFiles)
-                    tryCount++;
-                };
+            if (checkInternet()) {
+                var checkForFiles = await verifyInstallation(dQueue);
             };
             cauldronLogger.info(`Checksums Passed Install is Valid!2`);
             resolve(libArray);

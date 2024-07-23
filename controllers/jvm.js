@@ -4,17 +4,14 @@ const path = require('path');
 const homedir = require('os').homedir();
 const { cauldronLogger } = require('../tools/logger');
 
-const {  extract, checkForValidFiles,downloadVersionManifests } = require('../tools/downloader');
-const { processQueue } = require('./queue');
+const {  extract, checkForValidFiles } = require('../tools/fileTools');
+const { processQueue, verifyInstallation } = require('./queue');
 const JVM_CORE = "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json";
 const platform_convert = { 'win32': 'windows-x64','linux':'linux' };
 const { grabPath } = require('../tools/compatibility');
 var jvmData = "";
 
 
-async function aquireJVMMeta() {
-    jvmData = await downloadVersionManifests(JVM_CORE, true, 'jvm','jvm-core');
-};
 
 async function checkCompat(platform, jVersion,jvmData) {
     //await aquireJVMMeta();
@@ -56,16 +53,15 @@ async function checkJVM(name, jvmMani) {
                 dQueue.push({ origin: downUrl, destination: path.join(downloadPath, '../',),sha1: files[sIdx].downloads.raw.sha1,fileName:sIdx.split("/")[sIdx.split("/").length - 1] });
             }
         };
-        var checkForFiles = await processQueue(dQueue, 10000, 'checksum');
-        var test = false;
-        while (checkForFiles.length != 0) {
-            cauldronLogger.info(`Total Files (${dQueue.length}) Files to Download (${checkForFiles.length})`);
-            cauldronLogger.info('Downloading Files');
-            const handleDownload = await processQueue(checkForFiles, 3, 'download');
-            cauldronLogger.info('Files Downloaded! Decompressing');
-            const unzipFiles = await processQueue(compressedFiles, 3, 'unzip')
-            checkForFiles = await processQueue(checkForFiles, 1000, 'checksum');
-        };
+        var checkForFiles = await verifyInstallation(dQueue);
+        // while (checkForFiles.length != 0) {
+        //     cauldronLogger.info(`Total Files (${dQueue.length}) Files to Download (${checkForFiles.length})`);
+        //     cauldronLogger.info('Downloading Files');
+        //     const handleDownload = await processQueue(checkForFiles, 3, 'download');
+        //     cauldronLogger.info('Files Downloaded! Decompressing');
+        //     const unzipFiles = await processQueue(compressedFiles, 3, 'unzip')
+        //     checkForFiles = await processQueue(checkForFiles, 1000, 'checksum');
+        // };
         cauldronLogger.info(`Checksums Passed Install is Valid!`);
         resolve(true);
     })

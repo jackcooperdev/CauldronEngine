@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const { cauldronLogger } = require('../tools/logger');
 const fs = require('fs');
 const path = require('path');
-const { clientIsOffline, clientIsOnline, isOffline } = require('./isClientOffline');
+const {checkInternet } = require('./isClientOffline');
 
 // Verifies that the user owns a valid license of Minecraft
 
@@ -20,7 +20,6 @@ async function verifyMinecraft(access_token) {
         try {
             const verify = await axios(config)
             var verifyData = verify.data;
-            clientIsOnline();
             var cert = fs.readFileSync(path.join(__dirname, '../', 'mojang.pem'));  // get public key
             const verified = await jwt.verify(verifyData.signature, cert);
             if (verified) {
@@ -34,10 +33,9 @@ async function verifyMinecraft(access_token) {
                 if (err.code == 'ENOTFOUND') {
                     //Assume Offline
                     // Sets Client to Offline
-                    clientIsOffline();
                     cauldronLogger.warn("Error Communicating with MinecraftServices!");
                     cauldronLogger.warn("Is Client Offline?");
-                    if (isOffline()) {
+                    if (!checkInternet()) {
                         cauldronLogger.warn("Confirmed Client is Offline");
                         cauldronLogger.warn("Skipping step be warned client may not be authenticated!");
                         resolve(true);
@@ -46,7 +44,9 @@ async function verifyMinecraft(access_token) {
                         resolve(true)
                     }
                     
-                };
+                } else {
+                    resolve(false)
+                }
             };
             resolve(true);
         };
