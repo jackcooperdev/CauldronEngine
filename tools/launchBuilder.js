@@ -8,8 +8,6 @@ const homedir = require('os').homedir()
 const { grabPath } = require('../tools/compatibility');
 var forceComp = require('../plugins/forge-files/force_compat.json');
 var requiresLibPatch = require('../files/requiresLibPatch.json');
-const { getSession } = require('./sessionManager');
-const { getGameVars } = require('./defaultGameArgs')
 
 
 const defaultJVM = require('../files/defaultJVMArguments.json');
@@ -164,7 +162,15 @@ async function buildGameRules(manifest, loggedUser, overides, addit) {
 
         gameRules.push('--versionType')
         gameRules.push('${version_type}')
-        var gameVars = getGameVars(loggedUser, manifest, overides);
+        var gameVars = {
+            auth_player_name:loggedUser.profile.username,
+            version_type:manifest.type,
+            game_directory:CAULDRON_PATH,
+            server_ip:'',
+        };
+        for (idx in overides) {
+            gameVars[idx] = overides[idx]
+        };
         var gameVariables = {
             auth_player_name: gameVars.auth_player_name,
             version_name: manifest.id,

@@ -1,9 +1,9 @@
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
-const { cauldronLogger } = require('./logger');
+const { cauldronLogger } = require('../tools/logger');
 const fs = require('fs');
 const path = require('path');
-const {checkInternet } = require('./isClientOffline');
+const {checkInternet } = require('../tools/checkConnection');
 
 // Verifies that the user owns a valid license of Minecraft
 

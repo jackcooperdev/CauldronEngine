@@ -7,7 +7,7 @@ const StreamZip = require('node-stream-zip');
 const { grabPath } = require('../tools/compatibility');
 const { verifyInstallation } = require('./queue');
 const { cauldronLogger } = require('../tools/logger');
-const { checkInternet } = require('../tools/isClientOffline');
+const { checkInternet } = require('../tools/checkConnection');
 
 var osConvert = { 'win32': 'windows', 'linux': 'linux' };
 

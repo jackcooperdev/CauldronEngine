@@ -11,21 +11,20 @@
     "test": "echo \"Error: no test specified\""
   },
   "exports": {
-    "./auth": "./tools/authVerifier.js",
+    "./auth": "./utilities/authVerifier.js",
     "./launcher": "./controllers/launcher.js",
-    "./MAS": "./tools/MAS.js",
     "./assets": "./controllers/assets.js",
     "./forge": "./plugins/forge.js",
     "./jvm": "./controllers/jvm.js",
     "./libraries": "./controllers/libraries.js",
     "./logger": "./tools/logger.js",
     "./compat": "./tools/compatibility.js",
-    "./versionChecker": "./tools/versionChecker.js",
+    "./versionChecker": "./utilities/versionChecker.js",
     "./fileTools": "./tools/fileTools.js",
     "./queue": "./controllers/queue.js",
     "./session": "./tools/sessionManager.js",
     "./manifest": "./controllers/manifest.js",
-    "./online": "./tools/isClientOffline.js"
+    "./online": "./tools/checkConnection.js"
   },
   "author": "JackCooper",
   "license": "GPL-3.0-only",
