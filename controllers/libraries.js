@@ -61,7 +61,7 @@ async function getLibraries(libData, os, versionData) {
                     };
                     if (libData[idx].downloads.classifiers && checkInternet() && !nativeLock) {
                         var natives = libData[idx].downloads.classifiers[libData[idx].natives[acutalOS]];
-                        console.log(libData[idx].natives)
+                        //console.log(libData[idx].natives)
                         if (!natives) {
                             if (libData[idx].natives[acutalOS].includes("arch")) {
                                 var newOS = `natives-${acutalOS}-64`
@@ -69,7 +69,7 @@ async function getLibraries(libData, os, versionData) {
                             }
                         }
                         if (natives) {
-                            // /console.log(natives)
+                            // ///console.log(natives)
                             var needsExtracting = libData[idx].extract;
                             var obj = {
                                 origin: natives.url,

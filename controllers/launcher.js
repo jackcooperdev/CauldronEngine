@@ -5,7 +5,7 @@ const osCurrent = require('os').platform();
 
 const { grabPath } = require('../tools/compatibility');
 const { getAssets } = require("./assets");
-const { checkJVM  } = require("./jvm");
+const { checkJVM } = require("./jvm");
 const { getLibraries } = require("./libraries");
 const { getManifests } = require('./manifest')
 const { cauldronLogger, setLoggerSession } = require('../tools/logger');
@@ -31,10 +31,10 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
             // Create SessionID If Not Declared
             if (!sessionID) {
                 var newSession = {
-                    type:'game',
-                    version:version,
-                    loader:loader,
-                    overrides:overrides
+                    type: 'game',
+                    version: version,
+                    loader: loader,
+                    overrides: overrides
                 };
                 sessionID = createSession(newSession);
             }
@@ -43,10 +43,13 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
             // Finds ALL Manifests Required for version. Offline Failsafe
             const manifests = await getManifests(version, loader, lVersion);
             cauldronLogger.info("Manifests Got!")
-            cauldronLogger.info(`Getting JVM: ${manifests.jvmComp}`);
-            const jvmDown = await checkJVM(manifests.jvmComp, manifests.jvmMani);
-            cauldronLogger.info('JVM Passed!');
-
+            if (!manifests.jvmDownloaded) {
+                cauldronLogger.info(`Getting JVM: ${manifests.jvmComp}`);
+                const jvmDown = await checkJVM(manifests.jvmComp, manifests.jvmMani);
+                cauldronLogger.info('JVM Passed!');
+            } else {
+                cauldronLogger.info("Skipping JVM")
+            }
             if (!manifests.assetsDownloaded) {
                 cauldronLogger.info('Starting Asset Download');
                 cauldronLogger.info(`Index No: ${manifests.spec.assets}`);
@@ -60,10 +63,10 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
             if (!dry) {
                 cauldronLogger.info('All Files Aquired Building Launch File');
                 cauldronLogger.info('Creating JVM Arguments');
-                //console.log(manifests.spec)
-                var logsInjected = await logInjector(path.join(CAULDRON_PATH,'assets','log_configs','client-1.7.xml'),sessionID)
+                ////console.log(manifests.spec)
+                var logsInjected = await logInjector(path.join(CAULDRON_PATH, 'assets', 'log_configs', 'client-1.7.xml'), sessionID)
                 var validRules = await buildJVMRules(manifests.spec, libGet, manifests.versionData, overrides.jvm);
-                cauldronLogger.info('Generating Game Arguments')
+                cauldronLogger.info('Generating Game Arguments');
                 var gameRules = await buildGameRules(manifests.spec, authData, overrides.game, overrides.additG);
                 var launchPath = await buildFile(manifests.spec, manifests.jvmComp, validRules, gameRules);
                 cauldronLogger.info('Starting Game');

@@ -49,6 +49,13 @@ async function checkJVM(name, jvmMani) {
         };
         var checkForFiles = await verifyInstallation(dQueue);
         cauldronLogger.info(`Java Installation Verified`);
+        var currentJVMFile = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'jvm_installed.json')));
+        var jvmObj = {
+            installed:true,
+            lastChecked:new Date().getTime()
+        };
+        currentJVMFile[name] = jvmObj;
+        fs.writeFileSync(path.join(CAULDRON_PATH, 'jvm_installed.json'), JSON.stringify(currentJVMFile));
         resolve(true);
     })
 };

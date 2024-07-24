@@ -296,7 +296,7 @@ async function getForgeManifest(fVersion, version, versionCache) {
                     libraries.shift();
                 };
 
-                //console.log(libraries[0])
+                ////console.log(libraries[0])
                 // Create new Manifest Data from Template
                 var manifestData = template;
 
@@ -365,7 +365,7 @@ async function getForgeManifest(fVersion, version, versionCache) {
             };
 
         } catch (err) {
-            //console.log(err)
+            ////console.log(err)
             reject(err)
         }
     })
@@ -513,7 +513,7 @@ async function postProcessing(versionData, manifest) {
                     };
                 } catch (err) {
                     installer.close();
-                    //console.log(err)
+                    ////console.log(err)
                     reject(err);
                 }
             };
@@ -523,7 +523,7 @@ async function postProcessing(versionData, manifest) {
             resolve(true);
         }
     })
-    //console.log(firstTemp[0])
+    ////console.log(firstTemp[0])
 }
 
 module.exports = { getForgeVersion, getForgeManifest, getSuffixUsed, postProcessing,checkInstaller }

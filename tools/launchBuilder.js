@@ -2,18 +2,16 @@ const fs = require('fs');
 const path = require('path');
 const shell = require('shelljs');
 const osCurrent = require('os').platform();
-const machineCurrent = require('os').machine();
 const { exec } = require('child_process');
-const homedir = require('os').homedir()
+
 const { grabPath } = require('../tools/compatibility');
+
 var forceComp = require('../plugins/forge-files/force_compat.json');
 var requiresLibPatch = require('../files/requiresLibPatch.json');
-
-
+const package = require('../package.json');
 const defaultJVM = require('../files/defaultJVMArguments.json');
 var osConvert = { 'win32': 'windows', 'linux': 'linux' };
 
-// TODO Sort 
 
 // Varible Injector
 var injector = {
@@ -28,12 +26,13 @@ var injector = {
     })()
 };
 
+// Injects current Session ID into log file and creates new file
 async function logInjector(logFile,sessionID) {
     var CAULDRON_PATH = grabPath();
     var logFileCont = fs.readFileSync(logFile).toString();
     logFileCont = injector.create(logFileCont, {'log_loc':path.join(CAULDRON_PATH,'sessionLogs',sessionID,'mcLogs.log')});
     fs.writeFileSync(path.join(logFile,'../','log_config.xml'),logFileCont)
-}
+};
 
 
 async function buildJVMRules(manifest, libraryList, versionData, overides) {
@@ -70,7 +69,6 @@ async function buildJVMRules(manifest, libraryList, versionData, overides) {
 
         var logPath = "";
         if (manifest.logging) {
-            console.log(manifest.logging)
             validRules.push(manifest.logging.client.argument);
             logPath = path.join(CAULDRON_PATH, 'assets', 'log_configs', manifest.logging.client.file.id)
         };
@@ -132,7 +130,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overides) {
         var relVaribles = {
             natives_directory: path.join(CAULDRON_PATH, 'versions', manifest.id, 'natives'),
             launcher_name: cusJVM.launcher_name,
-            launcher_version: '0.0.1',
+            launcher_version: package.version,
             client_jar: path.join(CAULDRON_PATH, 'versions', manifest.id, manifest.id + ".jar"),
             classpath: classPath,
             path: path.join(CAULDRON_PATH,'assets','log_configs','log_config.xml'),
@@ -158,7 +156,6 @@ async function buildGameRules(manifest, loggedUser, overides, addit) {
                 gameRules.push(allGameRules[gRules])
             }
         };
-        console.log(gameRules)
 
         gameRules.push('--versionType')
         gameRules.push('${version_type}')

@@ -35,7 +35,7 @@ async function checkManifest(fileName, url, requiresConvert, type) {
                     const downloadedFile = await downloadManifest(url, path.join(CAULDRON_PATH, fileName), requiresConvert, type);
                     resolve(downloadedFile);
                 } catch (err) {
-                    console.log(err)
+                    //console.log(err)
                 }
 
             } else {
@@ -59,7 +59,7 @@ async function checkOther(fileName, url) {
                     const downloadedFile = await downloadOther(url, path.join(CAULDRON_PATH, fileName))
                     resolve(downloadedFile);
                 } catch (err) {
-                    console.log(err)
+                    //console.log(err)
                 }
 
             } else {
@@ -119,6 +119,10 @@ async function getJVMManifest() {
     // not used in launcher
     return new Promise(async (resolve, reject) => {
         var CAULDRON_PATH = grabPath();
+           // Check for jvm file
+           if (!fs.existsSync(path.join(CAULDRON_PATH, 'jvm_installed.json'))) {
+            fs.writeFileSync(path.join(CAULDRON_PATH, 'jvm_installed.json'), '{}');
+        };
         try {
 
             // JVM Manifests
@@ -152,7 +156,13 @@ async function getManifests(v, l, lv) {
             if (!fs.existsSync(path.join(CAULDRON_PATH, 'assets_installed.json'))) {
                 fs.writeFileSync(path.join(CAULDRON_PATH, 'assets_installed.json'), '{}');
             };
+
+             // Check for jvm file
+             if (!fs.existsSync(path.join(CAULDRON_PATH, 'jvm_installed.json'))) {
+                fs.writeFileSync(path.join(CAULDRON_PATH, 'jvm_installed.json'), '{}');
+            };
             const assetDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'assets_installed.json')));
+            const jvmDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'jvm_installed.json')));
             const getMain = await checkManifest('cauldron_version_manifest.json', 'https://launchermeta.mojang.com/mc/game/version_manifest.json', false, 'main');
             // Convert to Actual Values
             const { version, loaderVersion, loader } = await whatIsThis(v, l, lv, getMain);
@@ -160,7 +170,7 @@ async function getManifests(v, l, lv) {
             if (!foundVersionData) {
                 throw new Error('Version Not Found')
             };
-            //console.log(foundVersionData)
+            ////console.log(foundVersionData)
             const getSpec = await checkManifest(path.join('versions', foundVersionData.id, foundVersionData.id + '.json'), foundVersionData.url);
             if (loader != 'vanilla') {
                 //createdManifest = await loaderFunctions[loader](lVersion, version, foundVersion);
@@ -173,7 +183,7 @@ async function getManifests(v, l, lv) {
                 cauldronLogger.warn("Destroying Session: No Logger Detected. Game will still boot");
                 destroySession();
             }
-            console.log(createdManifest.downloads.client.url)
+            //console.log(createdManifest.downloads.client.url)
             const grabClient = await checkOther(path.join('versions', createdManifest.id, createdManifest.id + '.jar'), createdManifest.downloads.client.url);
 
             // Check for Duplicates in Libs
@@ -206,6 +216,11 @@ async function getManifests(v, l, lv) {
                 haveAssetsBeenDownloaded = true;
             };
 
+            var hasJVMBeenDownloaded = false;
+            if (jvmDict[createdManifest.javaVersion.component]) {
+                hasJVMBeenDownloaded = true;
+            };
+
             var allManifiests = {
                 main: getMain,
                 spec: createdManifest,
@@ -219,6 +234,7 @@ async function getManifests(v, l, lv) {
                 versionData: { loader: loader, version: version, loaderVersion: loaderVersion },
                 loader: loader,
                 assetsDownloaded: haveAssetsBeenDownloaded,
+                jvmDownloaded:hasJVMBeenDownloaded,
                 loaderVersion: loaderVersion
             };
             resolve(allManifiests);
@@ -258,7 +274,7 @@ async function whatIsThis(version, loader, lVersion, MANIFEST) {
             rObject.loaderVersion = lVersion;
         };
     } catch (err) {
-        //console.log(err)
+        ////console.log(err)
         throw new Error(err)
     };
     return rObject;

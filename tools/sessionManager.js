@@ -20,6 +20,15 @@ function createSession(data) {
     return sessionID;
 };
 
+function checkForGameSession() {
+    for (idx in currentSessions) {
+        if (currentSessions[idx].type == 'game') {
+            return true;
+        }
+    };
+    return false;
+}
+
 
 
 function getSession(sessionID) {
@@ -33,4 +42,4 @@ async function destroySession(sessionID) {
 };
 
 
-module.exports = { createSession, getSession, destroySession, createUUID };
+module.exports = { createSession, getSession, destroySession, createUUID,checkForGameSession };

@@ -55,7 +55,7 @@ async function extract(filePath) {
             const writeFile = fs.writeFileSync(filePath, decompress)
             resolve(true);
         } catch (err) {
-            console.log(err)
+            //console.log(err)
             if (filePath == 'no path') {
                 resolve(true)
             } else {
