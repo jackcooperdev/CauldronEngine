@@ -4,14 +4,13 @@ const shell = require('shelljs');
 const homedir = require('os').homedir()
 const StreamZip = require('node-stream-zip');
 
-const { grabPath } = require('../tools/compatibility');
+const { grabPath, getOperatingSystem } = require('../tools/compatibility');
 const { verifyInstallation } = require('./queue');
 const { cauldronLogger } = require('../tools/logger');
 const { checkInternet } = require('../tools/checkConnection');
 
-var osConvert = { 'win32': 'windows', 'linux': 'linux','darwin':'osx' };
 
-async function getLibraries(libData, os, versionData) {
+async function getLibraries(libData, versionData) {
     return new Promise(async (resolve, reject) => {
         var CAULDRON_PATH = grabPath();
         try {
@@ -20,7 +19,7 @@ async function getLibraries(libData, os, versionData) {
             } else if (versionData.loader == 'forge') {
                 version = `forge-${versionData.version}-${versionData.loaderVersion}`;
             };
-            var acutalOS = osConvert[os];
+            var acutalOS = getOperatingSystem();
             var dQueue = new Array();
             var libArray = new Array();
             cauldronLogger.info(`Operating System: ${acutalOS}`);

@@ -128,7 +128,7 @@ async function getJVMManifest() {
             // JVM Manifests
             // Check For Meta
             const jvmMeta = await checkManifest(path.join('jvm', 'jvm-core.json'), 'https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json')
-            const jvmCompat = await checkCompat(osCurrent, 'java-runtime-alpha', jvmMeta);
+            const jvmCompat = await checkCompat('java-runtime-alpha', jvmMeta);
             if (jvmCompat) {
                 var jvmMani = await checkManifest(path.join('jvm', 'java-runtime-alpha.json'), jvmCompat[0].manifest.url);
             } else {
@@ -196,7 +196,7 @@ async function getManifests(v, l, lv) {
 
             // Check For Meta
             const jvmMeta = await checkManifest(path.join('jvm', 'jvm-core.json'), 'https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json')
-            const jvmCompat = await checkCompat(osCurrent, createdManifest.javaVersion.component, jvmMeta);
+            const jvmCompat = await checkCompat(createdManifest.javaVersion.component, jvmMeta);
             if (jvmCompat) {
                 var jvmMani = await checkManifest(path.join('jvm', createdManifest.javaVersion.component + '.json'), jvmCompat[0].manifest.url);
             } else {

@@ -3,7 +3,7 @@ const { exec } = require('child_process');
 const osCurrent = require('os').platform();
 
 
-const { grabPath } = require('../tools/compatibility');
+const { grabPath, getOperatingSystem } = require('../tools/compatibility');
 const { getAssets } = require("./assets");
 const { checkJVM } = require("./jvm");
 const { getLibraries } = require("./libraries");
@@ -28,7 +28,8 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
     return new Promise(async (resolve, reject) => {
         var CAULDRON_PATH = grabPath();
         try {
-            // Create SessionID If Not Declared
+            getOperatingSystem();
+            //Create SessionID If Not Declared
             if (!sessionID) {
                 var newSession = {
                     type: 'game',
@@ -59,7 +60,7 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
                 cauldronLogger.info("Skipping Assets");
             };
             cauldronLogger.info('Starting Library Download')
-            const libGet = await getLibraries(manifests.spec.libraries, osCurrent, manifests.versionData);
+            const libGet = await getLibraries(manifests.spec.libraries, manifests.versionData);
             if (!dry) {
                 cauldronLogger.info('All Files Aquired Building Launch File');
                 cauldronLogger.info('Creating JVM Arguments');
@@ -78,8 +79,8 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
             }
 
         } catch (err) {
-            cauldronLogger.error(err);
-            resolve(false)
+            cauldronLogger.error(err.message);
+            resolve(err.message)
         }
     })
 

@@ -4,13 +4,13 @@ const shell = require('shelljs');
 const osCurrent = require('os').platform();
 const { exec, spawn } = require('child_process');
 
-const { grabPath } = require('../tools/compatibility');
+const { grabPath, getOperatingSystem } = require('../tools/compatibility');
 
 var forceComp = require('../plugins/forge-files/force_compat.json');
 var requiresLibPatch = require('../files/requiresLibPatch.json');
 const package = require('../package.json');
 const defaultJVM = require('../files/defaultJVMArguments.json');
-var osConvert = { 'win32': 'windows', 'linux': 'linux', 'darwin': 'osx' };
+
 
 
 // Varible Injector
@@ -63,7 +63,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overides) {
                 }
 
             } else if (jvmRules[idx].rules[0].os) {
-                if (jvmRules[idx].rules[0].os.name == osConvert[osCurrent]) {
+                if (jvmRules[idx].rules[0].os.name == getOperatingSystem()) {
                     if (Array.isArray(jvmRules[idx].value)) {
                         console.log('is')
                         console.log(jvmRules[idx].value)

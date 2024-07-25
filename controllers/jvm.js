@@ -4,12 +4,10 @@ const path = require('path');
 
 const { cauldronLogger } = require('../tools/logger');
 const { verifyInstallation } = require('./queue');
-const { grabPath } = require('../tools/compatibility');
+const { grabPath, getOperatingSystem } = require('../tools/compatibility');
 
-const platform_convert = { 'win32': 'windows-x64','linux':'linux','darwin':'mac-os' };
-
-async function checkCompat(platform, jVersion,jvmData) {
-    var actualPlatform = platform_convert[platform];
+async function checkCompat(jVersion,jvmData) {
+    var actualPlatform = getOperatingSystem(true);
     if (jvmData[actualPlatform][jVersion] != undefined) {
         return jvmData[actualPlatform][jVersion];
     } else {
