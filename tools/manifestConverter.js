@@ -36,7 +36,7 @@ async function attemptToConvert(original, overides) {
             arguments.push("-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump");
             arguments.push("-Dos.version=10.0");
         } else if (osCurrent == 'darwin') {
-            arguments.push("-XstartOnFirstThread")
+            //arguments.push("-XstartOnFirstThread")
         };
         if (!newTemplate['arguments']) {
             newTemplate['arguments'] = {};

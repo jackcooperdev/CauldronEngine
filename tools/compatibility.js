@@ -12,7 +12,7 @@ function grabPath() {
     const WORKING_DIR = '.cauldron';
     if (osCurrent == 'win32') {
         pathReturn = path.join(homedir, 'AppData', 'Roaming', WORKING_DIR)
-    } else if (osCurrent == 'linux') {
+    } else if (osCurrent == 'linux' || osCurrent == 'darwin') {
         pathReturn = path.join(homedir, WORKING_DIR);
     }
     shell.mkdir('-p',path.join(pathReturn))

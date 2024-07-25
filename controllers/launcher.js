@@ -63,8 +63,7 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
             if (!dry) {
                 cauldronLogger.info('All Files Aquired Building Launch File');
                 cauldronLogger.info('Creating JVM Arguments');
-                ////console.log(manifests.spec)
-                var logsInjected = await logInjector(path.join(CAULDRON_PATH, 'assets', 'log_configs', 'client-1.7.xml'), sessionID)
+                var logsInjected = await logInjector(path.join(CAULDRON_PATH, 'assets', 'log_configs', manifests.spec.logging.client.file.id), sessionID)
                 var validRules = await buildJVMRules(manifests.spec, libGet, manifests.versionData, overrides.jvm);
                 cauldronLogger.info('Generating Game Arguments');
                 var gameRules = await buildGameRules(manifests.spec, authData, overrides.game, overrides.additG);

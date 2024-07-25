@@ -9,7 +9,7 @@ const { verifyInstallation } = require('./queue');
 const { cauldronLogger } = require('../tools/logger');
 const { checkInternet } = require('../tools/checkConnection');
 
-var osConvert = { 'win32': 'windows', 'linux': 'linux' };
+var osConvert = { 'win32': 'windows', 'linux': 'linux','darwin':'osx' };
 
 async function getLibraries(libData, os, versionData) {
     return new Promise(async (resolve, reject) => {
@@ -61,16 +61,17 @@ async function getLibraries(libData, os, versionData) {
                     };
                     if (libData[idx].downloads.classifiers && checkInternet() && !nativeLock) {
                         var natives = libData[idx].downloads.classifiers[libData[idx].natives[acutalOS]];
-                        //console.log(libData[idx].natives)
                         if (!natives) {
-                            if (libData[idx].natives[acutalOS].includes("arch")) {
+                            if (libData[idx].natives && libData[idx].natives[acutalOS] && libData[idx].natives[acutalOS].includes("arch")) {
                                 var newOS = `natives-${acutalOS}-64`
                                 natives = libData[idx].downloads.classifiers[newOS];
                             }
                         }
                         if (natives) {
-                            // ///console.log(natives)
+                            console.log(natives)
                             var needsExtracting = libData[idx].extract;
+                            // Force On MAC Only
+                            needsExtracting = true;
                             var obj = {
                                 origin: natives.url,
                                 sha1: natives.sha1,

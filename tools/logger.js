@@ -35,24 +35,25 @@ server.on('connection', function (sock) {
                 var dataMessage = firstSplit[idx].split("]: ");
                 if (dataMessage[1]) {
                     var state = dataMessage[0].split("/")[1];
+                    var arr = dataMessage.shift();
                     switch (state) {
                         case 'INFO':
-                            mcLogger.info(dataMessage[1]);
+                            mcLogger.info(dataMessage.join(" "));
                             break;
                         case 'DEBUG':
-                            mcLogger.debug(dataMessage[1]);
+                            mcLogger.debug(dataMessage.join(" "));
                             break;
                         case 'TRACE':
-                            mcLogger.trace(dataMessage[1]);
+                            mcLogger.trace(dataMessage.join(" "));
                             break;
                         case 'WARN':
-                            mcLogger.warn(dataMessage[1]);
+                            mcLogger.warn(dataMessage.join(" "));
                             break;
                         case 'ERROR':
-                            mcLogger.error(dataMessage[1]);
+                            mcLogger.error(dataMessage.join(" "));
                             break;
                         default:
-                            mcLogger.error(dataMessage[1]);
+                            mcLogger.error(dataMessage.join(" "));
                             break;
                     };
                 };
