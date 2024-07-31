@@ -67,7 +67,7 @@ async function getLibraries(libData, versionData) {
                             }
                         }
                         if (natives) {
-                            console.log(natives)
+                            //console.log(natives)
                             var needsExtracting = libData[idx].extract;
                             // Force On MAC Only
                             needsExtracting = true;

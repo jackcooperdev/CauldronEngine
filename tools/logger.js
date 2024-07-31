@@ -9,17 +9,24 @@ log4js.configure({
     appenders: {
         out: { type: "console" },
         file: { type: "file", filename: path.join(grabPath(),'cauldron_engine_logs','logs.log'), maxLogSize: 10485760, backups: 3, compress: true},
+        network: { type: "tcp", host: "127.0.0.1",layout:{ type: "coloured" } },
     },
-    categories: { default: { appenders: ["out","file"], level: "debug" } },
+    categories: { default: { appenders: ["out","file","network"], level: "debug" } },
 });
 
 const mcLogger = log4js.getLogger("Minecraft");
 const cauldronLogger = log4js.getLogger('Cauldron')
 
-const server = net.createServer();
-server.listen(port, host, () => {
-    cauldronLogger.info('Listening For Minecraft Instances on port ' + port + '.');
-});
+
+try {
+    server = net.createServer();
+    server.listen(port, host, () => {
+        cauldronLogger.info('Listening For Minecraft Instances on port ' + port + '.');
+    });
+} catch {
+    //do nothing 
+}
+
 
 let sockets = [];
 
@@ -71,6 +78,10 @@ server.on('connection', function (sock) {
         
     });
 });
+
+server.on('error', function (sock) {
+    //console.log(sock)
+})
 
 function setLoggerSession(id) {
     loggerSession = id;

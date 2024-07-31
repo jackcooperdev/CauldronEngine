@@ -35,7 +35,7 @@ async function checkManifest(fileName, url, requiresConvert, type) {
                     const downloadedFile = await downloadManifest(url, path.join(CAULDRON_PATH, fileName), requiresConvert, type);
                     resolve(downloadedFile);
                 } catch (err) {
-                    //console.log(err)
+                    ////console.log(err)
                 }
 
             } else {
@@ -59,7 +59,7 @@ async function checkOther(fileName, url) {
                     const downloadedFile = await downloadOther(url, path.join(CAULDRON_PATH, fileName))
                     resolve(downloadedFile);
                 } catch (err) {
-                    //console.log(err)
+                    ////console.log(err)
                 }
 
             } else {
@@ -170,7 +170,7 @@ async function getManifests(v, l, lv) {
             if (!foundVersionData) {
                 throw new Error('Version Not Found')
             };
-            ////console.log(foundVersionData)
+            //////console.log(foundVersionData)
             const getSpec = await checkManifest(path.join('versions', foundVersionData.id, foundVersionData.id + '.json'), foundVersionData.url);
             if (loader != 'vanilla') {
                 //createdManifest = await loaderFunctions[loader](lVersion, version, foundVersion);
@@ -183,7 +183,7 @@ async function getManifests(v, l, lv) {
                 cauldronLogger.warn("Destroying Session: No Logger Detected. Game will still boot");
                 destroySession();
             }
-            //console.log(createdManifest.downloads.client.url)
+            ////console.log(createdManifest.downloads.client.url)
             const grabClient = await checkOther(path.join('versions', createdManifest.id, createdManifest.id + '.jar'), createdManifest.downloads.client.url);
 
             // Check for Duplicates in Libs
@@ -274,7 +274,7 @@ async function whatIsThis(version, loader, lVersion, MANIFEST) {
             rObject.loaderVersion = lVersion;
         };
     } catch (err) {
-        ////console.log(err)
+        //////console.log(err)
         throw new Error(err)
     };
     return rObject;
