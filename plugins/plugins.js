@@ -38,5 +38,18 @@ async function getIdentifierPlugin(loader,version,manifest) {
     })
 };
 
+async function getPostPlugin(loader,manifest) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            var { postProcessing } = require(`./${loader}/post`);
+            const data = await postProcessing(manifest);
+            resolve(data)
+        } catch (err) {
+            cauldronLogger.warn("Plugin Does not support the post function. There may be errors ahead")
+            resolve(false);
+        };
+    })
+};
 
-module.exports = { checkManifestPlugin,getDataPlugin,getIdentifierPlugin }
+
+module.exports = { checkManifestPlugin,getDataPlugin,getIdentifierPlugin, getPostPlugin }

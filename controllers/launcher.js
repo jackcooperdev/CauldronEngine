@@ -11,6 +11,7 @@ const { getManifests } = require('./manifest')
 const { cauldronLogger, setLoggerSession } = require('../tools/logger');
 const { createSession, destroySession } = require("../tools/sessionManager");
 const { buildJVMRules, buildGameRules, buildFile, logInjector } = require("../tools/launchBuilder");
+const { getPostPlugin } = require('../plugins/plugins');
 
 
 
@@ -51,8 +52,9 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
                 cauldronLogger.info("Skipping JVM")
             };
 
-            //const FORCEPOST = await postProcessing(manifests.versionData,manifests.spec)
-
+            if (loader != 'vanilla') {
+                const checkForPost = await getPostPlugin(loader,manifests)
+            };
             if (!manifests.assetsDownloaded) {
                 cauldronLogger.info('Starting Asset Download');
                 cauldronLogger.info(`Index No: ${manifests.spec.assets}`);
