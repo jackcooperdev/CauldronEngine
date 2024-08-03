@@ -6,7 +6,6 @@ const { exec, spawn } = require('child_process');
 
 const { grabPath, getOperatingSystem } = require('../tools/compatibility');
 
-var forceComp = require('../plugins/forge-files/force_compat.json');
 var requiresLibPatch = require('../files/requiresLibPatch.json');
 const package = require('../package.json');
 const defaultJVM = require('../files/defaultJVMArguments.json');
@@ -99,14 +98,14 @@ async function buildJVMRules(manifest, libraryList, versionData, overides) {
             validRules.push("-Dhttp.proxyPort=" + proxyPort)
         };
 
-        // Check For Force Compat (forge Only)
-        if (versionData.loader == 'forge') {
-            if (forceComp[versionData.version]) {
-                for (fIdx in forceComp[versionData.version]) {
-                    libraryList.push(path.join(CAULDRON_PATH, 'libraries', 'net/minecraftforge/forge', `${versionData.version}-${versionData.loaderVersion}`, `forge-${versionData.version}-${versionData.loaderVersion}-${forceComp[versionData.version][fIdx]}.jar`));
-                }
-            }
-        };
+        // // Check For Force Compat (forge Only)
+        // if (versionData.loader == 'forge') {
+        //     if (forceComp[versionData.version]) {
+        //         for (fIdx in forceComp[versionData.version]) {
+        //             libraryList.push(path.join(CAULDRON_PATH, 'libraries', 'net/minecraftforge/forge', `${versionData.version}-${versionData.loaderVersion}`, `forge-${versionData.version}-${versionData.loaderVersion}-${forceComp[versionData.version][fIdx]}.jar`));
+        //         }
+        //     }
+        // };
         var libOccurneces = {};
         var repeatedLibs = {};
         for (idx in libraryList) {
@@ -199,6 +198,7 @@ async function buildGameRules(manifest, loggedUser, overides, addit) {
             auth_session: `token:${loggedUser.access_token}`,
             server_ip: gameVars.server_ip
         };
+        console.log(gameVariables)
         if (manifest.assets == 'legacy') {
             gameVariables.game_assets = path.join(CAULDRON_PATH, 'assets', 'virtual', 'legacy');
         } else if (manifest.assets == 'pre-1.6') {

@@ -72,7 +72,7 @@ async function validate(file) {
         if (file.destination == 'no path') {
             resolve('pass');
         };
-        if (file.sha1 == 'NONE') {
+        if (file.sha1 == 'NONE' && fs.existsSync(path.join(file.destination, file.fileName))) {
             resolve('pass');
         }
         checksum.file(path.join(file.destination, file.fileName), function (err, sum) {

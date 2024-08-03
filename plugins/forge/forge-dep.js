@@ -8,13 +8,13 @@ const decompress = require("decompress");
 const StreamZip = require('node-stream-zip');
 
 //Imported Controllers
-const { processQueue } = require('../controllers/queue');
-const { getLibraries } = require('../controllers/libraries');
+const { processQueue, verifyInstallation } = require('../../controllers/queue');
+const { getLibraries } = require('../../controllers/libraries');
 
 // Tools
-const { cauldronLogger } = require('../tools/logger');
-const { checkForValidFiles, downloadVersionManifests } = require('../tools/fileTools');
-const { grabPath } = require('../tools/compatibility');
+const { cauldronLogger } = require('../../tools/logger');
+const { checkForValidFiles, downloadVersionManifests, validate } = require('../../tools/fileTools');
+const { grabPath } = require('../../tools/compatibility');
 
 // Global Cauldron Path
 
@@ -25,12 +25,12 @@ const FORGE_PROMO = "https://files.minecraftforge.net/net/minecraftforge/forge/p
 const LIBRARY_PATH = "https://libraries.minecraft.net/"
 
 // Require Files
-var suffixes = require('./forge-files/suffixes.json');
-var template = require('../files/manifestTemplate.json');
-var reqLegMod = require('./forge-files/requires_legacy_mod.json');
+var suffixes = require('../forge-files/suffixes.json');
+var template = require('../../files/manifestTemplate.json');
+var reqLegMod = require('../forge-files/requires_legacy_mod.json');
 //MODIFY THIS FILE WITH CAUTION THE VERSIONS IN THIS FILE HAVE NOT BEEN TESTED OR DO NOT WORK
-var unsupportedVersions = require('./forge-files/blocked_versions.json');
-const { attemptToConvert } = require('../tools/manifestConverter');
+var unsupportedVersions = require('../forge-files/blocked_versions.json');
+const { attemptToConvert } = require('../../tools/manifestConverter');
 
 // Vars
 var suffixUsed = "";
@@ -42,108 +42,24 @@ function getSuffixUsed() {
 };
 
 
-async function getForgeInstallerURL(version, forgeVersion) {
-    var url = "";
-    if (suffixes[version]) {
-        for (idx in suffixes[version]) {
-            url = `${FORGE_REPO}/forge/${version}-${forgeVersion}${suffixes[version][idx]}/forge-${version}-${forgeVersion}${suffixes[version][idx]}-installer.jar`;
-            const validateURL = await checkInstaller(url);
-            suffixUsed = suffixes[version][idx]
-            if (validateURL) {
-                break;
-            };
-        };
-    } else {
-        url = `${FORGE_REPO}/forge/${version}-${forgeVersion}/forge-${version}-${forgeVersion}-installer.jar`;
-    };
-    if (!url) {
-        throw new Error(`Sorry but Cauldron does not support ${version} - ${forgeVersion} forge yet. CODE: URLNFOUND`);
-    };
-    var verifyInstaller = await checkInstaller(url);
-    if (verifyInstaller) {
-        return url;
-    } else {
-        throw new Error(`Sorry but Cauldron does not support ${version} - ${forgeVersion} forge yet. CODE: URLNFOUND`);
-    };
+// Get Forge Manifest (used in manifest.js)
 
-};
-
-function convertNameToPath(name) {
-    var split = name.split(":");
-    var chunkOne = split[0].split(".").join("/");
-    var chunkTwo = split[1];
-    var chunkThree = split[2];
-    return { chunkOne: chunkOne, chunkTwo: chunkTwo, chunkThree: chunkThree };
-};
-
-async function checkInstaller(url) {
-    var config = {
-        method: 'get',
-        url: url
-    };
-    try {
-        const res = await axios(config);
-        return true;
-    } catch (err) {
-        return false;
-    };
-};
-
-//Variable Injector
-var injector = {
-    create: (function () {
-        var regexp = /\{([^{]+)}/g;
-        return function (str, o) {
-            return str.replace(regexp, function (ignore, key) {
-                return (key = o[key]) == null ? '' : key;
-            });
-        }
-    })()
-};
-
-// Grabs ForgeVersion from ForgePromo
-// Attempts to find recommended version else forces latest
-// Fails if in blacklist or version does not exist
-async function getForgeVersion(version, type) {
-    return new Promise(async (resolve, reject) => {
-    if (!type) {
-        type = 'recommended';
-    };
-    if (unsupportedVersions.includes(version)) {
-        reject(`Sorry but Cauldron does not support ${version} forge yet. CODE: BLVER`)
-    };
-    var forgePromos = await downloadVersionManifests(FORGE_PROMO, false, false);
-    var forgeVersion = forgePromos.promos[`${version}-${type}`];
-    if (!forgeVersion) {
-        forgeVersion = forgePromos.promos[`${version}-latest`];
-        if (!forgeVersion) {
-            reject('Version Does Not Exist')
-        }
-    };
-    cauldronLogger.warn("Forge is still experimental. Expect Crashes");
-    resolve(forgeVersion);
-    })
-};
-
-
-
-
-
-// Generate Forge Manifest
 async function getForgeManifest(fVersion, version, versionCache) {
     return new Promise(async (resolve, reject) => {
         var CAULDRON_PATH = grabPath();
+
         try {
+            console.log(fVersion)
             var grabForgeInstaller = await getForgeInstallerURL(version, fVersion);
             cauldronLogger.info("Forge Installer Path: " + grabForgeInstaller);
             var installObj = {
                 origin: grabForgeInstaller,
-                sha1: 'none',
-                destination: path.join(CAULDRON_PATH, 'bin'),
+                sha1: 'NONE',
+                destination: path.join(CAULDRON_PATH, 'forge-installers'),
                 fileName: `forge-${version}-${fVersion}-installer.jar`
             };
-            var downloadInstaller = await processQueue([installObj], 1, 'download');
-            const installer = new StreamZip.async({ file: path.join(CAULDRON_PATH, 'bin', installObj.fileName) });
+            var downloadInstaller = await verifyInstallation([installObj]);
+            const installer = new StreamZip.async({ file: path.join(CAULDRON_PATH, 'forge-installers', installObj.fileName) });
             const installerFiles = await installer.entries();
             const profileFileBuffer = await installer.entryData('install_profile.json');
             const profileFile = JSON.parse(profileFileBuffer);
@@ -159,12 +75,7 @@ async function getForgeManifest(fVersion, version, versionCache) {
                         destination: path.join(CAULDRON_PATH, 'mods'),
                         fileName: 'legacyjavafixer-1.0.jar'
                     };
-                    var checkForMod = await processQueue([obj], 1, 'checksum');
-                    while (checkForMod.length != 0) {
-                        const downloadMod = await processQueue([obj], 1, 'download');
-                        cauldronLogger.info("Downloaded LegacyJavaFixer Patch");
-                        checkForMod = await processQueue([obj], 1, 'checksum');
-                    };
+                    var checkForMod = await verifyInstallation([obj]);
                 } else {
                     if (fs.existsSync(path.join(CAULDRON_PATH, 'mods', 'legacyjavafixer-1.0.jar'))) {
                         fs.rmSync(path.join(CAULDRON_PATH, 'mods', 'legacyjavafixer-1.0.jar'))
@@ -267,7 +178,6 @@ async function getForgeManifest(fVersion, version, versionCache) {
                 manifestData.javaVersion = versionCache.javaVersion;
 
                 //Merge Libraries
-
                 manifestData.libraries = [...manifestData.libraries, ...versionCache.libraries];
 
 
@@ -335,7 +245,7 @@ async function getForgeManifest(fVersion, version, versionCache) {
                         destination: path.join(CAULDRON_PATH,'libraries',mainForge.downloads.artifact.path,'../'),
                         fileName: path.basename(mainForge.downloads.artifact.path)
                     };
-                    var checkForMod = await processQueue([obj], 1, 'download');
+                    var checkForMod = await verifyInstallation([obj]);
                 } else {
                     cauldronLogger.info("No Universal Download Link. Assuming Path");
                     var forgePath = path.join('net', 'minecraftforge', 'forge', `${version}-${fVersion}`)
@@ -360,24 +270,25 @@ async function getForgeManifest(fVersion, version, versionCache) {
                 //NOTE: Installer not deleted as its needed in Post Processing
                 // Close Installer File
                 installer.close();
+                //console.log(converted)
                 resolve(converted);
 
             };
 
         } catch (err) {
-            //////console.log(err)
-            reject(err)
+            console.log(err)
+            //reject(err)
         }
     })
-}
-
+};
 
 async function postProcessing(versionData, manifest) {
     return new Promise(async (resolve,reject) => {
         var CAULDRON_PATH = grabPath();
         var version = versionData.version;
         var fVersion = versionData.loaderVersion;
-        const installer = new StreamZip.async({ file: path.join(CAULDRON_PATH, 'bin', `forge-${versionData.version}-${versionData.loaderVersion}-installer.jar`) });
+        console.log('s')
+        const installer = new StreamZip.async({ file: path.join(CAULDRON_PATH, 'forge-installers', `forge-${versionData.version}-${versionData.loaderVersion}-installer.jar`) });
         const profileFileBuffer = await installer.entryData('install_profile.json');
         const profileFile = JSON.parse(profileFileBuffer);
         // Check if Processors Exists 
@@ -400,7 +311,7 @@ async function postProcessing(versionData, manifest) {
     
                     //Aquire Libraries (These Libraries are required but do not need to be included in the launch file)
                     var nonDeclaredLibs = profileFile.libraries;
-                    var downloadNonDeclaredLibs = await getLibraries(nonDeclaredLibs,osCurrent, versionData);
+                    var downloadNonDeclaredLibs = await getLibraries(nonDeclaredLibs, versionData);
                     
                     // Aquire Forge Data
                     var forgeData = profileFile.data;
@@ -414,7 +325,7 @@ async function postProcessing(versionData, manifest) {
                     };
                     
                     const clientLzmaBuffer = await installer.entryData('data/client.lzma');
-                    fs.writeFileSync(path.join(CAULDRON_PATH,'bin','client.lzma'),clientLzmaBuffer);
+                    fs.writeFileSync(path.join(CAULDRON_PATH,'forge-installers','client.lzma'),clientLzmaBuffer);
 
                     // Generate Params
                     var params = {};
@@ -423,7 +334,7 @@ async function postProcessing(versionData, manifest) {
                         if (fIdx == 'MCP_VERSION') {
                             params[fIdx] = MCP_VERSION;
                         } else if (fIdx == 'BINPATCH') {
-                            params[fIdx] = path.join(CAULDRON_PATH,'bin','client.lzma');
+                            params[fIdx] = path.join(CAULDRON_PATH,'forge-installers','client.lzma');
                         } else if (!fIdx.includes('SHA')) {
                             var splitDir = forgeData[fIdx].client.replace(/\[|\]/g, "").split(":");
                             if (fIdx == 'MAPPINGS' || fIdx == 'MOJMAPS' || fIdx == 'MERGED_MAPPINGS') {
@@ -454,7 +365,13 @@ async function postProcessing(versionData, manifest) {
                             checkObjs.push(obj);
                         };
                     };
-                    var checkFiles = await processQueue(checkObjs,3,'checksum');
+                    var checkFiles = await validate(checkObjs[0]);
+                    if (checkFiles == true) {
+                        checkFiles = []
+                    } else {
+                        checkFiles = [checkFiles]
+                    };
+                    console.log(checkFiles)
                     // We only care about the PATCHED File due to the fact its the only one where the checksums will match
                     if (checkFiles.length != 0) {
                         var processors = profileFile.processors;
@@ -502,6 +419,8 @@ async function postProcessing(versionData, manifest) {
                                 command = injector.create(command, params);
                                 cauldronLogger.info(`Forge Post Proccessing Job: ${Number(pIdx) + 1}/${processors.length} Starting`);
                                 var spawnProc = await spawn(path.join(CAULDRON_PATH,'jvm',manifest.javaVersion.component,'bin','java'), command.split(" "));
+                                console.log(path.join(CAULDRON_PATH,'jvm',manifest.javaVersion.component,'bin','java'))
+                                console.log(command)
                                 cauldronLogger.info(`Forge Post Proccessing Job: ${Number(pIdx) + 1}/${processors.length} Done!`);
                             };
                         };
@@ -526,4 +445,120 @@ async function postProcessing(versionData, manifest) {
     //////console.log(firstTemp[0])
 }
 
-module.exports = { getForgeVersion, getForgeManifest, getSuffixUsed, postProcessing,checkInstaller }
+
+// Grabs ForgeVersion from ForgePromo
+// Attempts to find recommended version else forces latest
+// Fails if in blacklist or version does not exist
+async function getForgeVersion(version, type,forgePromos) {
+    return new Promise(async (resolve, reject) => {
+    if (!type) {
+        type = 'recommended';
+    };
+    if (unsupportedVersions.includes(version)) {
+        reject(`Sorry but Cauldron does not support ${version} forge yet. CODE: BLVER`)
+    };
+    var forgeVersion = forgePromos.promos[`${version}-${type}`];
+    if (!forgeVersion) {
+        forgeVersion = forgePromos.promos[`${version}-latest`];
+        if (!forgeVersion) {
+            reject('Version Does Not Exist')
+        }
+    };
+    cauldronLogger.warn("Forge is still experimental. Expect Crashes");
+    resolve(forgeVersion);
+    })
+};
+
+
+// Tools
+
+// Get Forge Installer URL (does what it says on the tin)
+async function getForgeInstallerURL(version, forgeVersion) {
+    var url = "";
+    var CAULDRON_PATH = grabPath();
+    if (!fs.existsSync(path.join(CAULDRON_PATH,'forge-installers.json'))) {
+        aquiredForges = {}
+        fs.writeFileSync(path.join(CAULDRON_PATH,'forge-installers.json'),'{}');
+    } else {
+        aquiredForges = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH,'forge-installers.json')))
+    };
+
+    if (aquiredForges[`${version}-${forgeVersion}`]) {
+        url = aquiredForges[`${version}-${forgeVersion}`].url;
+        if (aquiredForges[`${version}-${forgeVersion}`].suffix) {
+            suffixUsed = aquiredForges[`${version}-${forgeVersion}`].suffix
+        };
+    } else {
+        if (suffixes[version]) {
+            for (idx in suffixes[version]) {
+                url = `${FORGE_REPO}/forge/${version}-${forgeVersion}${suffixes[version][idx]}/forge-${version}-${forgeVersion}${suffixes[version][idx]}-installer.jar`;
+                const validateURL = await checkInstaller(url);
+                suffixUsed = suffixes[version][idx]
+                if (validateURL) {
+                    aquiredForges[`${version}-${forgeVersion}`] = {url:'',suffix:''};
+                    aquiredForges[`${version}-${forgeVersion}`]['url'] = url;
+                    aquiredForges[`${version}-${forgeVersion}`]['suffix'] = suffixUsed;
+                    fs.writeFileSync(path.join(CAULDRON_PATH,'forge-installers.json'),JSON.stringify(aquiredForges))
+                    break;
+                };
+            };
+        } else {
+            aquiredForges[`${version}-${forgeVersion}`] = {url:'',suffix:''};
+            url = `${FORGE_REPO}/forge/${version}-${forgeVersion}/forge-${version}-${forgeVersion}-installer.jar`;
+            aquiredForges[`${version}-${forgeVersion}`]['url'] = url;
+            fs.writeFileSync(path.join(CAULDRON_PATH,'forge-installers.json'),JSON.stringify(aquiredForges))
+        };
+        if (!url) {
+            throw new Error(`Sorry but Cauldron does not support ${version} - ${forgeVersion} forge yet. CODE: URLNFOUNDA`);
+        };
+    };
+    var verifyInstaller = await checkInstaller(url);
+    if (verifyInstaller) {
+        return url;
+    } else {
+        throw new Error(`Sorry but Cauldron does not support ${version} - ${forgeVersion} forge yet. CODE: URLNFOUNDB`);
+    };
+};
+
+// Checks Installer Link to see if its valid
+async function checkInstaller(url) {
+    var config = {
+        method: 'get',
+        url: url
+    };
+    try {
+        console.log(url)
+        const res = await axios(config);
+        return true;
+    } catch (err) {
+        return false;
+    };
+};
+
+function getPromo() {
+    return FORGE_PROMO;
+};
+
+function convertNameToPath(name) {
+    var split = name.split(":");
+    var chunkOne = split[0].split(".").join("/");
+    var chunkTwo = split[1];
+    var chunkThree = split[2];
+    return { chunkOne: chunkOne, chunkTwo: chunkTwo, chunkThree: chunkThree };
+};
+
+//Variable Injector
+var injector = {
+    create: (function () {
+        var regexp = /\{([^{]+)}/g;
+        return function (str, o) {
+            return str.replace(regexp, function (ignore, key) {
+                return (key = o[key]) == null ? '' : key;
+            });
+        }
+    })()
+};
+
+
+
+module.exports = {getForgeManifest,getForgeVersion,getPromo, postProcessing}

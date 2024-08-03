@@ -9,7 +9,6 @@ const { checkJVM } = require("./jvm");
 const { getLibraries } = require("./libraries");
 const { getManifests } = require('./manifest')
 const { cauldronLogger, setLoggerSession } = require('../tools/logger');
-const { grabForgeProcs, postProcessing } = require("../plugins/forge");
 const { createSession, destroySession } = require("../tools/sessionManager");
 const { buildJVMRules, buildGameRules, buildFile, logInjector } = require("../tools/launchBuilder");
 
@@ -50,7 +49,10 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
                 cauldronLogger.info('JVM Passed!');
             } else {
                 cauldronLogger.info("Skipping JVM")
-            }
+            };
+
+            //const FORCEPOST = await postProcessing(manifests.versionData,manifests.spec)
+
             if (!manifests.assetsDownloaded) {
                 cauldronLogger.info('Starting Asset Download');
                 cauldronLogger.info(`Index No: ${manifests.spec.assets}`);

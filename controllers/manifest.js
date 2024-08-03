@@ -16,6 +16,8 @@ const { checkInternet } = require('../tools/checkConnection');
 const NEW_LOGS = require('../files/logs-locations.json');
 const { checkCompat } = require('./jvm');
 const { destroySession } = require('../tools/sessionManager');
+const { checkManifestPlugin, getDataPlugin, getIdentifierPlugin } = require('../plugins/plugins');
+
 
 async function checkManifest(fileName, url, requiresConvert, type) {
     return new Promise(async (resolve, reject) => {
@@ -29,7 +31,7 @@ async function checkManifest(fileName, url, requiresConvert, type) {
             }
             resolve(expected)
         } catch (err) {
-            cauldronLogger.error(`${fileName} not found trying to download`);
+            cauldronLogger.warn(`${fileName} not found trying to download`);
             if (isOnline) {
                 try {
                     const downloadedFile = await downloadManifest(url, path.join(CAULDRON_PATH, fileName), requiresConvert, type);
@@ -53,7 +55,7 @@ async function checkOther(fileName, url) {
             var expected = fs.readFileSync(path.join(CAULDRON_PATH, fileName));
             resolve(expected)
         } catch (err) {
-            cauldronLogger.error(`${fileName} not found trying to download`);
+            cauldronLogger.warn(`${fileName} not found trying to download`);
             if (isOnline) {
                 try {
                     const downloadedFile = await downloadOther(url, path.join(CAULDRON_PATH, fileName))
@@ -95,6 +97,7 @@ var convertManifests = {
 
 async function downloadManifest(url, dir, requiresConvert, type) {
     return new Promise(async (resolve, reject) => {
+        console.log(url)
         var config = {
             method: 'get',
             url: url
@@ -146,7 +149,8 @@ async function getJVMManifest() {
         }
 
     })
-}
+};
+
 
 async function getManifests(v, l, lv) {
     return new Promise(async (resolve, reject) => {
@@ -163,17 +167,21 @@ async function getManifests(v, l, lv) {
             };
             const assetDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'assets_installed.json')));
             const jvmDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'jvm_installed.json')));
-            const getMain = await checkManifest('cauldron_version_manifest.json', 'https://launchermeta.mojang.com/mc/game/version_manifest.json', false, 'main');
             // Convert to Actual Values
-            const { version, loaderVersion, loader } = await whatIsThis(v, l, lv, getMain);
+            if (l != 'vanilla') {
+                gotVersion = await checkManifest(`cauldron_${l}_version_manifest.json`,await getDataPlugin(l),false,'main');
+            } else {
+                gotVersion = await checkManifest('cauldron_version_manifest.json', 'https://launchermeta.mojang.com/mc/game/version_manifest.json', false, 'main');
+            }
+            const { version, loaderVersion, loader } = await whatIsThis(v, l, lv, gotVersion);
+            getMain = await checkManifest('cauldron_version_manifest.json', 'https://launchermeta.mojang.com/mc/game/version_manifest.json', false, 'main');
             const foundVersionData = getMain.versions.find(versionName => versionName.id === version);
             if (!foundVersionData) {
                 throw new Error('Version Not Found')
             };
-            //////console.log(foundVersionData)
             const getSpec = await checkManifest(path.join('versions', foundVersionData.id, foundVersionData.id + '.json'), foundVersionData.url);
             if (loader != 'vanilla') {
-                //createdManifest = await loaderFunctions[loader](lVersion, version, foundVersion);
+                createdManifest = await checkManifestPlugin(loader,loaderVersion, version, getSpec,gotVersion);
             } else {
                 createdManifest = await attemptToConvert(getSpec);
             };
@@ -268,8 +276,7 @@ async function whatIsThis(version, loader, lVersion, MANIFEST) {
     try {
         if (loader != 'vanilla') {
             if (!lVersion) {
-                // Needs Changing
-                //lVersion = await versionFunctions[loader](versionFound,'recommended');
+                lVersion = await getIdentifierPlugin(loader,versionFound,MANIFEST)
             };
             rObject.loaderVersion = lVersion;
         };
