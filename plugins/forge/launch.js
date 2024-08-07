@@ -1,0 +1,28 @@
+const { grabPath } = require("../../tools/compatibility");
+var forceComp = require('./files/force_compat.json');
+const path = require('path')
+async function jvm(data) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            var CAULDRON_PATH = grabPath();
+            var { manifest, libraryList, versionData, overides } = data;
+            if (forceComp[versionData.version]) {
+                if (forceComp[versionData.version][0] == 'legacy') {
+                    // Legacy Compat
+                    libraryList.push(path.join(CAULDRON_PATH, 'libraries', 'net/minecraftforge/minecraftforge',versionData.loaderVersion,`minecraftforge-${versionData.version}-${versionData.loaderVersion}.jar` ));
+
+                }
+                for (fIdx in forceComp[versionData.version]) {
+                    libraryList.push(path.join(CAULDRON_PATH, 'libraries', 'net/minecraftforge/forge', `${versionData.version}-${versionData.loaderVersion}`, `forge-${versionData.version}-${versionData.loaderVersion}-${forceComp[versionData.version][fIdx]}.jar`));
+                }
+            };
+            resolve({manifest, libraryList, versionData, overides })
+        } catch (err) {
+            console.log(err)
+            reject(err)
+        }
+
+    })
+}
+
+module.exports = { jvm }

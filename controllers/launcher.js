@@ -64,11 +64,14 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
                 cauldronLogger.info("Skipping Assets");
             };
             cauldronLogger.info('Starting Library Download')
-            const libGet = await getLibraries(manifests.spec.libraries, manifests.versionData);
+            const libGet = await getLibraries(manifests.spec.libraries, manifests.versionData,manifests.spec.id);
             if (!dry) {
                 cauldronLogger.info('All Files Aquired Building Launch File');
                 cauldronLogger.info('Creating JVM Arguments');
-                var logsInjected = await logInjector(path.join(CAULDRON_PATH, 'assets', 'log_configs', manifests.spec.logging.client.file.id), sessionID)
+                if (manifests.spec.logging) {
+                    console.log('HELLo')
+                    var logsInjected = await logInjector(path.join(CAULDRON_PATH, 'assets', 'log_configs', manifests.spec.logging.client.file.id), sessionID)
+                };
                 var validRules = await buildJVMRules(manifests.spec, libGet, manifests.versionData, overrides.jvm);
                 cauldronLogger.info('Generating Game Arguments');
                 var gameRules = await buildGameRules(manifests.spec, authData, overrides.game, overrides.additG);

@@ -1,4 +1,5 @@
 const { cauldronLogger } = require('../../tools/logger');
+const { destroySession } = require('../../tools/sessionManager');
 var unsupportedVersions = require('./files/blocked_versions.json');
 
 
@@ -12,6 +13,7 @@ async function identifier(version, forgePromos) {
         type = 'recommended';
 
         if (unsupportedVersions.includes(version)) {
+            destroySession();
             reject(`Sorry but Cauldron does not support ${version} forge yet. CODE: BLVER`);
         };
         var forgeVersion = forgePromos.promos[`${version}-${type}`];

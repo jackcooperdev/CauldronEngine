@@ -37,11 +37,20 @@ function getSession(sessionID) {
 
 async function destroySession(sessionID) {
     try {
-        fs.writeFileSync(path.join(grabPath(), 'sessionLogs', sessionID, 'info.json'), JSON.stringify(currentSessions[sessionID]));     
+        if (!sessionID) {
+            for (idx in currentSessions) {
+                if (currentSessions[idx].type == 'game') {
+                    delete currentSessions[idx];
+                }
+            }
+        } else {
+            fs.writeFileSync(path.join(grabPath(), 'sessionLogs', sessionID, 'info.json'), JSON.stringify(currentSessions[sessionID]));     
+            delete currentSessions[sessionID];
+        }
     } catch (err) {
         
     }
-    delete currentSessions[sessionID];
+    
 };
 
 

@@ -49,9 +49,10 @@ async function postProcessing(manifests) {
 
                     // Attempt to find MCP Version
                     var MCP_VERSION = "";
-                    if (!forgeData.MCP_VERSION) {
+                    if (!forgeData.MCP_VERSION && forgeData.MAPPINGS) {
+                        //console.log(forgeData)
                         MCP_VERSION = forgeData.MAPPINGS.client.split(`${version}-`)[1].split(":")[0]
-                    } else {
+                    } else if (forgeData.MCP_VERSION){
                         MCP_VERSION = forgeData.MCP_VERSION.client.replace(/'/g, "");
                     };
 
@@ -146,8 +147,10 @@ async function postProcessing(manifests) {
                             if (!processors[pIdx].sides || processors[pIdx].sides.includes("client")) {
                                 var command = `-cp ${classPaths.join(";")} ${mainClass} ${actualArgs}`;
                                 //Mappings path replacement
-                                command = command.replace(forgeData.MAPPINGS.client.replace(":mappings@txt", "@zip"), "{MAPPING_PATH}");
-                                command = command.replace(forgeData.MAPPINGS.client.replace(":mappings@tsrg", "@zip"), "{MAPPING_PATH}");
+                                if (forgeData.MAPPINGS) {
+                                    command = command.replace(forgeData.MAPPINGS.client.replace(":mappings@txt", "@zip"), "{MAPPING_PATH}");
+                                    command = command.replace(forgeData.MAPPINGS.client.replace(":mappings@tsrg", "@zip"), "{MAPPING_PATH}");
+                                };
                                 // Inject params
                                 command = injector.create(command, params);
                                 cauldronLogger.info(`Forge Post Proccessing Job: ${Number(pIdx) + 1}/${processors.length} Starting`);

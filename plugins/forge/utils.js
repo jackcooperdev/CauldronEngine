@@ -12,7 +12,7 @@ const FORGE_REPO = "https://maven.minecraftforge.net/net/minecraftforge";
 
 // Files
 var suffixes = require('./files/suffixes.json');
-
+var suffixUsed = "";
 // Get Forge Installer URL (does what it says on the tin)
 async function getForgeInstallerURL(version, forgeVersion) {
     var url = "";
@@ -23,12 +23,11 @@ async function getForgeInstallerURL(version, forgeVersion) {
     } else {
         aquiredForges = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH,'forge-installers.json')))
     };
-
     if (aquiredForges[`${version}-${forgeVersion}`]) {
         url = aquiredForges[`${version}-${forgeVersion}`].url;
         if (aquiredForges[`${version}-${forgeVersion}`].suffix) {
             suffixUsed = aquiredForges[`${version}-${forgeVersion}`].suffix
-        };
+        }
     } else {
         if (suffixes[version]) {
             for (idx in suffixes[version]) {
@@ -86,6 +85,9 @@ function convertNameToPath(name) {
 };
 // Util Functions
 function getSuffixUsed() {
+    if (!suffixUsed) {
+        suffixUsed = '';
+    }
     return suffixUsed;
 };
 module.exports = { getForgeInstallerURL,convertNameToPath, getSuffixUsed }

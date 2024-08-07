@@ -10,10 +10,11 @@ const { cauldronLogger } = require('../tools/logger');
 const { checkInternet } = require('../tools/checkConnection');
 
 
-async function getLibraries(libData, versionData) {
+async function getLibraries(libData, versionData,maniID) {
     return new Promise(async (resolve, reject) => {
         var CAULDRON_PATH = grabPath();
         try {
+            console.log(maniID)
             if (versionData.loader == 'vanilla') {
                 version = versionData.version;
             } else if (versionData.loader == 'forge') {
@@ -24,7 +25,7 @@ async function getLibraries(libData, versionData) {
             var libArray = new Array();
             cauldronLogger.info(`Operating System: ${acutalOS}`);
             var nativeLock = false;
-            if (fs.existsSync(path.join(CAULDRON_PATH, 'versions', version, 'natives'))) {
+            if (fs.existsSync(path.join(CAULDRON_PATH, 'versions', maniID, 'natives'))) {
                 nativeLock = true;
             };
             for (idx in libData) {
@@ -74,7 +75,7 @@ async function getLibraries(libData, versionData) {
                             var obj = {
                                 origin: natives.url,
                                 sha1: natives.sha1,
-                                destination: path.join(CAULDRON_PATH, 'versions', version, 'natives'),
+                                destination: path.join(CAULDRON_PATH, 'versions', maniID, 'natives'),
                                 fileName: natives.path.split("/")[natives.path.split("/").length - 1]
                             };
                             var checkForNative = await verifyInstallation([obj]);
@@ -85,11 +86,11 @@ async function getLibraries(libData, versionData) {
                                 const entries = await zip.entries();
                                 for (const entry of Object.values(entries)) {
                                     if (!entry.name.includes("META-INF") && !entry.name.includes(".git") && !entry.name.includes(".sha1")) {
-                                        await zip.extract(entry.name, path.join(CAULDRON_PATH, 'versions', version, 'natives'));
+                                        await zip.extract(entry.name, path.join(CAULDRON_PATH, 'versions', maniID, 'natives'));
                                     };
                                 };
                                 zip.close();
-                                fs.rmSync(path.join(CAULDRON_PATH, 'versions', version, 'natives', obj.fileName))
+                                fs.rmSync(path.join(CAULDRON_PATH, 'versions', maniID, 'natives', obj.fileName))
                             }
                         };
                     };

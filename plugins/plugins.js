@@ -33,7 +33,7 @@ async function getIdentifierPlugin(loader,version,manifest) {
             const data = await identifier(version,manifest);
             resolve(data)
         } catch (err) {
-            reject({message:'This Loader Is Not Supported! (Plugin May be missing a identifier file as well)'});
+            reject({message:err});
         };
     })
 };
@@ -52,4 +52,20 @@ async function getPostPlugin(loader,manifest) {
 };
 
 
-module.exports = { checkManifestPlugin,getDataPlugin,getIdentifierPlugin, getPostPlugin }
+async function getJVMArgsPlugin(loader,args) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            var { jvm } = require(`./${loader}/launch`);
+            const data = await jvm(args);
+            resolve(data)
+        } catch (err) {
+            cauldronLogger.warn("Plugin Does not support the jvmArgs function. There may be errors ahead")
+            resolve(false);
+        };
+    })
+};
+
+
+
+
+module.exports = { checkManifestPlugin,getDataPlugin,getIdentifierPlugin, getPostPlugin,getJVMArgsPlugin }

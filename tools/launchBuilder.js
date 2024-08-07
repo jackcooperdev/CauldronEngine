@@ -5,11 +5,11 @@ const osCurrent = require('os').platform();
 const { exec, spawn } = require('child_process');
 
 const { grabPath, getOperatingSystem } = require('../tools/compatibility');
-
+var forceComp = require('../plugins/forge/files/force_compat.json')
 var requiresLibPatch = require('../files/requiresLibPatch.json');
 const package = require('../package.json');
 const defaultJVM = require('../files/defaultJVMArguments.json');
-
+const { getJVMArgsPlugin } = require('../plugins/plugins')
 
 
 // Varible Injector
@@ -84,28 +84,20 @@ async function buildJVMRules(manifest, libraryList, versionData, overides) {
         //Check if version requires proxy
         var proxyPort = false;
         var vArray = ["1.0", "1.1", "1.3", "1.4", "1.5"]
-        if (manifest.id.startsWith("a1.0.")) {
+        var splitVersion = `${versionData.version.split(".")[0]}.${versionData.version.split(".")[1]}`
+        if (versionData.version.startsWith("a1.0.")) {
             proxyPort = 80;
-        } else if (manifest.id.startsWith('a1.1.')) {
+        } else if (versionData.version.startsWith('a1.1.')) {
             proxyPort = 11702;
-        } else if (manifest.id.startsWith('a1.') || manifest.id.startsWith('b1.')) {
+        } else if (versionData.version.startsWith('a1.') || versionData.version.startsWith('b1.')) {
             proxyPort = 11705;
-        } else if (vArray.includes(manifest.id) || manifest.id.startsWith(vArray)) {
+        } else if (vArray.includes(versionData.version) || versionData.version.startsWith(vArray) || vArray.includes(splitVersion)) {
             proxyPort = 11707;
         }
         if (proxyPort) {
             validRules.push("-Dhttp.proxyHost=betacraft.uk");
             validRules.push("-Dhttp.proxyPort=" + proxyPort)
         };
-
-        // // Check For Force Compat (forge Only)
-        // if (versionData.loader == 'forge') {
-        //     if (forceComp[versionData.version]) {
-        //         for (fIdx in forceComp[versionData.version]) {
-        //             libraryList.push(path.join(CAULDRON_PATH, 'libraries', 'net/minecraftforge/forge', `${versionData.version}-${versionData.loaderVersion}`, `forge-${versionData.version}-${versionData.loaderVersion}-${forceComp[versionData.version][fIdx]}.jar`));
-        //         }
-        //     }
-        // };
         var libOccurneces = {};
         var repeatedLibs = {};
         for (idx in libraryList) {
@@ -124,7 +116,14 @@ async function buildJVMRules(manifest, libraryList, versionData, overides) {
                 libraryList.splice(index, 1);
             };
         };
-
+        // Run Plugin Code
+        const plugin = await getJVMArgsPlugin(versionData.loader, { manifest, libraryList, versionData, overides })
+        if (plugin) {
+            manifest = plugin.manifest;
+            libraryList = plugin.libraryList;
+            versionData = plugin.versionData;
+            overides = plugin.overides;
+        };
         // Convert Library List into Joined List
         var classPathSep = ""
         if (osCurrent == 'win32') {
@@ -153,6 +152,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overides) {
                 validRules[rIdx] = injector.create(validRules[rIdx], relVaribles);
             }
         };
+        console.log(validRules)
         resolve(validRules);
     })
 };
@@ -181,6 +181,7 @@ async function buildGameRules(manifest, loggedUser, overides, addit) {
         for (idx in overides) {
             gameVars[idx] = overides[idx]
         };
+
         var gameVariables = {
             auth_player_name: gameVars.auth_player_name,
             version_name: manifest.id,
@@ -240,12 +241,12 @@ async function buildFile(manifest, jreVersion, validRules, gameRules) {
     if (osCurrent == 'linux' || osCurrent == 'darwin') {
         fs.writeFileSync(path.join(CAULDRON_PATH, 'scripts', 'launch.sh'), `${launchCommand}`);
         const validateScript = exec(`cd ${path.join(CAULDRON_PATH, 'scripts')} && chmod +x launch.sh`);
-    const validateJava = exec(`cd ${path.join(javaPath, '../')} && chmod +x java`);
-    return path.join(CAULDRON_PATH, 'scripts', 'launch.sh');
-} else if (osCurrent == 'win32') {
-    fs.writeFileSync(path.join(CAULDRON_PATH, 'scripts', 'launch.bat'), `${launchCommand}`);
-    return path.join(CAULDRON_PATH, 'scripts', 'launch.bat');
-}
+        const validateJava = exec(`cd ${path.join(javaPath, '../')} && chmod +x java`);
+        return path.join(CAULDRON_PATH, 'scripts', 'launch.sh');
+    } else if (osCurrent == 'win32') {
+        fs.writeFileSync(path.join(CAULDRON_PATH, 'scripts', 'launch.bat'), `${launchCommand}`);
+        return path.join(CAULDRON_PATH, 'scripts', 'launch.bat');
+    }
 
 
 };

@@ -18,6 +18,7 @@ const LIBRARY_PATH = "https://libraries.minecraft.net/"
 //Files
 var reqLegMod = require('./files/requires_legacy_mod.json');
 var template = require('../../files/manifestTemplate.json');
+var extraCompat = require('./files/force_compat.json');
 const { attemptToConvert } = require('../../tools/manifestConverter');
 
 async function getManifest(fVersion, version, versionCache) {
@@ -237,7 +238,18 @@ async function handleLegacyFormat(fVersion, version, versionCache, profileFile, 
                     fs.writeFileSync(path.join(CAULDRON_PATH, 'libraries', `net/minecraftforge/forge`, `${version}-${fVersion}`, `forge-${version}-${fVersion}.jar`), versionFileBuffer);
                     // Set Manifest ID
                     manifestData.id = `${pathChunks.chunkTwo}-${version}-${fVersion}`;
-                } else {
+                } else if (pathChunks.chunkTwo == 'minecraftforge') {
+                    // ~1.6 Compatability
+                    // Create Directory to Forge Version File
+                    shelljs.mkdir('-p', path.join(CAULDRON_PATH, 'libraries', `net/minecraftforge/minecraftforge`, `${fVersion}`));
+                    const versionFileBuffer = await installer.entryData(`minecraftforge-universal-${version}-${fVersion}${getSuffixUsed()}.jar`);
+                    console.log(versionFileBuffer)
+                    // //Write Buffer to File
+                    fs.writeFileSync(path.join(CAULDRON_PATH, 'libraries', `net/minecraftforge/minecraftforge`, `${fVersion}`, `minecraftforge-${version}-${fVersion}.jar`), versionFileBuffer);
+                    // // Set Manifest ID
+                    manifestData.id = `${pathChunks.chunkTwo}-${fVersion}`;
+                }
+                else {
                     // All Other Libraries
                     // Convert Other VALID libraries into standard format.
                     // NOTE: In this stage libraries aren't filtered based on OS this is done later
@@ -293,7 +305,7 @@ async function handleLegacyFormat(fVersion, version, versionCache, profileFile, 
 
                     // Add Library to Manifest Data
                     manifestData.libraries.push(removeUndefined);
-                    resolve(manifestData);
+                    //resolve(manifestData);
                 };
 
             }

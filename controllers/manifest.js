@@ -281,8 +281,7 @@ async function whatIsThis(version, loader, lVersion, MANIFEST) {
             rObject.loaderVersion = lVersion;
         };
     } catch (err) {
-        //////console.log(err)
-        throw new Error(err)
+        throw new Error(err.message)
     };
     return rObject;
 };
