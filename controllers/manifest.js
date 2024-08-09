@@ -97,7 +97,6 @@ var convertManifests = {
 
 async function downloadManifest(url, dir, requiresConvert, type) {
     return new Promise(async (resolve, reject) => {
-        console.log(url)
         var config = {
             method: 'get',
             url: url

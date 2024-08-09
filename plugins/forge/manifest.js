@@ -305,7 +305,7 @@ async function handleLegacyFormat(fVersion, version, versionCache, profileFile, 
 
                     // Add Library to Manifest Data
                     manifestData.libraries.push(removeUndefined);
-                    //resolve(manifestData);
+                    resolve(manifestData);
                 };
 
             }

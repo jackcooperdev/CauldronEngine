@@ -20,8 +20,8 @@ async function getDataPlugin(loader) {
             const data = getData();
             resolve(data)
         } catch (err) {
-            cauldronLogger.warn("Plugin Does not support the getData function. There may be errors ahead")
-            resolve(false);
+            cauldronLogger.error("This Loader Is Not Supported! (Plugin May be missing a manifest file as well)")
+           reject({message:'This Loader Is Not Supported! (Plugin May be missing a manifest file as well)'})
         };
     })
 };

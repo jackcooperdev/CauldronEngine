@@ -41,7 +41,7 @@ async function postProcessing(manifests) {
 
                     //Aquire Libraries (These Libraries are required but do not need to be included in the launch file)
                     var nonDeclaredLibs = profileFile.libraries;
-                    var downloadNonDeclaredLibs = await getLibraries(nonDeclaredLibs, manifests.versionData);
+                    var downloadNonDeclaredLibs = await getLibraries(nonDeclaredLibs, manifests.versionData, manifests.spec.id);
 
                     // Aquire Forge Data
                     var forgeData = profileFile.data;
