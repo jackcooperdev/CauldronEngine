@@ -56,7 +56,6 @@ async function getManifest(fVersion, version, versionCache) {
                 cauldronLogger.info("Manifest Format: Normal");
                 manifestData = await handleRegFormat(fVersion, version, versionCache, profileFile, installer);
             }
-
             //Write Version File
             shelljs.mkdir('-p', path.join(CAULDRON_PATH, 'versions', `forge-${version}-${fVersion}`));
             fs.writeFileSync(path.join(CAULDRON_PATH, 'versions', `forge-${version}-${fVersion}`, `forge-${version}-${fVersion}.json`), JSON.stringify(profileFile));
@@ -216,7 +215,6 @@ async function handleLegacyFormat(fVersion, version, versionCache, profileFile, 
             var forgeLibs = versionInfo.libraries;
 
             // Process and convert forge libraries into standard format
-
             for (idx in forgeLibs) {
                 // Attempt to extract URL from Library
                 var url = forgeLibs[idx].url;
@@ -248,12 +246,11 @@ async function handleLegacyFormat(fVersion, version, versionCache, profileFile, 
                     fs.writeFileSync(path.join(CAULDRON_PATH, 'libraries', `net/minecraftforge/minecraftforge`, `${fVersion}`, `minecraftforge-${version}-${fVersion}.jar`), versionFileBuffer);
                     // // Set Manifest ID
                     manifestData.id = `${pathChunks.chunkTwo}-${fVersion}`;
-                }
-                else {
+                } else {
                     // All Other Libraries
                     // Convert Other VALID libraries into standard format.
                     // NOTE: In this stage libraries aren't filtered based on OS this is done later
-
+                  
                     var rules = [];
                     var artifact = {};
                     var classifiers = {};
@@ -305,10 +302,11 @@ async function handleLegacyFormat(fVersion, version, versionCache, profileFile, 
 
                     // Add Library to Manifest Data
                     manifestData.libraries.push(removeUndefined);
-                    resolve(manifestData);
+
                 };
 
-            }
+            };
+            resolve(manifestData);
         } catch (error) {
             reject(error);
         }
