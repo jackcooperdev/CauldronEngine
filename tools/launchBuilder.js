@@ -52,7 +52,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overides) {
         libraryList.push(path.join(CAULDRON_PATH, 'versions', manifest.id, `${manifest.id}.jar`));
         jvmRules = manifest.arguments.jvm;
         var validRules = new Array();
-        //console.log(jvmRules)
+        ////console.log(jvmRules)
         for (idx in jvmRules) {
             if (!jvmRules[idx].rules) {
                 if (jvmRules[idx]) {
@@ -64,8 +64,8 @@ async function buildJVMRules(manifest, libraryList, versionData, overides) {
             } else if (jvmRules[idx].rules[0].os) {
                 if (jvmRules[idx].rules[0].os.name == getOperatingSystem()) {
                     if (Array.isArray(jvmRules[idx].value)) {
-                        //console.log('is')
-                        //console.log(jvmRules[idx].value)
+                        ////console.log('is')
+                        ////console.log(jvmRules[idx].value)
                         validRules.push(jvmRules[idx].value.pop())
                     } else {
                         validRules.push(jvmRules[idx].value)
@@ -79,7 +79,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overides) {
             validRules.push(manifest.logging.client.argument);
             logPath = path.join(CAULDRON_PATH, 'assets', 'log_configs', manifest.logging.client.file.id)
         };
-        //console.log(validRules)
+        ////console.log(validRules)
 
         //Check if version requires proxy
         var proxyPort = false;
@@ -146,13 +146,13 @@ async function buildJVMRules(manifest, libraryList, versionData, overides) {
             library_directory: path.join(CAULDRON_PATH, 'libraries').split("\\").join("/")
 
         };
-        //console.log(validRules)
+        ////console.log(validRules)
         for (rIdx in validRules) {
             if (validRules[rIdx]) {
                 validRules[rIdx] = injector.create(validRules[rIdx], relVaribles);
             }
         };
-        console.log(validRules)
+        //console.log(validRules)
         resolve(validRules);
     })
 };
@@ -199,7 +199,7 @@ async function buildGameRules(manifest, loggedUser, overides, addit) {
             auth_session: `token:${loggedUser.access_token}`,
             server_ip: gameVars.server_ip
         };
-        console.log(gameVariables)
+        //console.log(gameVariables)
         if (manifest.assets == 'legacy') {
             gameVariables.game_assets = path.join(CAULDRON_PATH, 'assets', 'virtual', 'legacy');
         } else if (manifest.assets == 'pre-1.6') {

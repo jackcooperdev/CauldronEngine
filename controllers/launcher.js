@@ -69,7 +69,7 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
                 cauldronLogger.info('All Files Aquired Building Launch File');
                 cauldronLogger.info('Creating JVM Arguments');
                 if (manifests.spec.logging) {
-                    console.log('HELLo')
+                    //console.log('HELLo')
                     var logsInjected = await logInjector(path.join(CAULDRON_PATH, 'assets', 'log_configs', manifests.spec.logging.client.file.id), sessionID)
                 };
                 var validRules = await buildJVMRules(manifests.spec, libGet, manifests.versionData, overrides.jvm);

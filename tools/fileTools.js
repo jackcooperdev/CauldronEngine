@@ -29,7 +29,7 @@ async function download(url, location, fileName) {
                     const { filePath, downloadStatus } = await downloader.download(); //Downloader.download() resolves with some useful properties.
                     resolve(true);
                 } catch (error) {
-                    //console.log('err')
+                    ////console.log('err')
                     //IMPORTANT: Handle a possible error. An error is thrown in case of network errors, or status codes of 400 and above.
                     //Note that if the maxAttempts is set to higher than 1, the error is thrown only if all attempts fail.
                     resolve(false);
@@ -56,7 +56,7 @@ async function extract(filePath) {
             const writeFile = fs.writeFileSync(filePath, decompress)
             resolve(true);
         } catch (err) {
-            ////console.log(err)
+            //////console.log(err)
             if (filePath == 'no path') {
                 resolve(true)
             } else {

@@ -40,7 +40,7 @@ async function getManifest(fVersion, version, versionCache) {
             // Download / Skip Downloading Installer
             var downloadInstaller = await verifyInstallation([installObj]);
 
-            console.log(path.join(CAULDRON_PATH, 'forge-installers', installObj.fileName))
+            //console.log(path.join(CAULDRON_PATH, 'forge-installers', installObj.fileName))
 
             // Extract File and aquire install_profile.json
             const installer = new StreamZip.async({ file: path.join(CAULDRON_PATH, 'forge-installers', installObj.fileName) });
@@ -81,7 +81,7 @@ async function getManifest(fVersion, version, versionCache) {
             resolve(converted);
 
         } catch (error) {
-            console.log(error)
+            //console.log(error)
         }
     });
 };
@@ -241,7 +241,7 @@ async function handleLegacyFormat(fVersion, version, versionCache, profileFile, 
                     // Create Directory to Forge Version File
                     shelljs.mkdir('-p', path.join(CAULDRON_PATH, 'libraries', `net/minecraftforge/minecraftforge`, `${fVersion}`));
                     const versionFileBuffer = await installer.entryData(`minecraftforge-universal-${version}-${fVersion}${getSuffixUsed()}.jar`);
-                    console.log(versionFileBuffer)
+                    //console.log(versionFileBuffer)
                     // //Write Buffer to File
                     fs.writeFileSync(path.join(CAULDRON_PATH, 'libraries', `net/minecraftforge/minecraftforge`, `${fVersion}`, `minecraftforge-${version}-${fVersion}.jar`), versionFileBuffer);
                     // // Set Manifest ID
