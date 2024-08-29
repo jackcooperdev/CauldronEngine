@@ -14,7 +14,6 @@
     "./auth": "./utilities/authVerifier.js",
     "./launcher": "./controllers/launcher.js",
     "./assets": "./controllers/assets.js",
-    "./forge": "./plugins/forge.js",
     "./jvm": "./controllers/jvm.js",
     "./libraries": "./controllers/libraries.js",
     "./logger": "./tools/logger.js",
@@ -24,7 +23,8 @@
     "./queue": "./controllers/queue.js",
     "./session": "./tools/sessionManager.js",
     "./manifest": "./controllers/manifest.js",
-    "./online": "./tools/checkConnection.js"
+    "./online": "./tools/checkConnection.js",
+    "./plugins" : "./plugins/plugins.js"
   },
   "author": "JackCooper",
   "license": "GPL-3.0-only",

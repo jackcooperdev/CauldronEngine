@@ -286,4 +286,4 @@ async function whatIsThis(version, loader, lVersion, MANIFEST) {
 };
 
 
-module.exports = { getManifests, getJVMManifest }
+module.exports = { getManifests, getJVMManifest,  checkManifest }
