@@ -31,7 +31,7 @@
   "dependencies": {
     "archiver": "^7.0.1",
     "await-spawn": "^4.0.2",
-    "axios": "^1.6.8",
+    "axios": "^1.7.4",
     "bluebird": "^3.7.2",
     "checksum": "^1.0.0",
     "cluster": "^0.7.7",
