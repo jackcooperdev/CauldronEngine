@@ -85,28 +85,4 @@ async function validate(file) {
     });
 };
 
-
-// async function validate(file) {
-//     return new Promise(async (resolve) => {
-//         if (file.destination == 'no path') {
-//             resolve(true);
-//         } else {
-//             if (fs.existsSync(path.join(file.destination, file.fileName))) {
-//                 var fileFound = fs.readFileSync(path.join(file.destination, file.fileName));
-//                 var sha1sum = crypto.createHash('sha1').update(fileFound).digest("hex");
-//                 if (sha1sum != file.sha1) {
-//                     if (file.sha1 == 'NONE') {
-//                         resolve('pass');
-//                     } else {
-//                         resolve(file);
-//                     }
-//                 } else {
-//                     resolve('pass')
-//                 }
-//             } else {
-//                 resolve(file)
-//             };
-//         };
-//     });
-// };
 module.exports = { download, extract, validate };

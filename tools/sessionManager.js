@@ -16,7 +16,6 @@ function createSession(data) {
     var newSession = data;
     var sessionID = createUUID();
     currentSessions[sessionID] = newSession;
-    shelljs.mkdir('-p', path.join(grabPath(), 'sessionLogs', sessionID));
     return sessionID;
 };
 
@@ -44,7 +43,6 @@ async function destroySession(sessionID) {
                 }
             }
         } else {
-            fs.writeFileSync(path.join(grabPath(), 'sessionLogs', sessionID, 'info.json'), JSON.stringify(currentSessions[sessionID]));     
             delete currentSessions[sessionID];
         }
     } catch (err) {

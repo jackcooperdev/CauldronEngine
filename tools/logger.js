@@ -9,7 +9,7 @@ log4js.configure({
     appenders: {
         out: { type: "console" },
         file: { type: "file", filename: path.join(grabPath(),'cauldron_engine_logs','logs.log'), maxLogSize: 10485760, backups: 3, compress: true},
-        network: { type: "tcp", host: "127.0.0.1",layout:{ type: "coloured" } },
+        network: { type: "tcp", host: "127.0.0.1",layout:{ type: "coloured" }, port:25568 },
     },
     categories: { default: { appenders: ["out","file","network"], level: "debug" } },
 });
