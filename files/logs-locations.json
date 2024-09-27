@@ -1,10 +1,10 @@
 {
   "client-1.12.xml": {
-    "url": "https://files.jackcooper.me/client-1.12.xml",
+    "url": "https://files.cauldronmc.com/logs/client-1.12.xml",
     "sha1": "639644152b89097fa955bf1dff02bd644fc95099"
   },
   "client-1.7.xml": {
-    "url": "https://files.jackcooper.me/client-1.7.xml",
+    "url": "https://files.cauldronmc.com/logs/client-1.7.xml",
     "sha1": "69d90af8128d6a2acc76965c6278196a1164bcc0"
   }
 }
