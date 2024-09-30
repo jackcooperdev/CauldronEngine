@@ -83,6 +83,7 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
             } else {
                 destroySession(sessionID);
                 cauldronLogger.info("Game Installed");
+                resolve(true);
             }
 
         } catch (err) {
