@@ -189,7 +189,7 @@ async function handleLegacyFormat(fVersion, version, versionCache, profileFile, 
             // Aquire Java Fixer if version needs it
             if (reqLegMod.includes(version)) {
                 var obj = [{
-                    origin: "https://files.jackcooper.me/legacyjavafixer-1.0.jar",
+                    origin: "https://files.cauldronmc.com/other/legacyjavafixer-1.0.jar",
                     sha1: 'a11b502bef19f49bfc199722b94da5f3d7b470a8',
                     destination: path.join(CAULDRON_PATH, 'mods'),
                     fileName: 'legacyjavafixer-1.0.jar'

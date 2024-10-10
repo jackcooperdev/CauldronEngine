@@ -5,7 +5,7 @@
     "type": "git",
     "url": "https://github.com/jackcooper04/CauldronEngine.git"
   },
-  "description": "Launch Controller for Cauldron",
+  "description": "Launch Controller for CauldronMC Project",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\""
@@ -17,7 +17,6 @@
     "./jvm": "./controllers/jvm.js",
     "./libraries": "./controllers/libraries.js",
     "./queue": "./controllers/queue.js",
-
     "./auth": "./tools/authVerifier.js",
     "./launchbuild" :"./tools/launchBuilder.js",
     "./logger": "./tools/logger.js",
@@ -25,7 +24,6 @@
     "./fileTools": "./tools/fileTools.js",
     "./session": "./tools/sessionManager.js",
     "./online": "./tools/checkConnection.js",
-
     "./plugins": "./plugins/plugins.js"
   },
   "author": "JackCooper",
