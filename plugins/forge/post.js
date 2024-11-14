@@ -50,7 +50,6 @@ async function postProcessing(manifests) {
                     // Attempt to find MCP Version
                     var MCP_VERSION = "";
                     if (!forgeData.MCP_VERSION && forgeData.MAPPINGS) {
-                        ////console.log(forgeData)
                         MCP_VERSION = forgeData.MAPPINGS.client.split(`${version}-`)[1].split(":")[0]
                     } else if (forgeData.MCP_VERSION){
                         MCP_VERSION = forgeData.MCP_VERSION.client.replace(/'/g, "");
@@ -155,7 +154,6 @@ async function postProcessing(manifests) {
                                 command = injector.create(command, params);
                                 cauldronLogger.info(`Forge Post Proccessing Job: ${Number(pIdx) + 1}/${processors.length} Starting`);
                                 var spawnProc = await spawn(path.join(CAULDRON_PATH,'jvm',manifests.jvmComp,'bin','java'), command.split(" "));
-                                //console.log(path.join(CAULDRON_PATH,'jvm',manifests.jvmComp,'bin','java') + " "+command)
                                 cauldronLogger.info(`Forge Post Proccessing Job: ${Number(pIdx) + 1}/${processors.length} Done!`);
                             };
                         };
@@ -171,7 +169,7 @@ async function postProcessing(manifests) {
                 resolve(true);
             };
         } catch (err) {
-            //console.log(err)
+            reject(err);
         };
     })
 };

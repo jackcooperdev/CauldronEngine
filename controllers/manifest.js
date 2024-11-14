@@ -37,7 +37,6 @@ async function checkManifest(fileName, url, requiresConvert, type) {
                     const downloadedFile = await downloadManifest(url, path.join(CAULDRON_PATH, fileName), requiresConvert, type);
                     resolve(downloadedFile);
                 } catch (err) {
-                    //////console.log(err)
                 }
 
             } else {
@@ -61,7 +60,7 @@ async function checkOther(fileName, url) {
                     const downloadedFile = await downloadOther(url, path.join(CAULDRON_PATH, fileName))
                     resolve(downloadedFile);
                 } catch (err) {
-                    //////console.log(err)
+                    reject(err);
                 }
 
             } else {
@@ -190,7 +189,6 @@ async function getManifests(v, l, lv) {
                 cauldronLogger.warn("Destroying Session: No Logger Detected. Game will still boot");
                 destroySession();
             }
-            //////console.log(createdManifest.downloads.client.url)
             const grabClient = await checkOther(path.join('versions', createdManifest.id, createdManifest.id + '.jar'), createdManifest.downloads.client.url);
 
             // Check for Duplicates in Libs

@@ -14,7 +14,6 @@ async function getLibraries(libData, versionData,maniID) {
     return new Promise(async (resolve, reject) => {
         var CAULDRON_PATH = grabPath();
         try {
-            //console.log(maniID)
             if (versionData.loader == 'vanilla') {
                 version = versionData.version;
             } else if (versionData.loader == 'forge') {
@@ -68,7 +67,6 @@ async function getLibraries(libData, versionData,maniID) {
                             }
                         }
                         if (natives) {
-                            ////console.log(natives)
                             var needsExtracting = libData[idx].extract;
                             // Force On MAC Only
                             needsExtracting = true;

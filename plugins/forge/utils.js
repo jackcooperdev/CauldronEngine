@@ -68,7 +68,6 @@ async function checkInstaller(url) {
         url: url
     };
     try {
-        //console.log(url)
         const res = await axios(config);
         return true;
     } catch (err) {

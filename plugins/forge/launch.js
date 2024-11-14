@@ -18,7 +18,6 @@ async function jvm(data) {
             };
             resolve({manifest, libraryList, versionData, overides })
         } catch (err) {
-            //console.log(err)
             reject(err)
         }
 
