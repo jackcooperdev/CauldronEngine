@@ -115,7 +115,7 @@ async function downloadManifest(url, dir, requiresConvert, type) {
     })
 };
 
-async function getJVMManifest() {
+async function getPackwizJVM() {
     // Used to Assist Packwiz on client.
     // not used in launcher
     return new Promise(async (resolve, reject) => {
@@ -284,4 +284,4 @@ async function whatIsThis(version, loader, lVersion, MANIFEST) {
 };
 
 
-module.exports = { getManifests, getJVMManifest,  checkManifest }
+module.exports = { getManifests, getPackwizJVM,  checkManifest }
