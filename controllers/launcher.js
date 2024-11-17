@@ -86,6 +86,7 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
             }
 
         } catch (err) {
+            destroySession(sessionID);
             cauldronLogger.error(err.message);
             resolve(err.message)
         }

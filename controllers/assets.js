@@ -9,7 +9,7 @@ async function getAssets(assetsIndex, assetFiles) {
     var CAULDRON_PATH = grabPath();
     return new Promise(async (resolve) => {
         var dQueue = assetFiles
-        var checkForFiles = await verifyInstallation(dQueue)
+        var checkForFiles = await verifyInstallation(dQueue,true);
         cauldronLogger.info(`Checksums Passed Install is Valid!`);
         if (assetsIndex != 'pre-1.6') {
             // Mark AssetFile As Downloaded

@@ -35,9 +35,13 @@ async function checkDownloadAndCheck(item) {
     })
 }
 
-async function verifyInstallation(queue) {
+async function verifyInstallation(queue, isAssetDownload) {
     return new Promise(async (resolve) => {
-        const procQueue = await Promise.map(queue, checkDownloadAndCheck, { concurrency: queue.length})
+        var concurrency = queue.length;
+        if (isAssetDownload) {
+            concurrency = queue.length / 2;
+        };
+        const procQueue = await Promise.map(queue, checkDownloadAndCheck, { concurrency: concurrency})
         removeItem(procQueue, 'pass');
         resolve(procQueue)
     })
