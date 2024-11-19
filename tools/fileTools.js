@@ -42,7 +42,6 @@ async function download(url, location, fileName) {
 
 
 
-
 async function extract(filePath) {
     return new Promise(async (resolve) => {
         try {

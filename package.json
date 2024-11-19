@@ -18,7 +18,7 @@
     "./libraries": "./controllers/libraries.js",
     "./queue": "./controllers/queue.js",
     "./auth": "./tools/authVerifier.js",
-    "./launchbuild" :"./tools/launchBuilder.js",
+    "./launchbuild": "./tools/launchBuilder.js",
     "./logger": "./tools/logger.js",
     "./compat": "./tools/compatibility.js",
     "./fileTools": "./tools/fileTools.js",
@@ -44,6 +44,7 @@
     "nodejs-file-downloader": "^4.12.1",
     "qs": "^6.12.1",
     "queue-system": "^4.1.1",
-    "shelljs": "^0.8.5"
+    "shelljs": "^0.8.5",
+    "ws": "^8.18.0"
   }
 }

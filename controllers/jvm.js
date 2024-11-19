@@ -5,7 +5,7 @@ const path = require('path');
 const { cauldronLogger } = require('../tools/logger');
 const { verifyInstallation } = require('./queue');
 const { grabPath, getOperatingSystem } = require('../tools/compatibility');
-
+const { startProgress } = require('../tools/progress');
 async function checkCompat(jVersion,jvmData) {
     var actualPlatform = getOperatingSystem(true);
     if (jvmData[actualPlatform][jVersion] != undefined) {
