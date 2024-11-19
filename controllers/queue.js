@@ -7,6 +7,7 @@ const Promise = require('bluebird');
 const { download, validate, extract } = require("../tools/fileTools");
 var _ = require('lodash');
 const { startProgress, triggerProgress } = require("../tools/progress");
+const { cauldronLogger } = require("../tools/logger");
 
 
 
@@ -36,7 +37,7 @@ async function checkDownloadAndCheck(item) {
         triggerProgress();
         resolve('pass')
         } catch (e) {
-            console.log('supressed')
+            cauldronLogger.error(e);
         }
         
     })

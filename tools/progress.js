@@ -11,9 +11,9 @@ async function startProgress(queueLength) {
             client.on('open', () => {
                 establishConnection();
                 client.send(queueLength);
+                client.close();
             });
         }
-
     } catch (err) {
         // do nothing
     }
@@ -23,16 +23,14 @@ async function startProgress(queueLength) {
 async function triggerProgress() {
     if (ws_c) {
         ws_c.send('Hello from another function!');
-      }
-
+    };
 }
 
 function establishConnection() {
     const socket = new ws('ws://localhost:8778/ws');
     socket.onopen = () => {
       ws_c = socket; // Assign the socket to the global variable
-      console.log('Connected');
     };
-  }
+};
 
 module.exports = { startProgress, triggerProgress }
