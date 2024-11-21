@@ -5,7 +5,6 @@ const path = require('path');
 const { cauldronLogger } = require('../tools/logger');
 const { verifyInstallation } = require('./queue');
 const { grabPath, getOperatingSystem } = require('../tools/compatibility');
-const { startProgress } = require('../tools/progress');
 async function checkCompat(jVersion,jvmData) {
     var actualPlatform = getOperatingSystem(true);
     if (jvmData[actualPlatform][jVersion] != undefined) {
@@ -28,7 +27,7 @@ async function checkJVM(name, jvmMani) {
             };
         };
         var compressedFiles = new Array();
-        var dQueue = new Array();
+        var dQueue = new Array();   
         for (sIdx in files) {
             if (files[sIdx].type == "file") {
                 var downloadPath = path.join(CAULDRON_PATH, 'jvm', name, sIdx)
@@ -45,7 +44,10 @@ async function checkJVM(name, jvmMani) {
                 dQueue.push({ origin: downUrl, destination: path.join(downloadPath, '../',),sha1: files[sIdx].downloads.raw.sha1,fileName:sIdx.split("/")[sIdx.split("/").length - 1] });
             }
         };
+        console.log(checkForFiles)
+
         var checkForFiles = await verifyInstallation(dQueue);
+        console.log(checkForFiles)
         if (getOperatingSystem() == 'linux') {
             await shelljs.chmod('+x', path.join(CAULDRON_PATH,'jvm',name,'bin','java'));
         };

@@ -6,7 +6,6 @@ const path = require('path');
 const Promise = require('bluebird');
 const { download, validate, extract } = require("../tools/fileTools");
 var _ = require('lodash');
-const { startProgress, triggerProgress } = require("../tools/progress");
 const { cauldronLogger } = require("../tools/logger");
 
 
@@ -33,8 +32,7 @@ async function checkDownloadAndCheck(item) {
         while (typeof validateItem == 'object') {
             const downloadItem = await download(validateItem.origin,validateItem.destination,validateItem.fileName);
             validateItem = await validate(item)
-        }
-        triggerProgress();
+        };
         resolve('pass')
         } catch (e) {
             cauldronLogger.error(e);
@@ -43,12 +41,8 @@ async function checkDownloadAndCheck(item) {
     })
 }
 
-async function verifyInstallation(queue, isAssetDownload,supressProgress) {
+async function verifyInstallation(queue, isAssetDownload) {
     return new Promise(async (resolve) => {
-        if (queue.length > 1 && !supressProgress) {
-            startProgress(queue.length);
-        };
-        
         var concurrency = queue.length;
         if (isAssetDownload) {
             concurrency = queue.length / 2;

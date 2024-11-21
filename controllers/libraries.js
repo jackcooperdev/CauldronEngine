@@ -10,7 +10,7 @@ const { cauldronLogger } = require('../tools/logger');
 const { checkInternet } = require('../tools/checkConnection');
 
 
-async function getLibraries(libData, versionData,maniID,supressProgress) {
+async function getLibraries(libData, versionData,maniID) {
     return new Promise(async (resolve, reject) => {
         var CAULDRON_PATH = grabPath();
         try {
@@ -95,7 +95,7 @@ async function getLibraries(libData, versionData,maniID,supressProgress) {
                 };
             };
             if (checkInternet()) {
-                var checkForFiles = await verifyInstallation(dQueue,false,supressProgress);
+                var checkForFiles = await verifyInstallation(dQueue,false);
             };
             cauldronLogger.info(`Checksums Passed Install is Valid!2`);
             resolve(libArray);
