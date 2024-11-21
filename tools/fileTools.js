@@ -1,6 +1,6 @@
 const Downloader = require("nodejs-file-downloader");
 const fs = require('fs')
-var lzma = require('lzma-native');
+let lzma = require('lzma-native');
 const axios = require('axios')
 const crypto = require('crypto');
 const shelljs = require('shelljs');
@@ -8,7 +8,7 @@ const path = require('path');
 const { grabPath } = require('./compatibility');
 const { isOffline, checkInternet } = require("./checkConnection");
 const { cauldronLogger } = require("./logger");
-var checksum = require('checksum')
+let checksum = require('checksum')
     , cs = checksum('sha1')
 
 async function download(url, location, fileName) {
@@ -45,7 +45,7 @@ async function download(url, location, fileName) {
 async function extract(filePath) {
     return new Promise(async (resolve) => {
         try {
-            var input = fs.readFileSync(filePath);
+            let input = fs.readFileSync(filePath);
         } catch (err) {
             (filePath)
         };

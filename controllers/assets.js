@@ -6,15 +6,15 @@ const { verifyInstallation } = require('./queue');
 
 
 async function getAssets(assetsIndex, assetFiles) {
-    var CAULDRON_PATH = grabPath();
+    let CAULDRON_PATH = grabPath();
     return new Promise(async (resolve) => {
-        var dQueue = assetFiles
-        var checkForFiles = await verifyInstallation(dQueue,true);
+        let dQueue = assetFiles
+        let checkForFiles = await verifyInstallation(dQueue,true);
         cauldronLogger.info(`Checksums Passed Install is Valid!`);
         if (assetsIndex != 'pre-1.6') {
             // Mark AssetFile As Downloaded
-            var currentAssetFile = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'assets_installed.json')));
-            var assetObj = {
+            let currentAssetFile = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'assets_installed.json')));
+            let assetObj = {
                 installed:true,
                 lastChecked:new Date().getTime()
             };

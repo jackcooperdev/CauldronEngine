@@ -21,10 +21,10 @@ const { checkManifestPlugin, getDataPlugin, getIdentifierPlugin } = require('../
 
 async function checkManifest(fileName, url, requiresConvert, type) {
     return new Promise(async (resolve, reject) => {
-        var isOnline = await checkInternet();
-        var CAULDRON_PATH = grabPath();
+        let isOnline = await checkInternet();
+        let CAULDRON_PATH = grabPath();
         try {
-            var expected = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, fileName)));
+            let expected = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, fileName)));
             if (isOnline && !requiresConvert && type == 'main') {
                 // Only Update Main Manifest
                 downloadManifest(url, path.join(CAULDRON_PATH, fileName))
@@ -48,10 +48,10 @@ async function checkManifest(fileName, url, requiresConvert, type) {
 
 async function checkOther(fileName, url) {
     return new Promise(async (resolve, reject) => {
-        var isOnline = await checkInternet();
-        var CAULDRON_PATH = grabPath();
+        let isOnline = await checkInternet();
+        let CAULDRON_PATH = grabPath();
         try {
-            var expected = fs.readFileSync(path.join(CAULDRON_PATH, fileName));
+            let expected = fs.readFileSync(path.join(CAULDRON_PATH, fileName));
             resolve(expected)
         } catch (err) {
             cauldronLogger.warn(`${fileName} not found trying to download`);
@@ -72,7 +72,7 @@ async function checkOther(fileName, url) {
 
 async function downloadOther(url, dir) {
     return new Promise(async (resolve, reject) => {
-        var config = {
+        let config = {
             method: 'get',
             url: url,
             responseType: 'arraybuffer'
@@ -88,7 +88,7 @@ async function downloadOther(url, dir) {
     })
 };
 
-var convertManifests = {
+let convertManifests = {
     'assets': convertAssets,
     'legacy': convertLegacyAssets,
     'pre-1.6': convertPre16Assets
@@ -96,14 +96,14 @@ var convertManifests = {
 
 async function downloadManifest(url, dir, requiresConvert, type) {
     return new Promise(async (resolve, reject) => {
-        var config = {
+        let config = {
             method: 'get',
             url: url
         };
         try {
             const file = await axios(config);
             shelljs.mkdir('-p', path.join(dir, '../'));
-            var fileData = file.data;
+            let fileData = file.data;
             if (requiresConvert) {
                 fileData = await convertManifests[type](fileData);
             }
@@ -119,7 +119,7 @@ async function getPackwizJVM() {
     // Used to Assist Packwiz on client.
     // not used in launcher
     return new Promise(async (resolve, reject) => {
-        var CAULDRON_PATH = grabPath();
+        let CAULDRON_PATH = grabPath();
            // Check for jvm file
            if (!fs.existsSync(path.join(CAULDRON_PATH, 'jvm_installed.json'))) {
             fs.writeFileSync(path.join(CAULDRON_PATH, 'jvm_installed.json'), '{}');
@@ -131,12 +131,12 @@ async function getPackwizJVM() {
             const jvmMeta = await checkManifest(path.join('jvm', 'jvm-core.json'), 'https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json')
             const jvmCompat = await checkCompat('java-runtime-alpha', jvmMeta);
             if (jvmCompat) {
-                var jvmMani = await checkManifest(path.join('jvm', 'java-runtime-alpha.json'), jvmCompat[0].manifest.url);
+                let jvmMani = await checkManifest(path.join('jvm', 'java-runtime-alpha.json'), jvmCompat[0].manifest.url);
             } else {
                 reject('Version Not Suppourted on ' + osCurrent);
             };
 
-            var allManifiests = {
+            let allManifiests = {
                 jvmMeta: jvmMeta,
                 jvmMani: jvmMani,
                 jvmComp: 'java-runtime-alpha',
@@ -152,7 +152,7 @@ async function getPackwizJVM() {
 
 async function getManifests(v, l, lv) {
     return new Promise(async (resolve, reject) => {
-        var CAULDRON_PATH = grabPath();
+        let CAULDRON_PATH = grabPath();
         try {
             // Check for asset file
             if (!fs.existsSync(path.join(CAULDRON_PATH, 'assets_installed.json'))) {
@@ -184,7 +184,7 @@ async function getManifests(v, l, lv) {
                 createdManifest = await attemptToConvert(getSpec);
             };
             if (createdManifest.logging) {
-                var grabLogging = await checkOther(path.join('assets', 'log_configs', createdManifest.logging.client.file.id), NEW_LOGS[createdManifest.logging.client.file.id].url);
+                let grabLogging = await checkOther(path.join('assets', 'log_configs', createdManifest.logging.client.file.id), NEW_LOGS[createdManifest.logging.client.file.id].url);
             } else {
                 cauldronLogger.warn("Destroying Session: No Logger Detected. Game will still boot");
                 destroySession();
@@ -192,7 +192,7 @@ async function getManifests(v, l, lv) {
             const grabClient = await checkOther(path.join('versions', createdManifest.id, createdManifest.id + '.jar'), createdManifest.downloads.client.url);
 
             // Check for Duplicates in Libs
-            var libs = createdManifest.libraries;
+            let libs = createdManifest.libraries;
             const ids = libs.map(o => o.name)
             const filtered = libs.filter(({ name }, index) => !ids.includes(name, index + 1));
             createdManifest.libraries = filtered;
@@ -203,30 +203,30 @@ async function getManifests(v, l, lv) {
             const jvmMeta = await checkManifest(path.join('jvm', 'jvm-core.json'), 'https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json')
             const jvmCompat = await checkCompat(createdManifest.javaVersion.component, jvmMeta);
             if (jvmCompat) {
-                var jvmMani = await checkManifest(path.join('jvm', createdManifest.javaVersion.component + '.json'), jvmCompat[0].manifest.url);
+                let jvmMani = await checkManifest(path.join('jvm', createdManifest.javaVersion.component + '.json'), jvmCompat[0].manifest.url);
             } else {
                 reject('Version Not Suppourted on ' + osCurrent);
             };
             // Assets
             const assetMani = await checkManifest(path.join('assets', 'indexes', createdManifest.assets + '.json'), createdManifest.assetIndex.url);
-            var specCond = createdManifest.assets
+            let specCond = createdManifest.assets
             if (createdManifest.assets != 'legacy' && createdManifest.assets != 'pre-1.6') {
                 specCond = 'assets'
             };
             const assetsConverted = await checkManifest(path.join('assets', 'indexes', createdManifest.assets + '-cauldron.json'), createdManifest.assetIndex.url, true, specCond);
 
             // TODO: Add verification expiratition (Session Based???)
-            var haveAssetsBeenDownloaded = false;
+            let haveAssetsBeenDownloaded = false;
             if (assetDict[createdManifest.assets]) {
                 haveAssetsBeenDownloaded = true;
             };
 
-            var hasJVMBeenDownloaded = false;
+            let hasJVMBeenDownloaded = false;
             if (jvmDict[createdManifest.javaVersion.component]) {
                 hasJVMBeenDownloaded = true;
             };
 
-            var allManifiests = {
+            let allManifiests = {
                 main: getMain,
                 spec: createdManifest,
                 logging: grabLogging,
@@ -261,7 +261,7 @@ async function whatIsThis(version, loader, lVersion, MANIFEST) {
     if (!loader) {
         loader = 'vanilla';
     };
-    var versionFound = "";
+    let versionFound = "";
     if (version == 'release' || version == 'latest') {
         versionFound = MANIFEST.latest.release;
     } else if (version == 'snapshot') {
@@ -269,7 +269,7 @@ async function whatIsThis(version, loader, lVersion, MANIFEST) {
     } else {
         versionFound = version
     };
-    var rObject = { version: versionFound, loaderVersion: '', loader: loader }
+    let rObject = { version: versionFound, loaderVersion: '', loader: loader }
     try {
         if (loader != 'vanilla') {
             if (!lVersion) {

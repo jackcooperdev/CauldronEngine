@@ -5,17 +5,17 @@ const osCurrent = require('os').platform();
 const { exec, spawn } = require('child_process');
 
 const { grabPath, getOperatingSystem } = require('../tools/compatibility');
-var forceComp = require('../plugins/forge/files/force_compat.json')
-var requiresLibPatch = require('../files/requiresLibPatch.json');
+let forceComp = require('../plugins/forge/files/force_compat.json')
+let requiresLibPatch = require('../files/requiresLibPatch.json');
 const package = require('../package.json');
 const defaultJVM = require('../files/defaultJVMArguments.json');
 const { getJVMArgsPlugin } = require('../plugins/plugins')
 
 
 // Varible Injector
-var injector = {
+let injector = {
     create: (function () {
-        var regexp = /\${([^{]+)}/g;
+        let regexp = /\${([^{]+)}/g;
 
         return function (str, o) {
             return str.replace(regexp, function (ignore, key) {
@@ -27,8 +27,8 @@ var injector = {
 
 // Injects current Session ID into log file and creates new file
 async function logInjector(logFile, sessionID) {
-    var CAULDRON_PATH = grabPath();
-    var logFileCont = fs.readFileSync(logFile).toString();
+    let CAULDRON_PATH = grabPath();
+    let logFileCont = fs.readFileSync(logFile).toString();
     logFileCont = injector.create(logFileCont, { 'log_loc': path.join(CAULDRON_PATH, 'sessionLogs', sessionID, 'mcLogs.log') });
     fs.writeFileSync(path.join(logFile, '../', 'log_config.xml'), logFileCont)
 };
@@ -36,22 +36,22 @@ async function logInjector(logFile, sessionID) {
 
 async function buildJVMRules(manifest, libraryList, versionData, overides) {
     return new Promise(async (resolve) => {
-        var CAULDRON_PATH = grabPath();
-        var cusJVM = defaultJVM;
+        let CAULDRON_PATH = grabPath();
+        let cusJVM = defaultJVM;
         // Aquire Set Version
         if (overides) {
             for (idx in overides) {
                 cusJVM[idx] = overides[idx]
             };
         };
-        var setVersion = versionData.version;
+        let setVersion = versionData.version;
         if (versionData.loader != 'vanilla') {
             setVersion = `${versionData.loader}-${versionData.version}-${versionData.loaderVersion}`;
             libraryList.push(path.join(CAULDRON_PATH, 'libraries', 'net', 'minecraftforge', 'forge', `${versionData.version}-${versionData.loaderVersion}`, `forge-${versionData.version}-${versionData.loaderVersion}.jar`));
         };
         libraryList.push(path.join(CAULDRON_PATH, 'versions', manifest.id, `${manifest.id}.jar`));
         jvmRules = manifest.arguments.jvm;
-        var validRules = new Array();
+        let validRules = new Array();
         for (idx in jvmRules) {
             if (!jvmRules[idx].rules) {
                 if (jvmRules[idx]) {
@@ -72,16 +72,16 @@ async function buildJVMRules(manifest, libraryList, versionData, overides) {
             };
         };
 
-        var logPath = "";
+        let logPath = "";
         if (manifest.logging) {
             validRules.push(manifest.logging.client.argument);
             logPath = path.join(CAULDRON_PATH, 'assets', 'log_configs', manifest.logging.client.file.id)
         };
 
         //Check if version requires proxy
-        var proxyPort = false;
-        var vArray = ["1.0", "1.1", "1.3", "1.4", "1.5"]
-        var splitVersion = `${versionData.version.split(".")[0]}.${versionData.version.split(".")[1]}`
+        let proxyPort = false;
+        let vArray = ["1.0", "1.1", "1.3", "1.4", "1.5"]
+        let splitVersion = `${versionData.version.split(".")[0]}.${versionData.version.split(".")[1]}`
         if (versionData.version.startsWith("a1.0.")) {
             proxyPort = 80;
         } else if (versionData.version.startsWith('a1.1.')) {
@@ -95,10 +95,10 @@ async function buildJVMRules(manifest, libraryList, versionData, overides) {
             validRules.push("-Dhttp.proxyHost=betacraft.uk");
             validRules.push("-Dhttp.proxyPort=" + proxyPort)
         };
-        var libOccurneces = {};
-        var repeatedLibs = {};
+        let libOccurneces = {};
+        let repeatedLibs = {};
         for (idx in libraryList) {
-            var libPath = libraryList[idx].split("\\")[libraryList[idx].split("\\").length - 3];
+            let libPath = libraryList[idx].split("\\")[libraryList[idx].split("\\").length - 3];
             if (libOccurneces[libPath]) {
                 libOccurneces[libPath].push(libraryList[idx]);
                 repeatedLibs[libPath] = libOccurneces[libPath];
@@ -109,7 +109,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overides) {
 
         if (requiresLibPatch[versionData.loader].includes(versionData.version)) {
             for (rLibs in repeatedLibs) {
-                var index = libraryList.indexOf(repeatedLibs[rLibs][0])
+                let index = libraryList.indexOf(repeatedLibs[rLibs][0])
                 libraryList.splice(index, 1);
             };
         };
@@ -122,7 +122,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overides) {
             overides = plugin.overides;
         };
         // Convert Library List into Joined List
-        var classPathSep = ""
+        let classPathSep = ""
         if (osCurrent == 'win32') {
             classPath = libraryList.join(";")
             classPathSep = ';'
@@ -131,7 +131,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overides) {
             classPathSep = ':'
         };
 
-        var relVaribles = {
+        let relVaribles = {
             natives_directory: path.join(CAULDRON_PATH, 'versions', manifest.id, 'natives'),
             launcher_name: cusJVM.launcher_name,
             launcher_version: package.version,
@@ -154,8 +154,8 @@ async function buildJVMRules(manifest, libraryList, versionData, overides) {
 
 async function buildGameRules(manifest, loggedUser, overides, addit) {
     return new Promise(async (resolve) => {
-        var CAULDRON_PATH = grabPath();
-        var gameRules = new Array();
+        let CAULDRON_PATH = grabPath();
+        let gameRules = new Array();
         allGameRules = manifest.arguments.game;
         for (gRules in allGameRules) {
             if (!allGameRules[gRules].rules) {
@@ -167,7 +167,7 @@ async function buildGameRules(manifest, loggedUser, overides, addit) {
             gameRules.push('${version_type}')
         };
 
-        var gameVars = {
+        let gameVars = {
             auth_player_name: loggedUser.profile.username,
             version_type: manifest.type,
             game_directory: CAULDRON_PATH,
@@ -177,7 +177,7 @@ async function buildGameRules(manifest, loggedUser, overides, addit) {
             gameVars[idx] = overides[idx]
         };
 
-        var gameVariables = {
+        let gameVariables = {
             auth_player_name: gameVars.auth_player_name,
             version_name: manifest.id,
             game_directory: gameVars.game_directory,
@@ -221,15 +221,15 @@ async function buildGameRules(manifest, loggedUser, overides, addit) {
 };
 
 async function buildFile(manifest, jreVersion, validRules, gameRules) {
-    var CAULDRON_PATH = grabPath();
-    var mainClass = manifest.mainClass;
+    let CAULDRON_PATH = grabPath();
+    let mainClass = manifest.mainClass;
     if (osCurrent == 'darwin') {
         javaPath = path.join(CAULDRON_PATH, 'jvm', jreVersion, 'jre.bundle', 'Contents', 'Home', 'bin', 'java');
     } else {
         javaPath = path.join(CAULDRON_PATH, 'jvm', jreVersion, 'bin', 'java');
     }
 
-    var launchCommand = `${javaPath} ${validRules.join(" ")} ${mainClass} ${gameRules.join(" ")}`;
+    let launchCommand = `${javaPath} ${validRules.join(" ")} ${mainClass} ${gameRules.join(" ")}`;
     shell.mkdir('-p', path.join(CAULDRON_PATH, 'scripts'))
 
     if (osCurrent == 'linux' || osCurrent == 'darwin') {

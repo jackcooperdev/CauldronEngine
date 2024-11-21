@@ -4,7 +4,7 @@ const path = require('path')
 const homedir = require('os').homedir();
 const fs = require('fs');
 const shell = require('shelljs');
-var configData = {};
+let configData = {};
 
 
 
@@ -21,18 +21,18 @@ function grabPath() {
 
 };
 
-var osConvertStandard = { 'win32': 'windows', 'linux': 'linux', 'darwin': 'osx' };
+let osConvertStandard = { 'win32': 'windows', 'linux': 'linux', 'darwin': 'osx' };
 
 function getOperatingSystem(isJVM) {
     if (!isJVM) {
-        var actualOS = osConvertStandard[osCurrent];
+        let actualOS = osConvertStandard[osCurrent];
         if (!actualOS) {
             throw new Error('Unsupported Operating System')
         } else {
             return actualOS;
         }
     } else {
-        var actualOS = osConvertStandard[osCurrent];
+        let actualOS = osConvertStandard[osCurrent];
         if (!actualOS) {
             throw new Error('Unsupported Operating System')
         } else {

@@ -6,7 +6,7 @@ const path = require('path')
 
 
 async function attemptToConvert(original, overides) {
-    var newTemplate = template;
+    let newTemplate = template;
     // Fill Template As Much as Possible
     for (idx in newTemplate) {
         newTemplate[idx] = original[idx]
@@ -17,7 +17,7 @@ async function attemptToConvert(original, overides) {
     };
 
     if (!newTemplate['arguments'] || !newTemplate['arguments'].jvm || newTemplate['arguments'].jvm.length == 0) {
-        var arguments = [
+        let arguments = [
             "-Djava.library.path=${natives_directory}",
             "-Dminecraft.launcher.brand=${launcher_name}",
             "-Dminecraft.client.jar=${client_jar}",
@@ -53,11 +53,11 @@ async function attemptToConvert(original, overides) {
 
 async function convertAssets(original) {
     return new Promise(async (resolve, reject) => {
-        var CAULDRON_PATH = grabPath();
-        var objs = original.objects;
-        var newData = new Array();
+        let CAULDRON_PATH = grabPath();
+        let objs = original.objects;
+        let newData = new Array();
         for (idx in objs) {
-            var obj = {
+            let obj = {
                 origin: `https://resources.download.minecraft.net/${objs[idx].hash.substring(0, 2)}/${objs[idx].hash}`,
                 sha1: objs[idx].hash,
                 destination: path.join(CAULDRON_PATH, 'assets', 'objects', objs[idx].hash.substring(0, 2)),
@@ -73,13 +73,13 @@ async function convertAssets(original) {
 
 async function convertLegacyAssets(original) {
     return new Promise(async (resolve, reject) => {
-        var CAULDRON_PATH = grabPath();
-        var objs = original.objects;
-        var newData = new Array();
+        let CAULDRON_PATH = grabPath();
+        let objs = original.objects;
+        let newData = new Array();
         for (idx in objs) {
-            var splitPath = idx.split("/");
-            var fileName = splitPath.pop();
-            var obj = {
+            let splitPath = idx.split("/");
+            let fileName = splitPath.pop();
+            let obj = {
                 origin: `https://resources.download.minecraft.net/${objs[idx].hash.substring(0, 2)}/${objs[idx].hash}`,
                 sha1: objs[idx].hash,
                 destination: path.join(CAULDRON_PATH, 'assets', 'virtual', 'legacy', splitPath.join("/")),
@@ -93,13 +93,13 @@ async function convertLegacyAssets(original) {
 
 async function convertPre16Assets(original) {
     return new Promise(async (resolve, reject) => {
-        var CAULDRON_PATH = grabPath();
-        var objs = original.objects;
-        var newData = new Array();
+        let CAULDRON_PATH = grabPath();
+        let objs = original.objects;
+        let newData = new Array();
         for (idx in objs) {
-            var splitPath = idx.split("/");
-            var fileName = splitPath.pop();
-            var obj = {
+            let splitPath = idx.split("/");
+            let fileName = splitPath.pop();
+            let obj = {
                 origin: `https://resources.download.minecraft.net/${objs[idx].hash.substring(0, 2)}/${objs[idx].hash}`,
                 sha1: objs[idx].hash,
                 destination: path.join(CAULDRON_PATH, 'resources', splitPath.join("/")),

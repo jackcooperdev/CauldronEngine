@@ -6,7 +6,7 @@ const { cauldronLogger } = require('../tools/logger');
 const { verifyInstallation } = require('./queue');
 const { grabPath, getOperatingSystem } = require('../tools/compatibility');
 async function checkCompat(jVersion,jvmData) {
-    var actualPlatform = getOperatingSystem(true);
+    let actualPlatform = getOperatingSystem(true);
     if (jvmData[actualPlatform][jVersion] != undefined) {
         return jvmData[actualPlatform][jVersion];
     } else {
@@ -16,21 +16,21 @@ async function checkCompat(jVersion,jvmData) {
 
 async function checkJVM(name, jvmMani) {
     return new Promise(async (resolve) => {
-        var CAULDRON_PATH = grabPath();
+        let CAULDRON_PATH = grabPath();
         shelljs.mkdir('-p', path.join(CAULDRON_PATH, 'jvm', name));
         fs.writeFileSync(path.join(CAULDRON_PATH, 'jvm', name + '.json'), JSON.stringify(jvmMani));
-        var files = jvmMani.files;
+        let files = jvmMani.files;
         // Build Dir Structure
         for (idx in files) {
             if (files[idx].type == "directory") {
                 shelljs.mkdir('-p', path.join(CAULDRON_PATH, 'jvm', name, idx));
             };
         };
-        var compressedFiles = new Array();
-        var dQueue = new Array();   
+        let compressedFiles = new Array();
+        let dQueue = new Array();   
         for (sIdx in files) {
             if (files[sIdx].type == "file") {
-                var downloadPath = path.join(CAULDRON_PATH, 'jvm', name, sIdx)
+                let downloadPath = path.join(CAULDRON_PATH, 'jvm', name, sIdx)
                 try {
                     if (files[sIdx].executable) {
                         downUrl = files[sIdx].downloads.lzma.url;
@@ -45,13 +45,13 @@ async function checkJVM(name, jvmMani) {
             }
         };
 
-        var checkForFiles = await verifyInstallation(dQueue);
+        let checkForFiles = await verifyInstallation(dQueue);
         if (getOperatingSystem() == 'linux') {
             await shelljs.chmod('+x', path.join(CAULDRON_PATH,'jvm',name,'bin','java'));
         };
         cauldronLogger.info(`Java Installation Verified`);
-        var currentJVMFile = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'jvm_installed.json')));
-        var jvmObj = {
+        let currentJVMFile = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'jvm_installed.json')));
+        let jvmObj = {
             installed:true,
             lastChecked:new Date().getTime()
         };

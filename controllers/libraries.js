@@ -12,18 +12,18 @@ const { checkInternet } = require('../tools/checkConnection');
 
 async function getLibraries(libData, versionData,maniID) {
     return new Promise(async (resolve, reject) => {
-        var CAULDRON_PATH = grabPath();
+        let CAULDRON_PATH = grabPath();
         try {
             if (versionData.loader == 'vanilla') {
                 version = versionData.version;
             } else if (versionData.loader == 'forge') {
                 version = `forge-${versionData.version}-${versionData.loaderVersion}`;
             };
-            var acutalOS = getOperatingSystem();
-            var dQueue = new Array();
-            var libArray = new Array();
+            let acutalOS = getOperatingSystem();
+            let dQueue = new Array();
+            let libArray = new Array();
             cauldronLogger.info(`Operating System: ${acutalOS}`);
-            var nativeLock = false;
+            let nativeLock = false;
             if (fs.existsSync(path.join(CAULDRON_PATH, 'versions', maniID, 'natives'))) {
                 nativeLock = true;
             };
@@ -49,7 +49,7 @@ async function getLibraries(libData, versionData,maniID) {
                 if (libAllowed) {
                     if (libData[idx].downloads.artifact) {
                         shell.mkdir('-p', path.join(CAULDRON_PATH, 'libraries', libData[idx].downloads.artifact.path, '../'))
-                        var obj = {
+                        let obj = {
                             origin: libData[idx].downloads.artifact.url,
                             sha1: libData[idx].downloads.artifact.sha1,
                             destination: path.join(CAULDRON_PATH, 'libraries', libData[idx].downloads.artifact.path, '../'),
@@ -59,25 +59,25 @@ async function getLibraries(libData, versionData,maniID) {
                         libArray.push(path.join(obj.destination, obj.fileName));
                     };
                     if (libData[idx].downloads.classifiers && checkInternet() && !nativeLock) {
-                        var natives = libData[idx].downloads.classifiers[libData[idx].natives[acutalOS]];
+                        let natives = libData[idx].downloads.classifiers[libData[idx].natives[acutalOS]];
                         if (!natives) {
                             if (libData[idx].natives && libData[idx].natives[acutalOS] && libData[idx].natives[acutalOS].includes("arch")) {
-                                var newOS = `natives-${acutalOS}-64`
+                                let newOS = `natives-${acutalOS}-64`
                                 natives = libData[idx].downloads.classifiers[newOS];
                             }
                         }
                         if (natives) {
-                            var needsExtracting = libData[idx].extract;
+                            let needsExtracting = libData[idx].extract;
                             // Force On MAC Only
                             needsExtracting = true;
-                            var obj = {
+                            let obj = {
                                 origin: natives.url,
                                 sha1: natives.sha1,
                                 destination: path.join(CAULDRON_PATH, 'versions', maniID, 'natives'),
                                 fileName: natives.path.split("/")[natives.path.split("/").length - 1]
                             };
-                            var checkForNative = await verifyInstallation([obj]);
-                            var extractFile = false;
+                            let checkForNative = await verifyInstallation([obj]);
+                            let extractFile = false;
                             if (needsExtracting) {
                                 const zip = new StreamZip.async({ file: path.join(obj.destination, obj.fileName) });
                                 const entriesCount = await zip.entriesCount;
@@ -95,7 +95,7 @@ async function getLibraries(libData, versionData,maniID) {
                 };
             };
             if (checkInternet()) {
-                var checkForFiles = await verifyInstallation(dQueue,false);
+                let checkForFiles = await verifyInstallation(dQueue,false);
             };
             cauldronLogger.info(`Checksums Passed Install is Valid!2`);
             resolve(libArray);

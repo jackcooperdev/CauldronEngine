@@ -26,12 +26,12 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
         loader = 'vanilla';
     };
     return new Promise(async (resolve, reject) => {
-        var CAULDRON_PATH = grabPath();
+        let CAULDRON_PATH = grabPath();
         try {
             getOperatingSystem();
             //Create SessionID If Not Declared
             if (!sessionID) {
-                var newSession = {
+                let newSession = {
                     type: 'game',
                     version: version,
                     loader: loader,
@@ -69,12 +69,12 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
                 cauldronLogger.info('All Files Aquired Building Launch File');
                 cauldronLogger.info('Creating JVM Arguments');
                 if (manifests.spec.logging) {
-                    var logsInjected = await logInjector(path.join(CAULDRON_PATH, 'assets', 'log_configs', manifests.spec.logging.client.file.id), sessionID)
+                    let logsInjected = await logInjector(path.join(CAULDRON_PATH, 'assets', 'log_configs', manifests.spec.logging.client.file.id), sessionID)
                 };
-                var validRules = await buildJVMRules(manifests.spec, libGet, manifests.versionData, overrides.jvm);
+                let validRules = await buildJVMRules(manifests.spec, libGet, manifests.versionData, overrides.jvm);
                 cauldronLogger.info('Generating Game Arguments');
-                var gameRules = await buildGameRules(manifests.spec, authData, overrides.game, overrides.additG);
-                var launchPath = await buildFile(manifests.spec, manifests.jvmComp, validRules, gameRules);
+                let gameRules = await buildGameRules(manifests.spec, authData, overrides.game, overrides.additG);
+                let launchPath = await buildFile(manifests.spec, manifests.jvmComp, validRules, gameRules);
                 cauldronLogger.info('Starting Game');
                 setLoggerSession(sessionID);
                 const exe = exec(`cd ${CAULDRON_PATH} && ${launchPath}`);

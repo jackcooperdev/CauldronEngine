@@ -11,12 +11,12 @@ const FORGE_REPO = "https://maven.minecraftforge.net/net/minecraftforge";
 
 
 // Files
-var suffixes = require('./files/suffixes.json');
-var suffixUsed = "";
+let suffixes = require('./files/suffixes.json');
+let suffixUsed = "";
 // Get Forge Installer URL (does what it says on the tin)
 async function getForgeInstallerURL(version, forgeVersion) {
-    var url = "";
-    var CAULDRON_PATH = grabPath();
+    let url = "";
+    let CAULDRON_PATH = grabPath();
     if (!fs.existsSync(path.join(CAULDRON_PATH,'forge-installers.json'))) {
         aquiredForges = {}
         fs.writeFileSync(path.join(CAULDRON_PATH,'forge-installers.json'),'{}');
@@ -52,7 +52,7 @@ async function getForgeInstallerURL(version, forgeVersion) {
             throw new Error(`Sorry but Cauldron does not support ${version} - ${forgeVersion} forge yet. CODE: URLNFOUNDA`);
         };
     };
-    var verifyInstaller = await checkInstaller(url);
+    let verifyInstaller = await checkInstaller(url);
     if (verifyInstaller) {
         return url;
     } else {
@@ -63,7 +63,7 @@ async function getForgeInstallerURL(version, forgeVersion) {
 
 // Checks Installer Link to see if its valid
 async function checkInstaller(url) {
-    var config = {
+    let config = {
         method: 'get',
         url: url
     };
@@ -76,10 +76,10 @@ async function checkInstaller(url) {
 };
 
 function convertNameToPath(name) {
-    var split = name.split(":");
-    var chunkOne = split[0].split(".").join("/");
-    var chunkTwo = split[1];
-    var chunkThree = split[2];
+    let split = name.split(":");
+    let chunkOne = split[0].split(".").join("/");
+    let chunkTwo = split[1];
+    let chunkThree = split[2];
     return { chunkOne: chunkOne, chunkTwo: chunkTwo, chunkThree: chunkThree };
 };
 // Util Functions

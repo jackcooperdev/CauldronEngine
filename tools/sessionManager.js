@@ -3,7 +3,7 @@ const path = require('path');
 const shelljs = require('shelljs');
 const { grabPath } = require('./compatibility');
 
-var currentSessions = {};
+let currentSessions = {};
 
 
 function createUUID() {
@@ -13,8 +13,8 @@ function createUUID() {
 };
 
 function createSession(data) {
-    var newSession = data;
-    var sessionID = createUUID();
+    let newSession = data;
+    let sessionID = createUUID();
     currentSessions[sessionID] = newSession;
     return sessionID;
 };

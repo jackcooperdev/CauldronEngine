@@ -1,11 +1,11 @@
 const { grabPath } = require("../../tools/compatibility");
-var forceComp = require('./files/force_compat.json');
+let forceComp = require('./files/force_compat.json');
 const path = require('path')
 async function jvm(data) {
     return new Promise(async (resolve, reject) => {
         try {
-            var CAULDRON_PATH = grabPath();
-            var { manifest, libraryList, versionData, overides } = data;
+            let CAULDRON_PATH = grabPath();
+            let { manifest, libraryList, versionData, overides } = data;
             if (forceComp[versionData.version]) {
                 if (forceComp[versionData.version][0] == 'legacy') {
                     // Legacy Compat

@@ -4,7 +4,7 @@ const { cauldronLogger } = require('../tools/logger');
 async function checkManifestPlugin(loader,loaderVersion, version, getSpec,getLoaderManifest) {
     return new Promise(async (resolve, reject) => {
         try {
-            var { getManifest } = require(`./${loader}/manifest`);
+            let { getManifest } = require(`./${loader}/manifest`);
             const data = await getManifest(loaderVersion, version, getSpec,getLoaderManifest)
             resolve(data)
         } catch (err) {
@@ -16,7 +16,7 @@ async function checkManifestPlugin(loader,loaderVersion, version, getSpec,getLoa
 async function getDataPlugin(loader) {
     return new Promise(async (resolve, reject) => {
         try {
-            var { getData } = require(`./${loader}/manifest`);
+            let { getData } = require(`./${loader}/manifest`);
             const data = getData();
             resolve(data)
         } catch (err) {
@@ -29,7 +29,7 @@ async function getDataPlugin(loader) {
 async function getIdentifierPlugin(loader,version,manifest) {
     return new Promise(async (resolve, reject) => {
         try {
-            var { identifier } = require(`./${loader}/identifier`);
+            let { identifier } = require(`./${loader}/identifier`);
             const data = await identifier(version,manifest);
             resolve(data)
         } catch (err) {
@@ -41,7 +41,7 @@ async function getIdentifierPlugin(loader,version,manifest) {
 async function getPostPlugin(loader,manifest) {
     return new Promise(async (resolve, reject) => {
         try {
-            var { postProcessing } = require(`./${loader}/post`);
+            let { postProcessing } = require(`./${loader}/post`);
             const data = await postProcessing(manifest);
             resolve(data)
         } catch (err) {
@@ -55,7 +55,7 @@ async function getPostPlugin(loader,manifest) {
 async function getJVMArgsPlugin(loader,args) {
     return new Promise(async (resolve, reject) => {
         try {
-            var { jvm } = require(`./${loader}/launch`);
+            let { jvm } = require(`./${loader}/launch`);
             const data = await jvm(args);
             resolve(data)
         } catch (err) {

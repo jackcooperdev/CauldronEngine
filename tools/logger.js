@@ -30,19 +30,19 @@ try {
 
 let sockets = [];
 
-var loggerSession = "";
+let loggerSession = "";
 
 server.on('connection', function (sock) {
     cauldronLogger.info('Minecraft Connected');
     sockets.push(sock);
     sock.on('data', function (data) {
-        var firstSplit = data.toString().split("\n");
+        let firstSplit = data.toString().split("\n");
         for (idx in firstSplit) {
             if (firstSplit[idx] != '') {
-                var dataMessage = firstSplit[idx].split("]: ");
+                let dataMessage = firstSplit[idx].split("]: ");
                 if (dataMessage[1]) {
-                    var state = dataMessage[0].split("/")[1];
-                    var arr = dataMessage.shift();
+                    let state = dataMessage[0].split("/")[1];
+                    let arr = dataMessage.shift();
                     switch (state) {
                         case 'INFO':
                             mcLogger.info(dataMessage.join(" "));
