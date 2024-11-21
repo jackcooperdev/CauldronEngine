@@ -185,7 +185,7 @@ async function buildGameRules(manifest, loggedUser, overides, addit) {
             assets_index_name: manifest.assets,
             auth_uuid: loggedUser.profile.uuid,
             auth_access_token: loggedUser.access_token,
-            clientid: loggedUser.user_id,
+            CLIENT_ID: loggedUser.user_id,
             game_assets: path.join(CAULDRON_PATH, 'resources'),
             auth_xuid: loggedUser.xui,
             user_type: 'msa',

@@ -123,18 +123,19 @@ async function getPackwizJVM() {
            // Check for jvm file
            if (!fs.existsSync(path.join(CAULDRON_PATH, 'jvm_installed.json'))) {
             fs.writeFileSync(path.join(CAULDRON_PATH, 'jvm_installed.json'), '{}');
-        };
+        }
         try {
 
             // JVM Manifests
             // Check For Meta
             const jvmMeta = await checkManifest(path.join('jvm', 'jvm-core.json'), 'https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json')
             const jvmCompat = await checkCompat('java-runtime-alpha', jvmMeta);
+            let jvmMani;
             if (jvmCompat) {
-                let jvmMani = await checkManifest(path.join('jvm', 'java-runtime-alpha.json'), jvmCompat[0].manifest.url);
+                jvmMani = await checkManifest(path.join('jvm', 'java-runtime-alpha.json'), jvmCompat[0].manifest.url);
             } else {
                 reject('Version Not Suppourted on ' + osCurrent);
-            };
+            }
 
             let allManifiests = {
                 jvmMeta: jvmMeta,
