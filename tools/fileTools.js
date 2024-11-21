@@ -32,13 +32,13 @@ async function download(url, location, fileName) {
                     //IMPORTANT: Handle a possible error. An error is thrown in case of network errors, or status codes of 400 and above.
                     //Note that if the maxAttempts is set to higher than 1, the error is thrown only if all attempts fail.
                     resolve(false);
-                };
+                }
             } else {
                 resolve(true);
             }
-        };
+        }
     });
-};
+}
 
 
 
@@ -48,7 +48,7 @@ async function extract(filePath) {
             let input = fs.readFileSync(filePath);
         } catch (err) {
             (filePath)
-        };
+        }
         try {
             const decompress = await lzma.decompress(input);
             const writeFile = fs.writeFileSync(filePath, decompress)
@@ -58,18 +58,18 @@ async function extract(filePath) {
                 resolve(true)
             } else {
                 resolve(false);
-            };
+            }
         }
 
     })
-};
+}
 
 async function validate(file) {
     return new Promise(async (resolve) => {
         if (file.destination == 'no path') {
             resolve('pass');
             return;
-        };
+        }
         if (file.sha1 == 'NONE' && fs.existsSync(path.join(file.destination, file.fileName))) {
             resolve('pass');
             return;
@@ -82,6 +82,6 @@ async function validate(file) {
             }
         })
     });
-};
+}
 
 module.exports = { download, extract, validate };

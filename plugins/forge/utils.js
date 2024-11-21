@@ -22,7 +22,7 @@ async function getForgeInstallerURL(version, forgeVersion) {
         fs.writeFileSync(path.join(CAULDRON_PATH,'forge-installers.json'),'{}');
     } else {
         aquiredForges = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH,'forge-installers.json')))
-    };
+    }
     if (aquiredForges[`${version}-${forgeVersion}`]) {
         url = aquiredForges[`${version}-${forgeVersion}`].url;
         if (aquiredForges[`${version}-${forgeVersion}`].suffix) {
@@ -40,25 +40,25 @@ async function getForgeInstallerURL(version, forgeVersion) {
                     aquiredForges[`${version}-${forgeVersion}`]['suffix'] = suffixUsed;
                     fs.writeFileSync(path.join(CAULDRON_PATH,'forge-installers.json'),JSON.stringify(aquiredForges))
                     break;
-                };
-            };
+                }
+            }
         } else {
             aquiredForges[`${version}-${forgeVersion}`] = {url:'',suffix:''};
             url = `${FORGE_REPO}/forge/${version}-${forgeVersion}/forge-${version}-${forgeVersion}-installer.jar`;
             aquiredForges[`${version}-${forgeVersion}`]['url'] = url;
             fs.writeFileSync(path.join(CAULDRON_PATH,'forge-installers.json'),JSON.stringify(aquiredForges));
-        };
+        }
         if (!url) {
             throw new Error(`Sorry but Cauldron does not support ${version} - ${forgeVersion} forge yet. CODE: URLNFOUNDA`);
-        };
-    };
+        }
+    }
     let verifyInstaller = await checkInstaller(url);
     if (verifyInstaller) {
         return url;
     } else {
         throw new Error(`Sorry but Cauldron does not support ${version} - ${forgeVersion} forge yet. CODE: URLNFOUNDB`);
-    };
-};
+    }
+}
 
 
 // Checks Installer Link to see if its valid
@@ -72,8 +72,8 @@ async function checkInstaller(url) {
         return true;
     } catch (err) {
         return false;
-    };
-};
+    }
+}
 
 function convertNameToPath(name) {
     let split = name.split(":");
@@ -81,12 +81,12 @@ function convertNameToPath(name) {
     let chunkTwo = split[1];
     let chunkThree = split[2];
     return { chunkOne: chunkOne, chunkTwo: chunkTwo, chunkThree: chunkThree };
-};
+}
 // Util Functions
 function getSuffixUsed() {
     if (!suffixUsed) {
         suffixUsed = '';
     }
     return suffixUsed;
-};
+}
 module.exports = { getForgeInstallerURL,convertNameToPath, getSuffixUsed }

@@ -39,10 +39,10 @@ async function verifyAccessToken(access_token) {
                 } else {
                     resolve(false)
                 }
-            };
+            }
             resolve(true);
-        };
+        }
     })
-};
+}
 
 module.exports = { verifyAccessToken };

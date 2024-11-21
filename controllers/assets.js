@@ -20,10 +20,10 @@ async function getAssets(assetsIndex, assetFiles) {
             };
             currentAssetFile[assetsIndex] = assetObj;
             fs.writeFileSync(path.join(CAULDRON_PATH, 'assets_installed.json'), JSON.stringify(currentAssetFile));
-        };
+        }
         resolve(true)
     });
-};
+}
 
 
 module.exports = { getAssets };

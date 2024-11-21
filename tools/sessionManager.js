@@ -10,21 +10,21 @@ function createUUID() {
     return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
         (+c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> +c / 4).toString(16)
     );
-};
+}
 
 function createSession(data) {
     let newSession = data;
     let sessionID = createUUID();
     currentSessions[sessionID] = newSession;
     return sessionID;
-};
+}
 
 function checkForGameSession() {
     for (idx in currentSessions) {
         if (currentSessions[idx].type == 'game') {
             return true;
         }
-    };
+    }
     return false;
 }
 
@@ -32,7 +32,7 @@ function checkForGameSession() {
 
 function getSession(sessionID) {
     return currentSessions[sessionID];
-};
+}
 
 async function destroySession(sessionID) {
     try {
@@ -49,7 +49,7 @@ async function destroySession(sessionID) {
         
     }
     
-};
+}
 
 
 module.exports = { createSession, getSession, destroySession, createUUID,checkForGameSession };

@@ -15,7 +15,7 @@ async function jvm(data) {
                 for (fIdx in forceComp[versionData.version]) {
                     libraryList.push(path.join(CAULDRON_PATH, 'libraries', 'net/minecraftforge/forge', `${versionData.version}-${versionData.loaderVersion}`, `forge-${versionData.version}-${versionData.loaderVersion}-${forceComp[versionData.version][fIdx]}.jar`));
                 }
-            };
+            }
             resolve({manifest, libraryList, versionData, overides })
         } catch (err) {
             reject(err)

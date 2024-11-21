@@ -9,9 +9,9 @@ async function checkManifestPlugin(loader,loaderVersion, version, getSpec,getLoa
             resolve(data)
         } catch (err) {
             reject({message:'This Loader Is Not Supported! (Plugin May be missing a manifest file as well)'});
-        };
+        }
     })
-};
+}
 
 async function getDataPlugin(loader) {
     return new Promise(async (resolve, reject) => {
@@ -22,9 +22,9 @@ async function getDataPlugin(loader) {
         } catch (err) {
             cauldronLogger.error("This Loader Is Not Supported! (Plugin May be missing a manifest file as well)")
            reject({message:'This Loader Is Not Supported! (Plugin May be missing a manifest file as well)'})
-        };
+        }
     })
-};
+}
 
 async function getIdentifierPlugin(loader,version,manifest) {
     return new Promise(async (resolve, reject) => {
@@ -34,9 +34,9 @@ async function getIdentifierPlugin(loader,version,manifest) {
             resolve(data)
         } catch (err) {
             reject({message:err});
-        };
+        }
     })
-};
+}
 
 async function getPostPlugin(loader,manifest) {
     return new Promise(async (resolve, reject) => {
@@ -47,9 +47,9 @@ async function getPostPlugin(loader,manifest) {
         } catch (err) {
             cauldronLogger.warn("Plugin Does not support the post function. There may be errors ahead")
             resolve(false);
-        };
+        }
     })
-};
+}
 
 
 async function getJVMArgsPlugin(loader,args) {
@@ -61,9 +61,9 @@ async function getJVMArgsPlugin(loader,args) {
         } catch (err) {
             cauldronLogger.warn("Plugin Does not support the jvmArgs function. There may be errors ahead")
             resolve(false);
-        };
+        }
     })
-};
+}
 
 
 

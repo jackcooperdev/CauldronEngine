@@ -10,11 +10,11 @@ async function attemptToConvert(original, overides) {
     // Fill Template As Much as Possible
     for (idx in newTemplate) {
         newTemplate[idx] = original[idx]
-    };
+    }
     if (!newTemplate['javaVersion']) {
         javaVersion = { component: 'jre-legacy' };
         newTemplate['javaVersion'] = javaVersion;
-    };
+    }
 
     if (!newTemplate['arguments'] || !newTemplate['arguments'].jvm || newTemplate['arguments'].jvm.length == 0) {
         let arguments = [
@@ -37,7 +37,7 @@ async function attemptToConvert(original, overides) {
             arguments.push("-Dos.version=10.0");
         } else if (osCurrent == 'darwin') {
             //arguments.push("-XstartOnFirstThread")
-        };
+        }
         if (!newTemplate['arguments']) {
             newTemplate['arguments'] = {};
         }
@@ -45,10 +45,10 @@ async function attemptToConvert(original, overides) {
         if (original.minecraftArguments) {
             //gameArguments['game'] = 
             newTemplate['arguments']['game'] = original.minecraftArguments.split(" ");
-        };
-    };
+        }
+    }
     return newTemplate;
-};
+}
 
 
 async function convertAssets(original) {
@@ -64,12 +64,12 @@ async function convertAssets(original) {
                 fileName: objs[idx].hash
             };
             newData.push(obj);
-        };
+        }
         resolve(newData)
 
     })
 
-};
+}
 
 async function convertLegacyAssets(original) {
     return new Promise(async (resolve, reject) => {
@@ -86,10 +86,10 @@ async function convertLegacyAssets(original) {
                 fileName: fileName
             };
             newData.push(obj);
-        };
+        }
         resolve(newData);
     });
-};
+}
 
 async function convertPre16Assets(original) {
     return new Promise(async (resolve, reject) => {
@@ -106,10 +106,10 @@ async function convertPre16Assets(original) {
                 fileName: fileName
             };
             newData.push(obj);
-        };
+        }
         resolve(newData);
     });
-};
+}
 
 
 

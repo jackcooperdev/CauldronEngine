@@ -32,7 +32,7 @@ async function checkDownloadAndCheck(item) {
         while (typeof validateItem == 'object') {
             const downloadItem = await download(validateItem.origin,validateItem.destination,validateItem.fileName);
             validateItem = await validate(item)
-        };
+        }
         resolve('pass')
         } catch (e) {
             cauldronLogger.error(e);
@@ -46,7 +46,7 @@ async function verifyInstallation(queue, isAssetDownload) {
         let concurrency = queue.length;
         if (isAssetDownload) {
             concurrency = queue.length / 2;
-        };
+        }
         const procQueue = await Promise.map(queue, checkDownloadAndCheck, { concurrency: concurrency})
         removeItem(procQueue, 'pass');
         resolve(procQueue)

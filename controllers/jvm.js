@@ -12,7 +12,7 @@ async function checkCompat(jVersion,jvmData) {
     } else {
         return false;
     }
-};
+}
 
 async function checkJVM(name, jvmMani) {
     return new Promise(async (resolve) => {
@@ -24,8 +24,8 @@ async function checkJVM(name, jvmMani) {
         for (idx in files) {
             if (files[idx].type == "directory") {
                 shelljs.mkdir('-p', path.join(CAULDRON_PATH, 'jvm', name, idx));
-            };
-        };
+            }
+        }
         let compressedFiles = new Array();
         let dQueue = new Array();   
         for (sIdx in files) {
@@ -40,15 +40,15 @@ async function checkJVM(name, jvmMani) {
                     }
                 } catch (err) {
                     downUrl = files[sIdx].downloads.raw.url;
-                };
+                }
                 dQueue.push({ origin: downUrl, destination: path.join(downloadPath, '../',),sha1: files[sIdx].downloads.raw.sha1,fileName:sIdx.split("/")[sIdx.split("/").length - 1] });
             }
-        };
+        }
 
         let checkForFiles = await verifyInstallation(dQueue);
         if (getOperatingSystem() == 'linux') {
             await shelljs.chmod('+x', path.join(CAULDRON_PATH,'jvm',name,'bin','java'));
-        };
+        }
         cauldronLogger.info(`Java Installation Verified`);
         let currentJVMFile = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'jvm_installed.json')));
         let jvmObj = {
@@ -59,7 +59,7 @@ async function checkJVM(name, jvmMani) {
         fs.writeFileSync(path.join(CAULDRON_PATH, 'jvm_installed.json'), JSON.stringify(currentJVMFile));
         resolve(true);
     })
-};
+}
 
 
 

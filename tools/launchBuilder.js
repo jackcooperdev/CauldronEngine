@@ -31,7 +31,7 @@ async function logInjector(logFile, sessionID) {
     let logFileCont = fs.readFileSync(logFile).toString();
     logFileCont = injector.create(logFileCont, { 'log_loc': path.join(CAULDRON_PATH, 'sessionLogs', sessionID, 'mcLogs.log') });
     fs.writeFileSync(path.join(logFile, '../', 'log_config.xml'), logFileCont)
-};
+}
 
 
 async function buildJVMRules(manifest, libraryList, versionData, overides) {
@@ -42,13 +42,13 @@ async function buildJVMRules(manifest, libraryList, versionData, overides) {
         if (overides) {
             for (idx in overides) {
                 cusJVM[idx] = overides[idx]
-            };
-        };
+            }
+        }
         let setVersion = versionData.version;
         if (versionData.loader != 'vanilla') {
             setVersion = `${versionData.loader}-${versionData.version}-${versionData.loaderVersion}`;
             libraryList.push(path.join(CAULDRON_PATH, 'libraries', 'net', 'minecraftforge', 'forge', `${versionData.version}-${versionData.loaderVersion}`, `forge-${versionData.version}-${versionData.loaderVersion}.jar`));
-        };
+        }
         libraryList.push(path.join(CAULDRON_PATH, 'versions', manifest.id, `${manifest.id}.jar`));
         jvmRules = manifest.arguments.jvm;
         let validRules = new Array();
@@ -68,15 +68,15 @@ async function buildJVMRules(manifest, libraryList, versionData, overides) {
                     } else {
                         validRules.push(jvmRules[idx].value)
                     }
-                };
-            };
-        };
+                }
+            }
+        }
 
         let logPath = "";
         if (manifest.logging) {
             validRules.push(manifest.logging.client.argument);
             logPath = path.join(CAULDRON_PATH, 'assets', 'log_configs', manifest.logging.client.file.id)
-        };
+        }
 
         //Check if version requires proxy
         let proxyPort = false;
@@ -94,7 +94,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overides) {
         if (proxyPort) {
             validRules.push("-Dhttp.proxyHost=betacraft.uk");
             validRules.push("-Dhttp.proxyPort=" + proxyPort)
-        };
+        }
         let libOccurneces = {};
         let repeatedLibs = {};
         for (idx in libraryList) {
@@ -104,15 +104,15 @@ async function buildJVMRules(manifest, libraryList, versionData, overides) {
                 repeatedLibs[libPath] = libOccurneces[libPath];
             } else {
                 libOccurneces[libPath] = [libraryList[idx]];
-            };
-        };
+            }
+        }
 
         if (requiresLibPatch[versionData.loader].includes(versionData.version)) {
             for (rLibs in repeatedLibs) {
                 let index = libraryList.indexOf(repeatedLibs[rLibs][0])
                 libraryList.splice(index, 1);
-            };
-        };
+            }
+        }
         // Run Plugin Code
         const plugin = await getJVMArgsPlugin(versionData.loader, { manifest, libraryList, versionData, overides })
         if (plugin) {
@@ -120,7 +120,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overides) {
             libraryList = plugin.libraryList;
             versionData = plugin.versionData;
             overides = plugin.overides;
-        };
+        }
         // Convert Library List into Joined List
         let classPathSep = ""
         if (osCurrent == 'win32') {
@@ -129,7 +129,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overides) {
         } else {
             classPath = libraryList.join(":")
             classPathSep = ':'
-        };
+        }
 
         let relVaribles = {
             natives_directory: path.join(CAULDRON_PATH, 'versions', manifest.id, 'natives'),
@@ -147,10 +147,10 @@ async function buildJVMRules(manifest, libraryList, versionData, overides) {
             if (validRules[rIdx]) {
                 validRules[rIdx] = injector.create(validRules[rIdx], relVaribles);
             }
-        };
+        }
         resolve(validRules);
     })
-};
+}
 
 async function buildGameRules(manifest, loggedUser, overides, addit) {
     return new Promise(async (resolve) => {
@@ -161,11 +161,11 @@ async function buildGameRules(manifest, loggedUser, overides, addit) {
             if (!allGameRules[gRules].rules) {
                 gameRules.push(allGameRules[gRules])
             }
-        };
+        }
         if (!gameRules.includes("--versionType")) {
             gameRules.push('--versionType');
             gameRules.push('${version_type}')
-        };
+        }
 
         let gameVars = {
             auth_player_name: loggedUser.profile.username,
@@ -175,7 +175,7 @@ async function buildGameRules(manifest, loggedUser, overides, addit) {
         };
         for (idx in overides) {
             gameVars[idx] = overides[idx]
-        };
+        }
 
         let gameVariables = {
             auth_player_name: gameVars.auth_player_name,
@@ -200,7 +200,7 @@ async function buildGameRules(manifest, loggedUser, overides, addit) {
             gameVariables.game_assets = path.join(CAULDRON_PATH, 'resources');
         } else {
             gameVariables.game_assets = path.join(CAULDRON_PATH, 'assets');
-        };
+        }
         for (idx in addit) {
             gameRules.push(addit[idx])
         }
@@ -214,11 +214,11 @@ async function buildGameRules(manifest, loggedUser, overides, addit) {
         }
         for (gIdx in gameRules) {
             gameRules[gIdx] = injector.create(gameRules[gIdx], gameVariables);
-        };
+        }
         // Grab Additonal
         resolve(gameRules);
     });
-};
+}
 
 async function buildFile(manifest, jreVersion, validRules, gameRules) {
     let CAULDRON_PATH = grabPath();
@@ -243,6 +243,6 @@ async function buildFile(manifest, jreVersion, validRules, gameRules) {
     }
 
 
-};
+}
 
 module.exports = { buildJVMRules, buildGameRules, buildFile, logInjector }

@@ -83,7 +83,7 @@ async function getManifest(fVersion, version, versionCache) {
             reject(error);
         }
     });
-};
+}
 
 // Handle Regular Maniests (~1.12.2 and above)
 
@@ -94,7 +94,7 @@ async function handleRegFormat(fVersion, version, versionCache, profileFile, ins
             // Remove LegacyFixer if present
             if (fs.existsSync(path.join(CAULDRON_PATH, 'mods', 'legacyjavafixer-1.0.jar'))) {
                 fs.rmSync(path.join(CAULDRON_PATH, 'mods', 'legacyjavafixer-1.0.jar'))
-            };
+            }
 
             const versionFileBuffer = await installer.entryData('version.json');
             const versionFile = JSON.parse(versionFileBuffer);
@@ -104,7 +104,7 @@ async function handleRegFormat(fVersion, version, versionCache, profileFile, ins
             let libraries = versionFile.libraries;
             if (libraries[0].name.includes("client")) {
                 libraries.shift();
-            };
+            }
 
             // Create new Manifest Data from Template
             let manifestData = template;
@@ -126,7 +126,7 @@ async function handleRegFormat(fVersion, version, versionCache, profileFile, ins
 
             } else {
                 manifestData.arguments.game = versionFile.minecraftArguments.split(" ");
-            };
+            }
 
             //Add Vanilla Data to manifest
             manifestData.assetIndex = versionCache.assetIndex;
@@ -155,14 +155,14 @@ async function handleRegFormat(fVersion, version, versionCache, profileFile, ins
                 for (const entry of Object.values(entries)) {
                     if (entry.name.includes(forgePath.split("\\").join("/")) && !entry.isDirectory) {
                         filesInMaven.push(entry.name);
-                    };
-                };
+                    }
+                }
                 for (fIdx in filesInMaven) {
                     let removeMaven = filesInMaven[fIdx].split("maven")[1];
                     const mFileBuffer = await installer.entryData(filesInMaven[fIdx]);
                     fs.writeFileSync(path.join(CAULDRON_PATH, 'libraries', removeMaven), mFileBuffer);
-                };
-            };
+                }
+            }
 
             //Convert To Default Format and fill in blank values (prob JVM args)
 
@@ -197,8 +197,8 @@ async function handleLegacyFormat(fVersion, version, versionCache, profileFile, 
             } else {
                 if (fs.existsSync(path.join(CAULDRON_PATH, 'mods', 'legacyjavafixer-1.0.jar'))) {
                     fs.rmSync(path.join(CAULDRON_PATH, 'mods', 'legacyjavafixer-1.0.jar'))
-                };
-            };
+                }
+            }
 
             // Replace versionInfo Variable
             let versionInfo = profileFile.versionInfo;
@@ -220,7 +220,7 @@ async function handleLegacyFormat(fVersion, version, versionCache, profileFile, 
                 // If URL is not extracted use default Minecraft Library Path
                 if (!url) {
                     url = LIBRARY_PATH;
-                };
+                }
                 // Convert Library Name To Path and URL
                 let pathChunks = convertNameToPath(forgeLibs[idx].name);
                 let libraryPath = `${pathChunks.chunkOne}/${pathChunks.chunkTwo}/${pathChunks.chunkThree}/${pathChunks.chunkTwo}-${pathChunks.chunkThree}.jar`;
@@ -256,7 +256,7 @@ async function handleLegacyFormat(fVersion, version, versionCache, profileFile, 
                     // Check For Rules
                     if (forgeLibs[idx].rules) {
                         rules = forgeLibs[idx].rules;
-                    };
+                    }
 
                     // Check For Natives
 
@@ -269,7 +269,7 @@ async function handleLegacyFormat(fVersion, version, versionCache, profileFile, 
                                 "url": `${url}${pathChunks.chunkOne}/${pathChunks.chunkTwo}/${pathChunks.chunkThree}/${pathChunks.chunkTwo}-${pathChunks.chunkThree}-${lNatives[nIdx]}.jar`
                             }
                             classifiers[lNatives[nIdx]] = obj
-                        };
+                        }
                     } else {
                         let obj = {
                             url: libraryURL,
@@ -277,7 +277,7 @@ async function handleLegacyFormat(fVersion, version, versionCache, profileFile, 
                             path: `${pathChunks.chunkOne}/${pathChunks.chunkTwo}/${pathChunks.chunkThree}/${pathChunks.chunkTwo}-${pathChunks.chunkThree}.jar`,
                         };
                         artifact = obj;
-                    };
+                    }
 
                     //Create New Library
                     let newLib = {
@@ -292,29 +292,29 @@ async function handleLegacyFormat(fVersion, version, versionCache, profileFile, 
                     let removeUndefined = JSON.parse(JSON.stringify(newLib));
                     if (Object.keys(removeUndefined.downloads.classifiers).length == 0) {
                         delete removeUndefined.downloads.classifiers;
-                    };
+                    }
                     // Clean Up
                     if (removeUndefined.rules.length == 0) {
                         delete removeUndefined.rules;
-                    };
+                    }
 
                     // Add Library to Manifest Data
                     manifestData.libraries.push(removeUndefined);
 
-                };
+                }
 
-            };
+            }
             resolve(manifestData);
         } catch (error) {
             reject(error);
         }
     });
-};
+}
 
 
 function getData() {
     return FORGE_PROMO;
-};
+}
 
 
 module.exports = { getManifest, getData };

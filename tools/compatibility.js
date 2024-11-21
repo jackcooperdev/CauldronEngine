@@ -19,7 +19,7 @@ function grabPath() {
     shell.mkdir('-p', path.join(pathReturn))
     return pathReturn
 
-};
+}
 
 let osConvertStandard = { 'win32': 'windows', 'linux': 'linux', 'darwin': 'osx' };
 
@@ -38,7 +38,7 @@ function getOperatingSystem(isJVM) {
         } else {
             if (actualOS == 'linux') {
                 return actualOS
-            };
+            }
             if (actualOS == 'windows') {
                 if (archCurrent == 'x64') {
                     return 'windows-x64'
@@ -47,12 +47,12 @@ function getOperatingSystem(isJVM) {
                 } else {
                     return 'windows-x86'
                 }
-            };
+            }
 
             if (actualOS == 'darwin') {
                 if (archCurrent.includes('arm')) {
                     return 'mac-os-arm64'
-                };
+                }
             } else {
                 return 'macos'
             }

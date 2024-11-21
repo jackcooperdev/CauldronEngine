@@ -1,12 +1,8 @@
 const fs = require('fs');
-const homedir = require('os').homedir();
 const path = require('path');
 const shelljs = require('shelljs');
 const axios = require('axios');
 const osCurrent = require('os').platform();
-
-// Import Other Controllers
-const { processQueue } = require('./queue');
 
 // Import Tools
 const { grabPath } = require('../tools/compatibility');
@@ -24,12 +20,14 @@ async function checkManifest(fileName, url, requiresConvert, type) {
         let isOnline = await checkInternet();
         let CAULDRON_PATH = grabPath();
         try {
-            let expected = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, fileName)));
-            if (isOnline && !requiresConvert && type == 'main') {
+            let expected = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, fileName)).toString());
+            if (isOnline && !requiresConvert && type === 'main') {
                 // Only Update Main Manifest
-                downloadManifest(url, path.join(CAULDRON_PATH, fileName))
+                downloadManifest(url, path.join(CAULDRON_PATH, fileName)).then(function () {
+                    cauldronLogger.info("Updated Local Manifest");
+                })
             }
-            resolve(expected)
+            resolve(expected);
         } catch (err) {
             cauldronLogger.warn(`${fileName} not found trying to download`);
             if (isOnline) {
@@ -84,9 +82,9 @@ async function downloadOther(url, dir) {
             resolve(file.data);
         } catch (err) {
             reject(err.message)
-        };
+        }
     })
-};
+}
 
 let convertManifests = {
     'assets': convertAssets,
@@ -111,9 +109,9 @@ async function downloadManifest(url, dir, requiresConvert, type) {
             resolve(fileData);
         } catch (err) {
             reject(err.message)
-        };
+        }
     })
-};
+}
 
 async function getPackwizJVM() {
     // Used to Assist Packwiz on client.
@@ -148,7 +146,7 @@ async function getPackwizJVM() {
         }
 
     })
-};
+}
 
 
 async function getManifests(v, l, lv) {
@@ -158,12 +156,12 @@ async function getManifests(v, l, lv) {
             // Check for asset file
             if (!fs.existsSync(path.join(CAULDRON_PATH, 'assets_installed.json'))) {
                 fs.writeFileSync(path.join(CAULDRON_PATH, 'assets_installed.json'), '{}');
-            };
+            }
 
              // Check for jvm file
              if (!fs.existsSync(path.join(CAULDRON_PATH, 'jvm_installed.json'))) {
                 fs.writeFileSync(path.join(CAULDRON_PATH, 'jvm_installed.json'), '{}');
-            };
+            }
             const assetDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'assets_installed.json')));
             const jvmDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'jvm_installed.json')));
             // Convert to Actual Values
@@ -177,13 +175,13 @@ async function getManifests(v, l, lv) {
             const foundVersionData = getMain.versions.find(versionName => versionName.id === version);
             if (!foundVersionData) {
                 throw new Error('Version Not Found')
-            };
+            }
             const getSpec = await checkManifest(path.join('versions', foundVersionData.id, foundVersionData.id + '.json'), foundVersionData.url);
             if (loader != 'vanilla') {
                 createdManifest = await checkManifestPlugin(loader,loaderVersion, version, getSpec,gotVersion);
             } else {
                 createdManifest = await attemptToConvert(getSpec);
-            };
+            }
             if (createdManifest.logging) {
                 let grabLogging = await checkOther(path.join('assets', 'log_configs', createdManifest.logging.client.file.id), NEW_LOGS[createdManifest.logging.client.file.id].url);
             } else {
@@ -207,25 +205,25 @@ async function getManifests(v, l, lv) {
                 let jvmMani = await checkManifest(path.join('jvm', createdManifest.javaVersion.component + '.json'), jvmCompat[0].manifest.url);
             } else {
                 reject('Version Not Suppourted on ' + osCurrent);
-            };
+            }
             // Assets
             const assetMani = await checkManifest(path.join('assets', 'indexes', createdManifest.assets + '.json'), createdManifest.assetIndex.url);
             let specCond = createdManifest.assets
             if (createdManifest.assets != 'legacy' && createdManifest.assets != 'pre-1.6') {
                 specCond = 'assets'
-            };
+            }
             const assetsConverted = await checkManifest(path.join('assets', 'indexes', createdManifest.assets + '-cauldron.json'), createdManifest.assetIndex.url, true, specCond);
 
             // TODO: Add verification expiratition (Session Based???)
             let haveAssetsBeenDownloaded = false;
             if (assetDict[createdManifest.assets]) {
                 haveAssetsBeenDownloaded = true;
-            };
+            }
 
             let hasJVMBeenDownloaded = false;
             if (jvmDict[createdManifest.javaVersion.component]) {
                 hasJVMBeenDownloaded = true;
-            };
+            }
 
             let allManifiests = {
                 main: getMain,
@@ -251,7 +249,7 @@ async function getManifests(v, l, lv) {
         }
 
     })
-};
+}
 
 
 // What Is This? Function
@@ -261,7 +259,7 @@ async function getManifests(v, l, lv) {
 async function whatIsThis(version, loader, lVersion, MANIFEST) {
     if (!loader) {
         loader = 'vanilla';
-    };
+    }
     let versionFound = "";
     if (version == 'release' || version == 'latest') {
         versionFound = MANIFEST.latest.release;
@@ -269,20 +267,20 @@ async function whatIsThis(version, loader, lVersion, MANIFEST) {
         versionFound = MANIFEST.latest.snapshot;
     } else {
         versionFound = version
-    };
+    }
     let rObject = { version: versionFound, loaderVersion: '', loader: loader }
     try {
         if (loader != 'vanilla') {
             if (!lVersion) {
                 lVersion = await getIdentifierPlugin(loader,versionFound,MANIFEST)
-            };
+            }
             rObject.loaderVersion = lVersion;
-        };
+        }
     } catch (err) {
         throw new Error(err.message)
-    };
+    }
     return rObject;
-};
+}
 
 
 module.exports = { getManifests, getPackwizJVM,  checkManifest }

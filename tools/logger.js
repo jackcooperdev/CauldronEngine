@@ -62,10 +62,10 @@ server.on('connection', function (sock) {
                         default:
                             mcLogger.error(dataMessage.join(" "));
                             break;
-                    };
-                };
-            };
-        };
+                    }
+                }
+            }
+        }
     });
     sock.on('close', function (data) {
         let index = sockets.findIndex(function (o) {

@@ -18,13 +18,13 @@ const { getPostPlugin } = require('../plugins/plugins');
 async function launchGame(version, dry, loader, lVersion, authData, sessionID, overrides) {
     if (!dry) {
         dry = false;
-    };
+    }
     if (!overrides) {
         overrides = { 'jvm': {}, 'game': {}, 'additG': {} };
     }
     if (!loader) {
         loader = 'vanilla';
-    };
+    }
     return new Promise(async (resolve, reject) => {
         let CAULDRON_PATH = grabPath();
         try {
@@ -50,11 +50,11 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
                 cauldronLogger.info('JVM Passed!');
             } else {
                 cauldronLogger.info("Skipping JVM")
-            };
+            }
 
             if (loader != 'vanilla') {
                 const checkForPost = await getPostPlugin(loader,manifests)
-            };
+            }
             if (!manifests.assetsDownloaded) {
                 cauldronLogger.info('Starting Asset Download');
                 cauldronLogger.info(`Index No: ${manifests.spec.assets}`);
@@ -62,7 +62,7 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
                 const assetGet = await getAssets(manifests.spec.assets, manifests.aseetsInfo);
             } else {
                 cauldronLogger.info("Skipping Assets");
-            };
+            }
             cauldronLogger.info('Starting Library Download')
             const libGet = await getLibraries(manifests.spec.libraries, manifests.versionData,manifests.spec.id);
             if (!dry) {
@@ -70,7 +70,7 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
                 cauldronLogger.info('Creating JVM Arguments');
                 if (manifests.spec.logging) {
                     let logsInjected = await logInjector(path.join(CAULDRON_PATH, 'assets', 'log_configs', manifests.spec.logging.client.file.id), sessionID)
-                };
+                }
                 let validRules = await buildJVMRules(manifests.spec, libGet, manifests.versionData, overrides.jvm);
                 cauldronLogger.info('Generating Game Arguments');
                 let gameRules = await buildGameRules(manifests.spec, authData, overrides.game, overrides.additG);
@@ -92,7 +92,7 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
         }
     })
 
-};
+}
 
 
 module.exports = { launchGame };

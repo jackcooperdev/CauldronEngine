@@ -18,7 +18,7 @@ async function getLibraries(libData, versionData,maniID) {
                 version = versionData.version;
             } else if (versionData.loader == 'forge') {
                 version = `forge-${versionData.version}-${versionData.loaderVersion}`;
-            };
+            }
             let acutalOS = getOperatingSystem();
             let dQueue = new Array();
             let libArray = new Array();
@@ -26,7 +26,7 @@ async function getLibraries(libData, versionData,maniID) {
             let nativeLock = false;
             if (fs.existsSync(path.join(CAULDRON_PATH, 'versions', maniID, 'natives'))) {
                 nativeLock = true;
-            };
+            }
             for (idx in libData) {
                 libAllowed = true;
                 if (libData[idx].rules) {
@@ -35,14 +35,14 @@ async function getLibraries(libData, versionData,maniID) {
                             if (libData[idx].rules[rIdx].os) {
                                 if (libData[idx].rules[rIdx].os.name != acutalOS) {
                                     libAllowed = false;
-                                };
-                            };
+                                }
+                            }
                         } else {
                             if (libData[idx].rules[rIdx].os) {
                                 if (libData[idx].rules[rIdx].os.name == acutalOS) {
                                     libAllowed = false;
-                                };
-                            };
+                                }
+                            }
                         }
                     }
                 }
@@ -57,7 +57,7 @@ async function getLibraries(libData, versionData,maniID) {
                         };
                         dQueue.push(obj);
                         libArray.push(path.join(obj.destination, obj.fileName));
-                    };
+                    }
                     if (libData[idx].downloads.classifiers && checkInternet() && !nativeLock) {
                         let natives = libData[idx].downloads.classifiers[libData[idx].natives[acutalOS]];
                         if (!natives) {
@@ -85,18 +85,18 @@ async function getLibraries(libData, versionData,maniID) {
                                 for (const entry of Object.values(entries)) {
                                     if (!entry.name.includes("META-INF") && !entry.name.includes(".git") && !entry.name.includes(".sha1")) {
                                         await zip.extract(entry.name, path.join(CAULDRON_PATH, 'versions', maniID, 'natives'));
-                                    };
-                                };
+                                    }
+                                }
                                 zip.close();
                                 fs.rmSync(path.join(CAULDRON_PATH, 'versions', maniID, 'natives', obj.fileName))
                             }
-                        };
-                    };
-                };
-            };
+                        }
+                    }
+                }
+            }
             if (checkInternet()) {
                 let checkForFiles = await verifyInstallation(dQueue,false);
-            };
+            }
             cauldronLogger.info(`Checksums Passed Install is Valid!2`);
             resolve(libArray);
         } catch (err) {

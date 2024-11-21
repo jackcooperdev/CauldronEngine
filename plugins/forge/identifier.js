@@ -15,19 +15,19 @@ async function identifier(version, forgePromos) {
         if (unsupportedVersions.includes(version)) {
             destroySession();
             reject(`Sorry but Cauldron does not support ${version} forge yet. CODE: BLVER`);
-        };
+        }
         let forgeVersion = forgePromos.promos[`${version}-${type}`];
         if (!forgeVersion) {
             forgeVersion = forgePromos.promos[`${version}-latest`];
             if (!forgeVersion) {
                 reject('Version Does Not Exist')
             }
-        };
+        }
         cauldronLogger.info("Forge Plugin Created By @jackcooper04");
         cauldronLogger.warn("Forge is still experimental. Expect Crashes");
         resolve(forgeVersion);
     })
-};
+}
 
 
 module.exports = { identifier };
