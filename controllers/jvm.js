@@ -16,6 +16,7 @@ async function checkCompat(jVersion,jvmData) {
 
 async function checkJVM(name, jvmMani) {
     return new Promise(async (resolve) => {
+
         let CAULDRON_PATH = grabPath();
         shelljs.mkdir('-p', path.join(CAULDRON_PATH, 'jvm', name));
         fs.writeFileSync(path.join(CAULDRON_PATH, 'jvm', name + '.json'), JSON.stringify(jvmMani));
@@ -38,7 +39,7 @@ async function checkJVM(name, jvmMani) {
                 let downloadPath = path.join(CAULDRON_PATH, 'jvm', name, sIdx)
                 try {
                     if (selectedFile.executable) {
-                        downUrl = selectedFile.downloads.lzma.url;
+                        downUrl = selectedFile.downloads.raw.url;
 
                     } else {
                         downUrl = selectedFile.downloads.raw.url;
@@ -49,7 +50,6 @@ async function checkJVM(name, jvmMani) {
                 dQueue.push({ origin: downUrl, destination: path.join(downloadPath, '../',),sha1: selectedFile.downloads.raw.sha1,fileName:sIdx.split("/")[sIdx.split("/").length - 1] });
             }
         }
-
         await verifyInstallation(dQueue);
         if (getOperatingSystem() === 'linux') {
             await shelljs.chmod('+x', path.join(CAULDRON_PATH,'jvm',name,'bin','java'));

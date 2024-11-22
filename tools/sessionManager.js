@@ -1,6 +1,3 @@
-
-const {cauldronLogger} = require("./logger");
-
 let currentSessions = {};
 
 
@@ -40,7 +37,7 @@ async function destroySession(sessionID) {
             delete currentSessions[sessionID];
         }
     } catch (err) {
-        cauldronLogger.error(err.message);
+        // do nothing
     }
     
 }

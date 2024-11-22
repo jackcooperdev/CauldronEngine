@@ -24,6 +24,7 @@ async function download(url, location, fileName) {
                     await downloader.download(); //Downloader.download() resolves with some useful properties.
                     resolve(true);
                 } catch (error) {
+                    console.log(error)
                     //IMPORTANT: Handle a possible error. An error is thrown in case of network errors, or status codes of 400 and above.
                     //Note that if the maxAttempts is set to higher than 1, the error is thrown only if all attempts fail.
                     resolve(false);
@@ -34,7 +35,6 @@ async function download(url, location, fileName) {
         }
     });
 }
-
 
 
 
