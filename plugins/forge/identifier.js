@@ -10,12 +10,15 @@ let unsupportedVersions = require('./files/blocked_versions.json');
 async function identifier(version, forgePromos) {
     return new Promise(async (resolve, reject) => {
 
-        type = 'recommended';
+        let type = 'recommended';
 
         if (unsupportedVersions.includes(version)) {
-            destroySession();
+            await destroySession();
             reject(`Sorry but Cauldron does not support ${version} forge yet. CODE: BLVER`);
         }
+        /**
+         * @param forgePromos.promos
+         */
         let forgeVersion = forgePromos.promos[`${version}-${type}`];
         if (!forgeVersion) {
             forgeVersion = forgePromos.promos[`${version}-latest`];

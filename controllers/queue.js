@@ -1,11 +1,6 @@
-const Downloader = require("nodejs-file-downloader");
-const fs = require('fs')
-let lzma = require('lzma-native');
-const crypto = require('crypto');
-const path = require('path');
+
 const Promise = require('bluebird');
-const { download, validate, extract } = require("../tools/fileTools");
-let _ = require('lodash');
+const { download, validate } = require("../tools/fileTools");
 const { cauldronLogger } = require("../tools/logger");
 
 
@@ -30,7 +25,7 @@ async function checkDownloadAndCheck(item) {
         try {
             let validateItem = await validate(item);
         while (typeof validateItem == 'object') {
-            const downloadItem = await download(validateItem.origin,validateItem.destination,validateItem.fileName);
+            await download(validateItem.origin,validateItem.destination,validateItem.fileName);
             validateItem = await validate(item)
         }
         resolve('pass')

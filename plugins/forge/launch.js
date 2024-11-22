@@ -5,18 +5,18 @@ async function jvm(data) {
     return new Promise(async (resolve, reject) => {
         try {
             let CAULDRON_PATH = grabPath();
-            let { manifest, libraryList, versionData, overides } = data;
+            let { manifest, libraryList, versionData, overrides } = data;
             if (forceComp[versionData.version]) {
-                if (forceComp[versionData.version][0] == 'legacy') {
+                if (forceComp[versionData.version][0] === 'legacy') {
                     // Legacy Compat
                     libraryList.push(path.join(CAULDRON_PATH, 'libraries', 'net/minecraftforge/minecraftforge',versionData.loaderVersion,`minecraftforge-${versionData.version}-${versionData.loaderVersion}.jar` ));
 
                 }
-                for (fIdx in forceComp[versionData.version]) {
+                for (let fIdx in forceComp[versionData.version]) {
                     libraryList.push(path.join(CAULDRON_PATH, 'libraries', 'net/minecraftforge/forge', `${versionData.version}-${versionData.loaderVersion}`, `forge-${versionData.version}-${versionData.loaderVersion}-${forceComp[versionData.version][fIdx]}.jar`));
                 }
             }
-            resolve({manifest, libraryList, versionData, overides })
+            resolve({manifest, libraryList, versionData, overrides })
         } catch (err) {
             reject(err)
         }

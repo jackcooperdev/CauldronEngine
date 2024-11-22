@@ -18,14 +18,13 @@ const LIBRARY_PATH = "https://libraries.minecraft.net/"
 //Files
 let reqLegMod = require('./files/requires_legacy_mod.json');
 let template = require('../../files/manifestTemplate.json');
-let extraCompat = require('./files/force_compat.json');
 const { attemptToConvert } = require('../../tools/manifestConverter');
 
 async function getManifest(fVersion, version, versionCache) {
     return new Promise(async (resolve, reject) => {
         let CAULDRON_PATH = grabPath();
         try {
-            // Aquire Installer URL (online or from cache)
+            // Acquire Installer URL (online or from cache)
             let grabForgeInstaller = await getForgeInstallerURL(version, fVersion);
             cauldronLogger.info("Forge Installer Path: " + grabForgeInstaller);
 
@@ -38,15 +37,15 @@ async function getManifest(fVersion, version, versionCache) {
             };
 
             // Download / Skip Downloading Installer
-            let downloadInstaller = await verifyInstallation([installObj]);
+            await verifyInstallation([installObj]);
 
 
-            // Extract File and aquire install_profile.json
+            // Extract File and acquire install_profile.json
             const installer = new StreamZip.async({ file: path.join(CAULDRON_PATH, 'forge-installers', installObj.fileName) });
-            const installerFiles = await installer.entries();
+            await installer.entries();
             const profileFileBuffer = await installer.entryData('install_profile.json');
-            const profileFile = JSON.parse(profileFileBuffer);
-
+            const profileFile = JSON.parse(profileFileBuffer.toString());
+            let manifestData;
             // Determine Manifest Format
             if (!profileFile.json) {
                 cauldronLogger.info("Manifest Format: Legacy");
@@ -71,7 +70,7 @@ async function getManifest(fVersion, version, versionCache) {
 
 
             // Close and Remove Installer File
-            installer.close();
+            await installer.close();
 
 
             //Convert To Default Format and fill in blank values (prob JVM args)
@@ -85,7 +84,7 @@ async function getManifest(fVersion, version, versionCache) {
     });
 }
 
-// Handle Regular Maniests (~1.12.2 and above)
+// Handle Regular Manifests (~1.12.2 and above)
 
 async function handleRegFormat(fVersion, version, versionCache, profileFile, installer) {
     return new Promise(async (resolve, reject) => {
@@ -109,13 +108,15 @@ async function handleRegFormat(fVersion, version, versionCache, profileFile, ins
             // Create new Manifest Data from Template
             let manifestData = template;
 
-            // Set ID and Mainclass
+            // Set ID and Main class
             manifestData.id = `forge-${version}-${fVersion}`;
             manifestData.mainClass = versionFile.mainClass;
 
             //No Need to convert library list as its already in standard format.
             manifestData.libraries = [...versionCache.libraries, ...libraries];
-
+            /**
+             * @param versionFile.minecraftArguments
+             */
             if (!versionFile.minecraftArguments) {
                 manifestData.arguments.game = [...versionFile.arguments.game, ...versionCache.arguments.game];
                 if (versionFile.arguments.jvm) {
@@ -139,25 +140,25 @@ async function handleRegFormat(fVersion, version, versionCache, profileFile, ins
             shelljs.mkdir('-p', path.join(CAULDRON_PATH, 'libraries', mainForge.downloads.artifact.path, '../'));
 
             // Check for universal download link. If none extract from maven
-            if (mainForge.downloads.artifact.url != "") {
+            if (mainForge.downloads.artifact.url !== "") {
                 let obj = {
                     origin: mainForge.downloads.artifact.url,
                     sha1: mainForge.downloads.artifact.sha1,
                     destination: path.join(CAULDRON_PATH, 'libraries', mainForge.downloads.artifact.path, '../'),
                     fileName: path.basename(mainForge.downloads.artifact.path)
                 };
-                let checkForMod = await verifyInstallation([obj]);
+                await verifyInstallation([obj]);
             } else {
                 cauldronLogger.info("No Universal Download Link. Assuming Path");
                 let forgePath = path.join('net', 'minecraftforge', 'forge', `${version}-${fVersion}`)
                 const entries = await installer.entries();
-                let filesInMaven = new Array();
+                let filesInMaven = [];
                 for (const entry of Object.values(entries)) {
                     if (entry.name.includes(forgePath.split("\\").join("/")) && !entry.isDirectory) {
                         filesInMaven.push(entry.name);
                     }
                 }
-                for (fIdx in filesInMaven) {
+                for (let fIdx in filesInMaven) {
                     let removeMaven = filesInMaven[fIdx].split("maven")[1];
                     const mFileBuffer = await installer.entryData(filesInMaven[fIdx]);
                     fs.writeFileSync(path.join(CAULDRON_PATH, 'libraries', removeMaven), mFileBuffer);
@@ -185,7 +186,7 @@ async function handleLegacyFormat(fVersion, version, versionCache, profileFile, 
         let CAULDRON_PATH = grabPath();
         try {
 
-            // Aquire Java Fixer if version needs it
+            // Acquire Java Fixer if version needs it
             if (reqLegMod.includes(version)) {
                 let obj = [{
                     origin: "https://files.cauldronmc.com/other/legacyjavafixer-1.0.jar",
@@ -193,7 +194,7 @@ async function handleLegacyFormat(fVersion, version, versionCache, profileFile, 
                     destination: path.join(CAULDRON_PATH, 'mods'),
                     fileName: 'legacyjavafixer-1.0.jar'
                 }];
-                let checkForMod = await verifyInstallation(obj);
+                await verifyInstallation(obj);
             } else {
                 if (fs.existsSync(path.join(CAULDRON_PATH, 'mods', 'legacyjavafixer-1.0.jar'))) {
                     fs.rmSync(path.join(CAULDRON_PATH, 'mods', 'legacyjavafixer-1.0.jar'))
@@ -214,7 +215,7 @@ async function handleLegacyFormat(fVersion, version, versionCache, profileFile, 
             let forgeLibs = versionInfo.libraries;
 
             // Process and convert forge libraries into standard format
-            for (idx in forgeLibs) {
+            for (let idx in forgeLibs) {
                 // Attempt to extract URL from Library
                 let url = forgeLibs[idx].url;
                 // If URL is not extracted use default Minecraft Library Path
@@ -227,7 +228,7 @@ async function handleLegacyFormat(fVersion, version, versionCache, profileFile, 
                 let libraryURL = `${url}${libraryPath}`;
 
                 // Check if Current Forge Library is the forge version file
-                if (pathChunks.chunkTwo == 'forge') {
+                if (pathChunks.chunkTwo === 'forge') {
                     // Create Directory to Forge Version File
                     shelljs.mkdir('-p', path.join(CAULDRON_PATH, 'libraries', `net/minecraftforge/forge`, `${version}-${fVersion}`));
                     const versionFileBuffer = await installer.entryData(`forge-${version}-${fVersion}${getSuffixUsed()}-universal.jar`);
@@ -235,7 +236,7 @@ async function handleLegacyFormat(fVersion, version, versionCache, profileFile, 
                     fs.writeFileSync(path.join(CAULDRON_PATH, 'libraries', `net/minecraftforge/forge`, `${version}-${fVersion}`, `forge-${version}-${fVersion}.jar`), versionFileBuffer);
                     // Set Manifest ID
                     manifestData.id = `${pathChunks.chunkTwo}-${version}-${fVersion}`;
-                } else if (pathChunks.chunkTwo == 'minecraftforge') {
+                } else if (pathChunks.chunkTwo === 'minecraftforge') {
                     // ~1.6 Compatability
                     // Create Directory to Forge Version File
                     shelljs.mkdir('-p', path.join(CAULDRON_PATH, 'libraries', `net/minecraftforge/minecraftforge`, `${fVersion}`));
@@ -262,21 +263,19 @@ async function handleLegacyFormat(fVersion, version, versionCache, profileFile, 
 
                     if (forgeLibs[idx].natives) {
                         let lNatives = forgeLibs[idx].natives
-                        for (nIdx in lNatives) {
-                            let obj = {
+                        for (let nIdx in lNatives) {
+                            classifiers[lNatives[nIdx]] = {
                                 "path": `${pathChunks.chunkOne}/${pathChunks.chunkTwo}/${pathChunks.chunkThree}/${pathChunks.chunkTwo}-${pathChunks.chunkThree}-${lNatives[nIdx]}.jar`,
                                 "sha1": "NONE",
                                 "url": `${url}${pathChunks.chunkOne}/${pathChunks.chunkTwo}/${pathChunks.chunkThree}/${pathChunks.chunkTwo}-${pathChunks.chunkThree}-${lNatives[nIdx]}.jar`
                             }
-                            classifiers[lNatives[nIdx]] = obj
                         }
                     } else {
-                        let obj = {
+                        artifact = {
                             url: libraryURL,
                             sha1: 'NONE',
                             path: `${pathChunks.chunkOne}/${pathChunks.chunkTwo}/${pathChunks.chunkThree}/${pathChunks.chunkTwo}-${pathChunks.chunkThree}.jar`,
                         };
-                        artifact = obj;
                     }
 
                     //Create New Library
@@ -290,11 +289,11 @@ async function handleLegacyFormat(fVersion, version, versionCache, profileFile, 
                         rules: rules
                     };
                     let removeUndefined = JSON.parse(JSON.stringify(newLib));
-                    if (Object.keys(removeUndefined.downloads.classifiers).length == 0) {
+                    if (Object.keys(removeUndefined.downloads.classifiers).length === 0) {
                         delete removeUndefined.downloads.classifiers;
                     }
                     // Clean Up
-                    if (removeUndefined.rules.length == 0) {
+                    if (removeUndefined.rules.length === 0) {
                         delete removeUndefined.rules;
                     }
 

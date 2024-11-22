@@ -1,14 +1,12 @@
 const axios = require('axios');
-const jwt = require('jsonwebtoken');
 const { cauldronLogger } = require('./logger');
-const fs = require('fs');
-const path = require('path');
+
 const {checkInternet } = require('./checkConnection');
 
 // Verifies that the user owns a valid license of Minecraft
 
 async function verifyAccessToken(access_token) {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve) => {
         let config = {
             method: 'get',
             maxBodyLength: Infinity,
@@ -18,16 +16,16 @@ async function verifyAccessToken(access_token) {
             }
         };
         try {
-            const verify = await axios(config)
+            await axios(config);
             resolve(true)
         } catch (err) {
             if (err.code) {
-                if (err.code == 'ENOTFOUND') {
+                if (err.code === 'ENOTFOUND') {
                     //Assume Offline
                     // Sets Client to Offline
                     cauldronLogger.warn("Error Communicating with MinecraftServices!");
                     cauldronLogger.warn("Is Client Offline?");
-                    if (!checkInternet()) {
+                    if (!await checkInternet()) {
                         cauldronLogger.warn("Confirmed Client is Offline");
                         cauldronLogger.warn("Skipping step be warned client may not be authenticated!");
                         resolve(true);

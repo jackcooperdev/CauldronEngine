@@ -1,4 +1,3 @@
-const path = require('path');
 const { cauldronLogger } = require('../tools/logger');
 
 async function checkManifestPlugin(loader,loaderVersion, version, getSpec,getLoaderManifest) {
@@ -39,7 +38,7 @@ async function getIdentifierPlugin(loader,version,manifest) {
 }
 
 async function getPostPlugin(loader,manifest) {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve) => {
         try {
             let { postProcessing } = require(`./${loader}/post`);
             const data = await postProcessing(manifest);
@@ -53,7 +52,7 @@ async function getPostPlugin(loader,manifest) {
 
 
 async function getJVMArgsPlugin(loader,args) {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve) => {
         try {
             let { jvm } = require(`./${loader}/launch`);
             const data = await jvm(args);

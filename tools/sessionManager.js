@@ -1,7 +1,5 @@
-const fs = require('fs');
-const path = require('path');
-const shelljs = require('shelljs');
-const { grabPath } = require('./compatibility');
+
+const {cauldronLogger} = require("./logger");
 
 let currentSessions = {};
 
@@ -20,8 +18,8 @@ function createSession(data) {
 }
 
 function checkForGameSession() {
-    for (idx in currentSessions) {
-        if (currentSessions[idx].type == 'game') {
+    for (let idx in currentSessions) {
+        if (currentSessions[idx].type === 'game') {
             return true;
         }
     }
@@ -29,27 +27,23 @@ function checkForGameSession() {
 }
 
 
-
-function getSession(sessionID) {
-    return currentSessions[sessionID];
-}
-
 async function destroySession(sessionID) {
     try {
         if (!sessionID) {
-            for (idx in currentSessions) {
-                if (currentSessions[idx].type == 'game') {
+            for (let idx in currentSessions) {
+                if (currentSessions[idx].type === 'game') {
                     delete currentSessions[idx];
+                    return;
                 }
             }
         } else {
             delete currentSessions[sessionID];
         }
     } catch (err) {
-        
+        cauldronLogger.error(err.message);
     }
     
 }
 
 
-module.exports = { createSession, getSession, destroySession, createUUID,checkForGameSession };
+module.exports = { createSession, destroySession,checkForGameSession };

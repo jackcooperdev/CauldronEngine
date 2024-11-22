@@ -17,36 +17,37 @@ let suffixUsed = "";
 async function getForgeInstallerURL(version, forgeVersion) {
     let url = "";
     let CAULDRON_PATH = grabPath();
+    let acquiredForges;
     if (!fs.existsSync(path.join(CAULDRON_PATH,'forge-installers.json'))) {
-        aquiredForges = {}
+        acquiredForges = {}
         fs.writeFileSync(path.join(CAULDRON_PATH,'forge-installers.json'),'{}');
     } else {
-        aquiredForges = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH,'forge-installers.json')))
+        acquiredForges = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH,'forge-installers.json')).toString());
     }
-    if (aquiredForges[`${version}-${forgeVersion}`]) {
-        url = aquiredForges[`${version}-${forgeVersion}`].url;
-        if (aquiredForges[`${version}-${forgeVersion}`].suffix) {
-            suffixUsed = aquiredForges[`${version}-${forgeVersion}`].suffix
+    if (acquiredForges[`${version}-${forgeVersion}`]) {
+        url = acquiredForges[`${version}-${forgeVersion}`].url;
+        if (acquiredForges[`${version}-${forgeVersion}`].suffix) {
+            suffixUsed = acquiredForges[`${version}-${forgeVersion}`].suffix
         }
     } else {
         if (suffixes[version]) {
-            for (idx in suffixes[version]) {
+            for (let idx in suffixes[version]) {
                 url = `${FORGE_REPO}/forge/${version}-${forgeVersion}${suffixes[version][idx]}/forge-${version}-${forgeVersion}${suffixes[version][idx]}-installer.jar`;
                 const validateURL = await checkInstaller(url);
                 suffixUsed = suffixes[version][idx]
                 if (validateURL) {
-                    aquiredForges[`${version}-${forgeVersion}`] = {url:'',suffix:''};
-                    aquiredForges[`${version}-${forgeVersion}`]['url'] = url;
-                    aquiredForges[`${version}-${forgeVersion}`]['suffix'] = suffixUsed;
-                    fs.writeFileSync(path.join(CAULDRON_PATH,'forge-installers.json'),JSON.stringify(aquiredForges))
+                    acquiredForges[`${version}-${forgeVersion}`] = {url:'',suffix:''};
+                    acquiredForges[`${version}-${forgeVersion}`]['url'] = url;
+                    acquiredForges[`${version}-${forgeVersion}`]['suffix'] = suffixUsed;
+                    fs.writeFileSync(path.join(CAULDRON_PATH,'forge-installers.json'),JSON.stringify(acquiredForges))
                     break;
                 }
             }
         } else {
-            aquiredForges[`${version}-${forgeVersion}`] = {url:'',suffix:''};
+            acquiredForges[`${version}-${forgeVersion}`] = {url:'',suffix:''};
             url = `${FORGE_REPO}/forge/${version}-${forgeVersion}/forge-${version}-${forgeVersion}-installer.jar`;
-            aquiredForges[`${version}-${forgeVersion}`]['url'] = url;
-            fs.writeFileSync(path.join(CAULDRON_PATH,'forge-installers.json'),JSON.stringify(aquiredForges));
+            acquiredForges[`${version}-${forgeVersion}`]['url'] = url;
+            fs.writeFileSync(path.join(CAULDRON_PATH,'forge-installers.json'),JSON.stringify(acquiredForges));
         }
         if (!url) {
             throw new Error(`Sorry but Cauldron does not support ${version} - ${forgeVersion} forge yet. CODE: URLNFOUNDA`);
@@ -68,7 +69,7 @@ async function checkInstaller(url) {
         url: url
     };
     try {
-        const res = await axios(config);
+        await axios(config);
         return true;
     } catch (err) {
         return false;

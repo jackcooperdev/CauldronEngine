@@ -5,18 +5,19 @@ const path = require('path')
 
 
 
-async function attemptToConvert(original, overides) {
+async function attemptToConvert(original) {
     let newTemplate = template;
     // Fill Template As Much as Possible
-    for (idx in newTemplate) {
+    for (let idx in newTemplate) {
         newTemplate[idx] = original[idx]
     }
+    let javaVersion;
     if (!newTemplate['javaVersion']) {
         javaVersion = { component: 'jre-legacy' };
         newTemplate['javaVersion'] = javaVersion;
     }
 
-    if (!newTemplate['arguments'] || !newTemplate['arguments'].jvm || newTemplate['arguments'].jvm.length == 0) {
+    if (!newTemplate['arguments'] || !newTemplate['arguments'].jvm || newTemplate['arguments'].jvm.length === 0) {
         let arguments = [
             "-Djava.library.path=${natives_directory}",
             "-Dminecraft.launcher.brand=${launcher_name}",
@@ -32,10 +33,10 @@ async function attemptToConvert(original, overides) {
             "-XX:MaxGCPauseMillis=50",
             "-XX:G1HeapRegionSize=32M"
         ]
-        if (osCurrent == 'win32') {
+        if (osCurrent === 'win32') {
             arguments.push("-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump");
             arguments.push("-Dos.version=10.0");
-        } else if (osCurrent == 'darwin') {
+        } else if (osCurrent === 'darwin') {
             //arguments.push("-XstartOnFirstThread")
         }
         if (!newTemplate['arguments']) {
@@ -52,11 +53,11 @@ async function attemptToConvert(original, overides) {
 
 
 async function convertAssets(original) {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve) => {
         let CAULDRON_PATH = grabPath();
         let objs = original.objects;
-        let newData = new Array();
-        for (idx in objs) {
+        let newData = [];
+        for (let idx in objs) {
             let obj = {
                 origin: `https://resources.download.minecraft.net/${objs[idx].hash.substring(0, 2)}/${objs[idx].hash}`,
                 sha1: objs[idx].hash,
@@ -72,11 +73,11 @@ async function convertAssets(original) {
 }
 
 async function convertLegacyAssets(original) {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve) => {
         let CAULDRON_PATH = grabPath();
         let objs = original.objects;
-        let newData = new Array();
-        for (idx in objs) {
+        let newData = [];
+        for (let idx in objs) {
             let splitPath = idx.split("/");
             let fileName = splitPath.pop();
             let obj = {
@@ -92,11 +93,11 @@ async function convertLegacyAssets(original) {
 }
 
 async function convertPre16Assets(original) {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve) => {
         let CAULDRON_PATH = grabPath();
         let objs = original.objects;
-        let newData = new Array();
-        for (idx in objs) {
+        let newData = [];
+        for (let idx in objs) {
             let splitPath = idx.split("/");
             let fileName = splitPath.pop();
             let obj = {

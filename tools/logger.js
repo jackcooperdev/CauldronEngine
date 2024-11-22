@@ -17,7 +17,7 @@ log4js.configure({
 const mcLogger = log4js.getLogger("Minecraft");
 const cauldronLogger = log4js.getLogger('Cauldron')
 
-
+let server;
 try {
     server = net.createServer();
     server.listen(port, host, () => {
@@ -37,12 +37,12 @@ server.on('connection', function (sock) {
     sockets.push(sock);
     sock.on('data', function (data) {
         let firstSplit = data.toString().split("\n");
-        for (idx in firstSplit) {
-            if (firstSplit[idx] != '') {
+        for (let idx in firstSplit) {
+            if (firstSplit[idx] !== '') {
                 let dataMessage = firstSplit[idx].split("]: ");
                 if (dataMessage[1]) {
                     let state = dataMessage[0].split("/")[1];
-                    let arr = dataMessage.shift();
+                    dataMessage.shift();
                     switch (state) {
                         case 'INFO':
                             mcLogger.info(dataMessage.join(" "));
@@ -67,13 +67,13 @@ server.on('connection', function (sock) {
             }
         }
     });
-    sock.on('close', function (data) {
+    sock.on('close', function () {
         let index = sockets.findIndex(function (o) {
             return o.remoteAddress === sock.remoteAddress && o.remotePort === sock.remotePort;
         })
         if (index !== -1) sockets.splice(index, 1);
         cauldronLogger.info('Minecraft Disconnected');
-            destroySession(loggerSession);
+            destroySession(loggerSession).then(function (){});
             loggerSession = "";
         
     });

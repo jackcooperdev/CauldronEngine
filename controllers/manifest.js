@@ -132,15 +132,15 @@ async function getPackwizJVM() {
             if (jvmCompat) {
                 jvmMani = await checkManifest(path.join('jvm', 'java-runtime-alpha.json'), jvmCompat[0].manifest.url);
             } else {
-                reject('Version Not Suppourted on ' + osCurrent);
+                reject('Version Not Supported on ' + osCurrent);
             }
 
-            let allManifiests = {
+            let allManifests = {
                 jvmMeta: jvmMeta,
                 jvmMani: jvmMani,
                 jvmComp: 'java-runtime-alpha',
             };
-            resolve(allManifiests);
+            resolve(allManifests);
         } catch (err) {
             reject(err);
         }
@@ -162,59 +162,66 @@ async function getManifests(v, l, lv) {
              if (!fs.existsSync(path.join(CAULDRON_PATH, 'jvm_installed.json'))) {
                 fs.writeFileSync(path.join(CAULDRON_PATH, 'jvm_installed.json'), '{}');
             }
-            const assetDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'assets_installed.json')));
-            const jvmDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'jvm_installed.json')));
+            const assetDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'assets_installed.json')).toString());
+            const jvmDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'jvm_installed.json')).toString());
             // Convert to Actual Values
-            if (l != 'vanilla') {
+            let gotVersion;
+            if (l !== 'vanilla') {
                 gotVersion = await checkManifest(`cauldron_${l}_version_manifest.json`,await getDataPlugin(l),false,'main');
             } else {
                 gotVersion = await checkManifest('cauldron_version_manifest.json', 'https://launchermeta.mojang.com/mc/game/version_manifest.json', false, 'main');
             }
             const { version, loaderVersion, loader } = await whatIsThis(v, l, lv, gotVersion);
-            getMain = await checkManifest('cauldron_version_manifest.json', 'https://launchermeta.mojang.com/mc/game/version_manifest.json', false, 'main');
+            let getMain = await checkManifest('cauldron_version_manifest.json', 'https://launchermeta.mojang.com/mc/game/version_manifest.json', false, 'main');
+            /**
+             * @param getMain
+             * @param getMain.versions
+             */
             const foundVersionData = getMain.versions.find(versionName => versionName.id === version);
             if (!foundVersionData) {
-                throw new Error('Version Not Found')
+                reject('Version Not Found');
             }
             const getSpec = await checkManifest(path.join('versions', foundVersionData.id, foundVersionData.id + '.json'), foundVersionData.url);
-            if (loader != 'vanilla') {
+            let createdManifest;
+            if (loader !== 'vanilla') {
                 createdManifest = await checkManifestPlugin(loader,loaderVersion, version, getSpec,gotVersion);
             } else {
                 createdManifest = await attemptToConvert(getSpec);
             }
+            let grabLogging;
             if (createdManifest.logging) {
-                let grabLogging = await checkOther(path.join('assets', 'log_configs', createdManifest.logging.client.file.id), NEW_LOGS[createdManifest.logging.client.file.id].url);
+                grabLogging = await checkOther(path.join('assets', 'log_configs', createdManifest.logging.client.file.id), NEW_LOGS[createdManifest.logging.client.file.id].url);
             } else {
                 cauldronLogger.warn("Destroying Session: No Logger Detected. Game will still boot");
-                destroySession();
+                await destroySession();
             }
-            const grabClient = await checkOther(path.join('versions', createdManifest.id, createdManifest.id + '.jar'), createdManifest.downloads.client.url);
+            await checkOther(path.join('versions', createdManifest.id, createdManifest.id + '.jar'), createdManifest.downloads.client.url);
 
             // Check for Duplicates in Libs
             let libs = createdManifest.libraries;
             const ids = libs.map(o => o.name)
-            const filtered = libs.filter(({ name }, index) => !ids.includes(name, index + 1));
-            createdManifest.libraries = filtered;
+            createdManifest.libraries = libs.filter(({name}, index) => !ids.includes(name, index + 1));
 
             // JVM Manifests
 
             // Check For Meta
             const jvmMeta = await checkManifest(path.join('jvm', 'jvm-core.json'), 'https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json')
             const jvmCompat = await checkCompat(createdManifest.javaVersion.component, jvmMeta);
+            let jvmMani;
             if (jvmCompat) {
-                let jvmMani = await checkManifest(path.join('jvm', createdManifest.javaVersion.component + '.json'), jvmCompat[0].manifest.url);
+                 jvmMani = await checkManifest(path.join('jvm', createdManifest.javaVersion.component + '.json'), jvmCompat[0].manifest.url);
             } else {
-                reject('Version Not Suppourted on ' + osCurrent);
+                reject('Version Not Supported on ' + osCurrent);
             }
             // Assets
             const assetMani = await checkManifest(path.join('assets', 'indexes', createdManifest.assets + '.json'), createdManifest.assetIndex.url);
             let specCond = createdManifest.assets
-            if (createdManifest.assets != 'legacy' && createdManifest.assets != 'pre-1.6') {
+            if (createdManifest.assets !== 'legacy' && createdManifest.assets !== 'pre-1.6') {
                 specCond = 'assets'
             }
             const assetsConverted = await checkManifest(path.join('assets', 'indexes', createdManifest.assets + '-cauldron.json'), createdManifest.assetIndex.url, true, specCond);
 
-            // TODO: Add verification expiratition (Session Based???)
+            // TODO: Add verification expiration (Session Based???)
             let haveAssetsBeenDownloaded = false;
             if (assetDict[createdManifest.assets]) {
                 haveAssetsBeenDownloaded = true;
@@ -225,7 +232,7 @@ async function getManifests(v, l, lv) {
                 hasJVMBeenDownloaded = true;
             }
 
-            let allManifiests = {
+            let allManifests = {
                 main: getMain,
                 spec: createdManifest,
                 logging: grabLogging,
@@ -233,7 +240,7 @@ async function getManifests(v, l, lv) {
                 jvmMani: jvmMani,
                 jvmComp: createdManifest.javaVersion.component,
                 assets: assetMani,
-                aseetsInfo: assetsConverted,
+                assetsInfo: assetsConverted,
                 version: version,
                 versionData: { loader: loader, version: version, loaderVersion: loaderVersion },
                 loader: loader,
@@ -241,7 +248,7 @@ async function getManifests(v, l, lv) {
                 jvmDownloaded:hasJVMBeenDownloaded,
                 loaderVersion: loaderVersion
             };
-            resolve(allManifiests);
+            resolve(allManifests);
 
 
         } catch (err) {
@@ -260,17 +267,21 @@ async function whatIsThis(version, loader, lVersion, MANIFEST) {
     if (!loader) {
         loader = 'vanilla';
     }
-    let versionFound = "";
-    if (version == 'release' || version == 'latest') {
+    let versionFound;
+    /**
+     * @param MANIFEST
+     * @param MANIFEST.latest
+     */
+    if (version === 'release' || version === 'latest') {
         versionFound = MANIFEST.latest.release;
-    } else if (version == 'snapshot') {
+    } else if (version === 'snapshot') {
         versionFound = MANIFEST.latest.snapshot;
     } else {
         versionFound = version
     }
     let rObject = { version: versionFound, loaderVersion: '', loader: loader }
     try {
-        if (loader != 'vanilla') {
+        if (loader !== 'vanilla') {
             if (!lVersion) {
                 lVersion = await getIdentifierPlugin(loader,versionFound,MANIFEST)
             }
@@ -283,4 +294,4 @@ async function whatIsThis(version, loader, lVersion, MANIFEST) {
 }
 
 
-module.exports = { getManifests, getPackwizJVM,  checkManifest }
+module.exports = { getManifests, getPackwizJVM }
