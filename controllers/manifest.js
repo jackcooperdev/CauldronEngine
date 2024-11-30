@@ -311,4 +311,4 @@ async function whatIsThis(version, loader, lVersion, MANIFEST) {
 }
 
 
-module.exports = {getManifests, getPackwizJVM}
+module.exports = {getManifests, getPackwizJVM, checkManifest}
