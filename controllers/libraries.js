@@ -3,16 +3,17 @@ const path = require('path');
 const shell = require('shelljs');
 const StreamZip = require('node-stream-zip');
 
-const { grabPath, getOperatingSystem } = require('../tools/compatibility');
-const { verifyInstallation } = require('./queue');
-const { cauldronLogger } = require('../tools/logger');
-const { checkInternet } = require('../tools/checkConnection');
+const {grabPath, getOperatingSystem} = require('../tools/compatibility');
+const {verifyInstallation} = require('./queue');
+const {cauldronLogger} = require('../tools/logger');
+const {checkInternet} = require('../tools/checkConnection');
 
 
-async function getLibraries(libData, versionData,maniID) {
+async function getLibraries(libData, versionData, maniID) {
     return new Promise(async (resolve, reject) => {
         let CAULDRON_PATH = grabPath();
         try {
+            let currentLibraryFile = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'libs_installed.json')).toString());
             let actualOS = getOperatingSystem();
             let dQueue = [];
             let libArray = [];
@@ -70,9 +71,11 @@ async function getLibraries(libData, versionData,maniID) {
                                 destination: path.join(CAULDRON_PATH, 'versions', maniID, 'natives'),
                                 fileName: natives.path.split("/")[natives.path.split("/").length - 1]
                             };
-                            await verifyInstallation([obj]);
+                            if (!currentLibraryFile[maniID]) {
+                                await verifyInstallation([obj]);
+                            }
                             if (needsExtracting) {
-                                const zip = new StreamZip.async({ file: path.join(obj.destination, obj.fileName) });
+                                const zip = new StreamZip.async({file: path.join(obj.destination, obj.fileName)});
                                 const entries = await zip.entries();
                                 for (const entry of Object.values(entries)) {
                                     if (!entry.name.includes("META-INF") && !entry.name.includes(".git") && !entry.name.includes(".sha1")) {
@@ -86,10 +89,16 @@ async function getLibraries(libData, versionData,maniID) {
                     }
                 }
             }
-            if (await checkInternet()) {
-                await verifyInstallation(dQueue,false);
+            if (await checkInternet() && !currentLibraryFile[maniID]) {
+                await verifyInstallation(dQueue, false);
             }
-            cauldronLogger.info(`Checksums Passed Install is Valid!2`);
+
+            currentLibraryFile[maniID] = {
+                installed: true,
+                lastChecked: new Date().getTime()
+            };
+            fs.writeFileSync(path.join(CAULDRON_PATH, 'libs_installed.json'), JSON.stringify(currentLibraryFile));
+            cauldronLogger.info(`Checksums Passed Install is Valid!`);
             resolve(libArray);
         } catch (err) {
             reject(err);
@@ -98,4 +107,4 @@ async function getLibraries(libData, versionData,maniID) {
     })
 }
 
-module.exports = { getLibraries }
+module.exports = {getLibraries}

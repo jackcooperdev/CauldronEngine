@@ -1,18 +1,16 @@
 const path = require('path')
-const { exec } = require('child_process');
+const {exec} = require('child_process');
 
 
-
-const { grabPath, getOperatingSystem } = require('../tools/compatibility');
-const { getAssets } = require("./assets");
-const { checkJVM } = require("./jvm");
-const { getLibraries } = require("./libraries");
-const { getManifests } = require('./manifest')
-const { cauldronLogger, setLoggerSession } = require('../tools/logger');
-const { createSession, destroySession } = require("../tools/sessionManager");
-const { buildJVMRules, buildGameRules, buildFile, logInjector } = require("../tools/launchBuilder");
-const { getPostPlugin } = require('../plugins/plugins');
-
+const {grabPath, getOperatingSystem} = require('../tools/compatibility');
+const {getAssets} = require("./assets");
+const {checkJVM} = require("./jvm");
+const {getLibraries} = require("./libraries");
+const {getManifests} = require('./manifest')
+const {cauldronLogger, setLoggerSession} = require('../tools/logger');
+const {createSession, destroySession} = require("../tools/sessionManager");
+const {buildJVMRules, buildGameRules, buildFile, logInjector} = require("../tools/launchBuilder");
+const {getPostPlugin} = require('../plugins/plugins');
 
 
 async function launchGame(version, dry, loader, lVersion, authData, sessionID, overrides) {
@@ -20,7 +18,7 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
         dry = false;
     }
     if (!overrides) {
-        overrides = { 'jvm': {}, 'game': {}, 'additG': {} };
+        overrides = {'jvm': {}, 'game': {}, 'additG': {}};
     }
     if (!loader) {
         loader = 'vanilla';
@@ -53,7 +51,7 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
             }
 
             if (loader !== 'vanilla') {
-                await getPostPlugin(loader,manifests)
+                await getPostPlugin(loader, manifests)
             }
             if (!manifests.assetsDownloaded) {
                 cauldronLogger.info('Starting Asset Download');
@@ -64,7 +62,7 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
                 cauldronLogger.info("Skipping Assets");
             }
             cauldronLogger.info('Starting Library Download')
-            const libGet = await getLibraries(manifests.spec.libraries, manifests.versionData,manifests.spec.id);
+            const libGet = await getLibraries(manifests.spec.libraries, manifests.versionData, manifests.spec.id);
             if (!dry) {
                 cauldronLogger.info('All Files Acquired Building Launch File');
                 cauldronLogger.info('Creating JVM Arguments');
@@ -95,4 +93,4 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
 }
 
 
-module.exports = { launchGame };
+module.exports = {launchGame};
