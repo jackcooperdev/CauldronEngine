@@ -1,13 +1,13 @@
-const { cauldronLogger } = require('../tools/logger');
+const {cauldronLogger} = require('../tools/logger');
 
-async function checkManifestPlugin(loader,loaderVersion, version, getSpec,getLoaderManifest) {
+async function checkManifestPlugin(loader, loaderVersion, version, getSpec, getLoaderManifest) {
     return new Promise(async (resolve, reject) => {
         try {
-            let { getManifest } = require(`./${loader}/manifest`);
-            const data = await getManifest(loaderVersion, version, getSpec,getLoaderManifest)
+            let {getManifest} = require(`./${loader}/manifest`);
+            const data = await getManifest(loaderVersion, version, getSpec, getLoaderManifest)
             resolve(data)
         } catch (err) {
-            reject({message:'This Loader Is Not Supported! (Plugin May be missing a manifest file as well)'});
+            reject({message: 'This Loader Is Not Supported! (Plugin May be missing a manifest file as well)'});
         }
     })
 }
@@ -15,46 +15,47 @@ async function checkManifestPlugin(loader,loaderVersion, version, getSpec,getLoa
 async function getDataPlugin(loader) {
     return new Promise(async (resolve, reject) => {
         try {
-            let { getData } = require(`./${loader}/manifest`);
+            let {getData} = require(`./${loader}/manifest`);
             const data = getData();
             resolve(data)
         } catch (err) {
             cauldronLogger.error("This Loader Is Not Supported! (Plugin May be missing a manifest file as well)")
-           reject({message:'This Loader Is Not Supported! (Plugin May be missing a manifest file as well)'})
+            reject({message: 'This Loader Is Not Supported! (Plugin May be missing a manifest file as well)'})
         }
     })
 }
 
-async function getIdentifierPlugin(loader,version,manifest) {
+async function getIdentifierPlugin(loader, version, manifest) {
     return new Promise(async (resolve, reject) => {
         try {
-            let { identifier } = require(`./${loader}/identifier`);
-            const data = await identifier(version,manifest);
+            let {identifier} = require(`./${loader}/identifier`);
+            const data = await identifier(version, manifest);
             resolve(data)
         } catch (err) {
-            reject({message:err});
+            reject({message: err});
         }
     })
 }
 
-async function getPostPlugin(loader,manifest) {
+async function getPostPlugin(loader, manifest) {
     return new Promise(async (resolve) => {
         try {
-            let { postProcessing } = require(`./${loader}/post`);
+            let {postProcessing} = require(`./${loader}/post`);
             const data = await postProcessing(manifest);
             resolve(data)
         } catch (err) {
+            console.log(err)
             cauldronLogger.warn("Plugin Does not support the post function. There may be errors ahead")
-            resolve(false);
+            //resolve(false);
         }
     })
 }
 
 
-async function getJVMArgsPlugin(loader,args) {
+async function getJVMArgsPlugin(loader, args) {
     return new Promise(async (resolve) => {
         try {
-            let { jvm } = require(`./${loader}/launch`);
+            let {jvm} = require(`./${loader}/launch`);
             const data = await jvm(args);
             resolve(data)
         } catch (err) {
@@ -65,6 +66,4 @@ async function getJVMArgsPlugin(loader,args) {
 }
 
 
-
-
-module.exports = { checkManifestPlugin,getDataPlugin,getIdentifierPlugin, getPostPlugin,getJVMArgsPlugin }
+module.exports = {checkManifestPlugin, getDataPlugin, getIdentifierPlugin, getPostPlugin, getJVMArgsPlugin}
