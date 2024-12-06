@@ -62,6 +62,7 @@ async function getLibraries(libData, versionData, maniID) {
                             }
                         }
                         if (natives) {
+                            console.log('natives found')
                             let needsExtracting = libData[idx].extract;
                             // Force On MAC Only
                             needsExtracting = true;
@@ -97,7 +98,7 @@ async function getLibraries(libData, versionData, maniID) {
                 installed: true,
                 lastChecked: new Date().getTime()
             };
-            fs.writeFileSync(path.join(CAULDRON_PATH, 'libs_installed.json'), JSON.stringify(currentLibraryFile));
+            //fs.writeFileSync(path.join(CAULDRON_PATH, 'libs_installed.json'), JSON.stringify(currentLibraryFile));
             cauldronLogger.info(`Checksums Passed Install is Valid!`);
             resolve(libArray);
         } catch (err) {

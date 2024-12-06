@@ -4,11 +4,10 @@ const fs = require('fs');
 const shelljs = require('shelljs');
 
 
-
-const { verifyInstallation } = require("../../controllers/queue");
-const { grabPath } = require("../../tools/compatibility");
-const { cauldronLogger } = require("../../tools/logger");
-const { getForgeInstallerURL, convertNameToPath, getSuffixUsed } = require("./utils");
+const {verifyInstallation} = require("../../controllers/queue");
+const {grabPath} = require("../../tools/compatibility");
+const {cauldronLogger} = require("../../tools/logger");
+const {getForgeInstallerURL, convertNameToPath, getSuffixUsed} = require("./utils");
 
 // Important Links
 const FORGE_PROMO = "https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json";
@@ -18,7 +17,7 @@ const LIBRARY_PATH = "https://libraries.minecraft.net/"
 //Files
 let reqLegMod = require('./files/requires_legacy_mod.json');
 let template = require('../../files/manifestTemplate.json');
-const { attemptToConvert } = require('../../tools/manifestConverter');
+const {attemptToConvert} = require('../../tools/manifestConverter');
 
 async function getManifest(fVersion, version, versionCache) {
     return new Promise(async (resolve, reject) => {
@@ -41,7 +40,7 @@ async function getManifest(fVersion, version, versionCache) {
 
 
             // Extract File and acquire install_profile.json
-            const installer = new StreamZip.async({ file: path.join(CAULDRON_PATH, 'forge-installers', installObj.fileName) });
+            const installer = new StreamZip.async({file: path.join(CAULDRON_PATH, 'forge-installers', installObj.fileName)});
             await installer.entries();
             const profileFileBuffer = await installer.entryData('install_profile.json');
             const profileFile = JSON.parse(profileFileBuffer.toString());
@@ -112,6 +111,33 @@ async function handleRegFormat(fVersion, version, versionCache, profileFile, ins
             manifestData.id = `forge-${version}-${fVersion}`;
             manifestData.mainClass = versionFile.mainClass;
 
+
+            let vanillaLibraries = versionCache.libraries;
+            let handledLibraries = [];
+            console.log('START')
+            for (let idx in libraries) {
+                let splitName = libraries[idx].name.split(":")
+                splitName.pop()
+                let convertedName = splitName.join(":");
+                let obj = versionCache.libraries.find((o, i) => {
+                    if (!handledLibraries.includes(convertedName)) {
+                        let splitOName = o.name.split(":");
+                        splitOName.pop();
+                        if (splitOName.join(":") === convertedName && !handledLibraries.includes(convertedName)) {
+                            console.log('HIT')
+                            console.log(splitName.join(":"))
+                            handledLibraries.push(convertedName);
+                            versionCache.libraries.splice(i, 1);
+                            console.log(i)
+                        }
+                    }
+
+
+                });
+                //console.log('com.google.guava:failureaccess:1.0.2'.includes(splitName.join(":")) || '')
+
+            }
+
             //No Need to convert library list as its already in standard format.
             manifestData.libraries = [...versionCache.libraries, ...libraries];
             /**
@@ -147,6 +173,7 @@ async function handleRegFormat(fVersion, version, versionCache, profileFile, ins
                     destination: path.join(CAULDRON_PATH, 'libraries', mainForge.downloads.artifact.path, '../'),
                     fileName: path.basename(mainForge.downloads.artifact.path)
                 };
+                console.log(obj)
                 await verifyInstallation([obj]);
             } else {
                 cauldronLogger.info("No Universal Download Link. Assuming Path");
@@ -171,9 +198,9 @@ async function handleRegFormat(fVersion, version, versionCache, profileFile, ins
 
             // Close Installer File
             installer.close();
-
             resolve(converted)
         } catch (error) {
+            console.log(error)
             reject(error);
         }
     })
@@ -249,7 +276,7 @@ async function handleLegacyFormat(fVersion, version, versionCache, profileFile, 
                     // All Other Libraries
                     // Convert Other VALID libraries into standard format.
                     // NOTE: In this stage libraries aren't filtered based on OS this is done later
-                  
+
                     let rules = [];
                     let artifact = {};
                     let classifiers = {};
@@ -316,4 +343,4 @@ function getData() {
 }
 
 
-module.exports = { getManifest, getData };
+module.exports = {getManifest, getData};

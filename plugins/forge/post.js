@@ -2,11 +2,11 @@ const StreamZip = require('node-stream-zip');
 const fs = require('fs')
 const path = require('path')
 
-const { grabPath } = require("../../tools/compatibility");
-const { getLibraries } = require('../../controllers/libraries');
-const { validate } = require('../../tools/fileTools');
-const { cauldronLogger } = require('../../tools/logger');
-const { convertNameToPath } = require('./utils');
+const {grabPath} = require("../../tools/compatibility");
+const {getLibraries} = require('../../controllers/libraries');
+const {validate} = require('../../tools/fileTools');
+const {cauldronLogger} = require('../../tools/logger');
+const {convertNameToPath} = require('./utils');
 const spawn = require('await-spawn')
 
 
@@ -35,7 +35,7 @@ async function postProcessing(manifests) {
                     // Some actions require the main forge file to be accessible via a URL. This patches the url to a localhost path.
                     // This defaults to CauldronAgents port number (8778) and is on the path /libraries.
                     // TESTING ALTERNATIVE SOLUTIONS
-                    // REQUIRES INVESTIGATION INTO WHAT VERSIONS NEED IT
+                    //  REQUIRES an INVESTIGATION INTO WHAT VERSIONS NEED IT
                     relLib.downloads.artifact.url = path.join(CAULDRON_PATH, 'libraries', relLib.downloads.artifact.path);
                     //versionFile.libraries[0] = relLib;
 
@@ -167,7 +167,10 @@ async function postProcessing(manifests) {
                                 // Inject params
                                 command = injector.create(command, params);
                                 cauldronLogger.info(`Forge Post Proccessing Job: ${Number(pIdx) + 1}/${processors.length} Starting`);
+                                //fs.writeFileSync(path.join(CAULDRON_PATH, `${Number(pIdx) + 1}.txt`), command)
+                                console.log(path.join(CAULDRON_PATH, 'jvm', manifests.jvmComp, 'bin', 'java'))
                                 await spawn(path.join(CAULDRON_PATH, 'jvm', manifests.jvmComp, 'bin', 'java'), command.split(" "));
+
                                 cauldronLogger.info(`Forge Post Proccessing Job: ${Number(pIdx) + 1}/${processors.length} Done!`);
                             }
                         }
@@ -200,4 +203,4 @@ let injector = {
         }
     })()
 };
-module.exports = { postProcessing };
+module.exports = {postProcessing};

@@ -58,6 +58,7 @@ async function checkOther(fileName, url) {
             resolve(expected)
         } catch (err) {
             cauldronLogger.warn(`${fileName} not found trying to download`);
+            console.log(url)
             if (isOnline) {
                 try {
                     const downloadedFile = await downloadOther(url, path.join(CAULDRON_PATH, fileName))
@@ -176,13 +177,15 @@ async function getManifests(v, l, lv) {
             const jvmDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'jvm_installed.json')).toString());
             const libDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'libs_installed.json')).toString());
             // Convert to Actual Values
-            let gotVersion;
+            let vanillaManifest;
+            let pluginManifest;
             if (l !== 'vanilla') {
-                gotVersion = await checkManifest(`cauldron_${l}_version_manifest.json`, await getDataPlugin(l), false, 'main');
+                vanillaManifest = await checkManifest('cauldron_version_manifest.json', 'https://launchermeta.mojang.com/mc/game/version_manifest.json', false, 'main');
+                pluginManifest = await checkManifest(`cauldron_${l}_version_manifest.json`, await getDataPlugin(l), false, 'main');
             } else {
-                gotVersion = await checkManifest('cauldron_version_manifest.json', 'https://launchermeta.mojang.com/mc/game/version_manifest.json', false, 'main');
+                vanillaManifest = await checkManifest('cauldron_version_manifest.json', 'https://launchermeta.mojang.com/mc/game/version_manifest.json', false, 'main');
             }
-            const {version, loaderVersion, loader} = await whatIsThis(v, l, lv, gotVersion);
+            const {version, loaderVersion, loader} = await whatIsThis(v, l, lv, vanillaManifest, pluginManifest);
             let getMain = await checkManifest('cauldron_version_manifest.json', 'https://launchermeta.mojang.com/mc/game/version_manifest.json', false, 'main');
             /**
              * @param getMain
@@ -195,7 +198,7 @@ async function getManifests(v, l, lv) {
             const getSpec = await checkManifest(path.join('versions', foundVersionData.id, foundVersionData.id + '.json'), foundVersionData.url);
             let createdManifest;
             if (loader !== 'vanilla') {
-                createdManifest = await checkManifestPlugin(loader, loaderVersion, version, getSpec, gotVersion);
+                createdManifest = await checkManifestPlugin(loader, loaderVersion, version, getSpec, pluginManifest);
             } else {
                 createdManifest = await attemptToConvert(getSpec);
             }
@@ -280,7 +283,11 @@ async function getManifests(v, l, lv) {
 // Helps convert terms like release and snapshot into actual versions
 // Also grabs information for the selected loader (like loader version)
 
-async function whatIsThis(version, loader, lVersion, MANIFEST) {
+async function whatIsThis(version, loader, lVersion, vanillaManifest, additManifest) {
+    console.log('what iz this')
+    console.log(version)
+    console.log(loader)
+    console.log(lVersion)
     if (!loader) {
         loader = 'vanilla';
     }
@@ -290,21 +297,26 @@ async function whatIsThis(version, loader, lVersion, MANIFEST) {
      * @param MANIFEST.latest
      */
     if (version === 'release' || version === 'latest') {
-        versionFound = MANIFEST.latest.release;
+        versionFound = vanillaManifest.latest.release;
+        console.log(versionFound)
     } else if (version === 'snapshot') {
-        versionFound = MANIFEST.latest.snapshot;
+        versionFound = vanillaManifest.latest.snapshot;
     } else {
         versionFound = version
     }
     let rObject = {version: versionFound, loaderVersion: '', loader: loader}
     try {
+        console.log(loader)
         if (loader !== 'vanilla') {
+            console.log('not vanilla')
             if (!lVersion) {
-                lVersion = await getIdentifierPlugin(loader, versionFound, MANIFEST)
+                console.log('requesting additional info')
+                lVersion = await getIdentifierPlugin(loader, versionFound, additManifest)
             }
             rObject.loaderVersion = lVersion;
         }
     } catch (err) {
+        console.log('failed at what is this')
         throw new Error(err.message)
     }
     return rObject;

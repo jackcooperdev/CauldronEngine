@@ -2,13 +2,13 @@ const fs = require('fs');
 const path = require('path');
 const shell = require('shelljs');
 const osCurrent = require('os').platform();
-const { exec } = require('child_process');
+const {exec} = require('child_process');
 
-const { grabPath, getOperatingSystem } = require('../tools/compatibility');
+const {grabPath, getOperatingSystem} = require('../tools/compatibility');
 let requiresLibPatch = require('../files/requiresLibPatch.json');
 const systemPKG = require('../package.json');
 const defaultJVM = require('../files/defaultJVMArguments.json');
-const { getJVMArgsPlugin } = require('../plugins/plugins')
+const {getJVMArgsPlugin} = require('../plugins/plugins')
 
 
 // Variable Injector
@@ -28,7 +28,7 @@ let injector = {
 async function logInjector(logFile, sessionID) {
     let CAULDRON_PATH = grabPath();
     let logFileCont = fs.readFileSync(logFile).toString();
-    logFileCont = injector.create(logFileCont, { 'log_loc': path.join(CAULDRON_PATH, 'sessionLogs', sessionID, 'mcLogs.log') });
+    logFileCont = injector.create(logFileCont, {'log_loc': path.join(CAULDRON_PATH, 'sessionLogs', sessionID, 'mcLogs.log')});
     fs.writeFileSync(path.join(logFile, '../', 'log_config.xml'), logFileCont)
 }
 
@@ -112,13 +112,17 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
             }
         }
         // Run Plugin Code
-        const plugin = await getJVMArgsPlugin(versionData.loader, { manifest, libraryList, versionData, overrides })
-        if (plugin) {
-            manifest = plugin.manifest;
-            libraryList = plugin.libraryList;
-            versionData = plugin.versionData;
-            overrides = plugin.overides;
+        if (versionData.loader !== 'vanilla') {
+            const plugin = await getJVMArgsPlugin(versionData.loader, {manifest, libraryList, versionData, overrides})
+            if (plugin) {
+                manifest = plugin.manifest;
+                libraryList = plugin.libraryList;
+                versionData = plugin.versionData;
+                overrides = plugin.overides;
+            }
         }
+
+
         // Convert Library List into Joined List
         let classPathSep;
         let classPath;
@@ -245,4 +249,4 @@ async function buildFile(manifest, jreVersion, validRules, gameRules) {
 
 }
 
-module.exports = { buildJVMRules, buildGameRules, buildFile, logInjector }
+module.exports = {buildJVMRules, buildGameRules, buildFile, logInjector}
