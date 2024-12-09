@@ -51,9 +51,9 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
             }
 
             if (loader !== 'vanilla') {
-                console.log('start post')
+
                 await getPostPlugin(loader, manifests)
-                console.log('end post')
+
             }
             if (!manifests.assetsDownloaded) {
                 cauldronLogger.info('Starting Asset Download');

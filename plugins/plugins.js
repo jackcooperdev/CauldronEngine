@@ -44,7 +44,7 @@ async function getPostPlugin(loader, manifest) {
             const data = await postProcessing(manifest);
             resolve(data)
         } catch (err) {
-            console.log(err)
+
             cauldronLogger.warn("Plugin Does not support the post function. There may be errors ahead")
             //resolve(false);
         }

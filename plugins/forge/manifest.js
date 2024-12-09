@@ -114,7 +114,7 @@ async function handleRegFormat(fVersion, version, versionCache, profileFile, ins
 
             let vanillaLibraries = versionCache.libraries;
             let handledLibraries = [];
-            console.log('START')
+
             for (let idx in libraries) {
                 let splitName = libraries[idx].name.split(":")
                 splitName.pop()
@@ -124,17 +124,17 @@ async function handleRegFormat(fVersion, version, versionCache, profileFile, ins
                         let splitOName = o.name.split(":");
                         splitOName.pop();
                         if (splitOName.join(":") === convertedName && !handledLibraries.includes(convertedName)) {
-                            console.log('HIT')
-                            console.log(splitName.join(":"))
+
+
                             handledLibraries.push(convertedName);
                             versionCache.libraries.splice(i, 1);
-                            console.log(i)
+
                         }
                     }
 
 
                 });
-                //console.log('com.google.guava:failureaccess:1.0.2'.includes(splitName.join(":")) || '')
+
 
             }
 
@@ -173,7 +173,7 @@ async function handleRegFormat(fVersion, version, versionCache, profileFile, ins
                     destination: path.join(CAULDRON_PATH, 'libraries', mainForge.downloads.artifact.path, '../'),
                     fileName: path.basename(mainForge.downloads.artifact.path)
                 };
-                console.log(obj)
+
                 await verifyInstallation([obj]);
             } else {
                 cauldronLogger.info("No Universal Download Link. Assuming Path");
@@ -200,7 +200,7 @@ async function handleRegFormat(fVersion, version, versionCache, profileFile, ins
             installer.close();
             resolve(converted)
         } catch (error) {
-            console.log(error)
+
             reject(error);
         }
     })

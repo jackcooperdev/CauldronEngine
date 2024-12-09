@@ -9,7 +9,7 @@ let unsupportedVersions = require('./files/blocked_versions.json');
 async function identifier(version, forgePromos) {
     return new Promise(async (resolve, reject) => {
         try {
-            console.log('fuck you')
+
             let type = 'recommended';
 
             if (unsupportedVersions.includes(version)) {
@@ -30,7 +30,7 @@ async function identifier(version, forgePromos) {
             cauldronLogger.warn("Forge is still experimental. Expect Crashes");
             resolve(forgeVersion);
         } catch (e) {
-            console.log(e)
+            cauldronLogger.error(e);
         }
 
     })

@@ -167,8 +167,6 @@ async function postProcessing(manifests) {
                                 // Inject params
                                 command = injector.create(command, params);
                                 cauldronLogger.info(`Forge Post Proccessing Job: ${Number(pIdx) + 1}/${processors.length} Starting`);
-                                //fs.writeFileSync(path.join(CAULDRON_PATH, `${Number(pIdx) + 1}.txt`), command)
-                                console.log(path.join(CAULDRON_PATH, 'jvm', manifests.jvmComp, 'bin', 'java'))
                                 await spawn(path.join(CAULDRON_PATH, 'jvm', manifests.jvmComp, 'bin', 'java'), command.split(" "));
 
                                 cauldronLogger.info(`Forge Post Proccessing Job: ${Number(pIdx) + 1}/${processors.length} Done!`);

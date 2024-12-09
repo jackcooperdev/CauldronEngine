@@ -29,7 +29,7 @@ async function checkManifest(fileName, url, requiresConvert, type) {
             if (isOnline && !requiresConvert && type === 'main') {
                 // Only Update Main Manifest
                 downloadManifest(url, path.join(CAULDRON_PATH, fileName)).then(function () {
-                    cauldronLogger.info("Updated Local Manifest");
+                    //cauldronLogger.info("Updated Local Manifest");
                 })
             }
             resolve(expected);
@@ -58,7 +58,7 @@ async function checkOther(fileName, url) {
             resolve(expected)
         } catch (err) {
             cauldronLogger.warn(`${fileName} not found trying to download`);
-            console.log(url)
+
             if (isOnline) {
                 try {
                     const downloadedFile = await downloadOther(url, path.join(CAULDRON_PATH, fileName))
@@ -252,7 +252,6 @@ async function getManifests(v, l, lv) {
             }
 
             let allManifests = {
-                main: getMain,
                 spec: createdManifest,
                 logging: grabLogging,
                 jvmMeta: jvmMeta,
@@ -284,10 +283,8 @@ async function getManifests(v, l, lv) {
 // Also grabs information for the selected loader (like loader version)
 
 async function whatIsThis(version, loader, lVersion, vanillaManifest, additManifest) {
-    console.log('what iz this')
-    console.log(version)
-    console.log(loader)
-    console.log(lVersion)
+
+
     if (!loader) {
         loader = 'vanilla';
     }
@@ -298,7 +295,7 @@ async function whatIsThis(version, loader, lVersion, vanillaManifest, additManif
      */
     if (version === 'release' || version === 'latest') {
         versionFound = vanillaManifest.latest.release;
-        console.log(versionFound)
+
     } else if (version === 'snapshot') {
         versionFound = vanillaManifest.latest.snapshot;
     } else {
@@ -306,17 +303,17 @@ async function whatIsThis(version, loader, lVersion, vanillaManifest, additManif
     }
     let rObject = {version: versionFound, loaderVersion: '', loader: loader}
     try {
-        console.log(loader)
+
         if (loader !== 'vanilla') {
-            console.log('not vanilla')
+
             if (!lVersion) {
-                console.log('requesting additional info')
+
                 lVersion = await getIdentifierPlugin(loader, versionFound, additManifest)
             }
             rObject.loaderVersion = lVersion;
         }
     } catch (err) {
-        console.log('failed at what is this')
+
         throw new Error(err.message)
     }
     return rObject;

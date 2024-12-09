@@ -2,10 +2,11 @@ const fs = require('fs');
 const shelljs = require('shelljs');
 const path = require('path');
 
-const { cauldronLogger } = require('../tools/logger');
-const { verifyInstallation } = require('./queue');
-const { grabPath, getOperatingSystem } = require('../tools/compatibility');
-async function checkCompat(jVersion,jvmData) {
+const {cauldronLogger} = require('../tools/logger');
+const {verifyInstallation} = require('./queue');
+const {grabPath, getOperatingSystem} = require('../tools/compatibility');
+
+async function checkCompat(jVersion, jvmData) {
     let actualPlatform = getOperatingSystem(true);
     if (jvmData[actualPlatform][jVersion] !== undefined) {
         return jvmData[actualPlatform][jVersion];
@@ -47,12 +48,17 @@ async function checkJVM(name, jvmMani) {
                 } catch (err) {
                     downUrl = selectedFile.downloads.raw.url;
                 }
-                dQueue.push({ origin: downUrl, destination: path.join(downloadPath, '../',),sha1: selectedFile.downloads.raw.sha1,fileName:sIdx.split("/")[sIdx.split("/").length - 1] });
+                dQueue.push({
+                    origin: downUrl,
+                    destination: path.join(downloadPath, '../',),
+                    sha1: selectedFile.downloads.raw.sha1,
+                    fileName: sIdx.split("/")[sIdx.split("/").length - 1]
+                });
             }
         }
         await verifyInstallation(dQueue);
         if (getOperatingSystem() === 'linux') {
-            await shelljs.chmod('+x', path.join(CAULDRON_PATH,'jvm',name,'bin','java'));
+            await shelljs.chmod('+x', path.join(CAULDRON_PATH, 'jvm', name, 'bin', 'java'));
         }
         cauldronLogger.info(`Java Installation Verified`);
         let currentJVMFile = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'jvm_installed.json')).toString());
@@ -66,5 +72,4 @@ async function checkJVM(name, jvmMani) {
 }
 
 
-
-module.exports = { checkCompat, checkJVM }
+module.exports = {checkCompat, checkJVM}

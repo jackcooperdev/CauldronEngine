@@ -9,7 +9,7 @@ const {cauldronLogger} = require('../tools/logger');
 const {checkInternet} = require('../tools/checkConnection');
 
 
-async function getLibraries(libData, versionData, maniID) {
+async function getLibraries(libData, versionData, maniID, skipDownload) {
     return new Promise(async (resolve, reject) => {
         let CAULDRON_PATH = grabPath();
         try {
@@ -62,7 +62,7 @@ async function getLibraries(libData, versionData, maniID) {
                             }
                         }
                         if (natives) {
-                            console.log('natives found')
+
                             let needsExtracting = libData[idx].extract;
                             // Force On MAC Only
                             needsExtracting = true;
@@ -90,17 +90,21 @@ async function getLibraries(libData, versionData, maniID) {
                     }
                 }
             }
-            if (await checkInternet() && !currentLibraryFile[maniID]) {
+            if (await checkInternet() && !currentLibraryFile[maniID] && !skipDownload) {
                 await verifyInstallation(dQueue, false);
+                currentLibraryFile[maniID] = {
+                    installed: true,
+                    lastChecked: new Date().getTime()
+                };
+                cauldronLogger.info(`Checksums Passed Install is Valid!`);
+                fs.writeFileSync(path.join(CAULDRON_PATH, 'libs_installed.json'), JSON.stringify(currentLibraryFile));
+                resolve(libArray);
+            } else if (skipDownload) {
+                resolve(dQueue);
+            } else {
+                resolve(libArray);
             }
 
-            currentLibraryFile[maniID] = {
-                installed: true,
-                lastChecked: new Date().getTime()
-            };
-            //fs.writeFileSync(path.join(CAULDRON_PATH, 'libs_installed.json'), JSON.stringify(currentLibraryFile));
-            cauldronLogger.info(`Checksums Passed Install is Valid!`);
-            resolve(libArray);
         } catch (err) {
             reject(err);
         }
