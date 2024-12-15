@@ -14,7 +14,6 @@ const {
 } = require('../tools/manifestConverter');
 const {cauldronLogger} = require('../tools/logger');
 const {checkInternet} = require('../tools/checkConnection');
-const NEW_LOGS = require('../files/logs-locations.json');
 const {checkCompat} = require('./jvm');
 const {destroySession} = require('../tools/sessionManager');
 const {checkManifestPlugin, getDataPlugin, getIdentifierPlugin} = require('../plugins/plugins');
@@ -63,7 +62,7 @@ async function checkJAR(fileName, url) {
 
             if (isOnline) {
                 try {
-                    const downloadedFile = await downloadJAR(url, path.join(CAULDRON_PATH, fileName))
+                    const downloadedFile = await downloadALL(url, path.join(CAULDRON_PATH, fileName))
                     resolve(downloadedFile);
                 } catch (err) {
                     reject(err);
@@ -76,7 +75,7 @@ async function checkJAR(fileName, url) {
     })
 }
 
-async function downloadJAR(url, dir) {
+async function downloadALL(url, dir) {
     return new Promise(async (resolve, reject) => {
         let config = {
             method: 'get',
@@ -90,6 +89,23 @@ async function downloadJAR(url, dir) {
             resolve(file.data);
         } catch (err) {
             reject(err.message)
+        }
+    })
+}
+
+
+async function checkLog(fileName, url) {
+    return new Promise(async (resolve, reject) => {
+        let isOnline = await checkInternet();
+        let CAULDRON_PATH = grabPath();
+        if (isOnline) {
+            try {
+                const downloadedFile = await downloadALL(url, path.join(CAULDRON_PATH, fileName))
+                resolve(downloadedFile);
+            } catch (err) {
+                reject(err);
+            }
+
         }
     })
 }
@@ -209,11 +225,11 @@ async function getManifests(v, l, lv) {
                 let logLocation =  createdManifest.logging.client.file.url;
                 if (await findCustomLogger(createdManifest.logging.client.file.id)) {
                     logLocation = `${await grabStaticFileServer()}/logs/${createdManifest.logging.client.file.id}`;
+                    grabLogging = await checkLog(path.join('assets', 'log_configs', createdManifest.logging.client.file.id), logLocation);
                 } else {
                     cauldronLogger.warn("Destroying Session: No Custom Logger Detected (Create Issue with version number). Game will still boot");
                     await destroySession();
                 }
-                grabLogging = await checkJAR(path.join('assets', 'log_configs', createdManifest.logging.client.file.id), logLocation);
             } else {
                 cauldronLogger.warn("Destroying Session: No Logger Detected. Game will still boot");
                 await destroySession();
@@ -259,7 +275,6 @@ async function getManifests(v, l, lv) {
             if (libDict[createdManifest.id]) {
                 hasLibsBeenDownloaded = true;
             }
-
             let allManifests = {
                 spec: createdManifest,
                 logging: grabLogging,

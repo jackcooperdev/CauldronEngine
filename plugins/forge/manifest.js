@@ -18,6 +18,7 @@ const LIBRARY_PATH = "https://libraries.minecraft.net/"
 let reqLegMod = require('./files/requires_legacy_mod.json');
 let template = require('../../files/manifestTemplate.json');
 const {attemptToConvert} = require('../../tools/manifestConverter');
+const {grabStaticFileServer} = require("../../tools/fileServerLocator");
 
 async function getManifest(fVersion, version, versionCache) {
     return new Promise(async (resolve, reject) => {
@@ -212,11 +213,11 @@ async function handleLegacyFormat(fVersion, version, versionCache, profileFile, 
     return new Promise(async (resolve, reject) => {
         let CAULDRON_PATH = grabPath();
         try {
-
+            let FILE_SERVER = await grabStaticFileServer();
             // Acquire Java Fixer if version needs it
             if (reqLegMod.includes(version)) {
                 let obj = [{
-                    origin: "https://files.cauldronmc.com/other/legacyjavafixer-1.0.jar",
+                    origin: `${FILE_SERVER}/other/legacyjavafixer-1.0.jar`,
                     sha1: 'a11b502bef19f49bfc199722b94da5f3d7b470a8',
                     destination: path.join(CAULDRON_PATH, 'mods'),
                     fileName: 'legacyjavafixer-1.0.jar'

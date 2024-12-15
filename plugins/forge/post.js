@@ -32,7 +32,7 @@ async function postProcessing(manifests) {
                     const versionFile = JSON.parse(versionFileBuffer.toString());
 
                     let relLib = versionFile.libraries[0];
-                    // Some actions require the main forge file to be accessible via a URL. This patches the url to a localhost path.
+                    // Some actions require the websocket forge file to be accessible via a URL. This patches the url to a localhost path.
                     // This defaults to CauldronAgents port number (8778) and is on the path /libraries.
                     // TESTING ALTERNATIVE SOLUTIONS
                     //  REQUIRES an INVESTIGATION INTO WHAT VERSIONS NEED IT

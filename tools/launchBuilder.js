@@ -27,9 +27,13 @@ let injector = {
 // Injects current Session ID into log file and creates new file
 async function logInjector(logFile, sessionID) {
     let CAULDRON_PATH = grabPath();
-    let logFileCont = fs.readFileSync(logFile).toString();
-    logFileCont = injector.create(logFileCont, {'log_loc': path.join(CAULDRON_PATH, 'sessionLogs', sessionID, 'mcLogs.log')});
-    fs.writeFileSync(path.join(logFile, '../', 'log_config.xml'), logFileCont)
+    try {
+        let logFileCont = fs.readFileSync(logFile).toString();
+        logFileCont = injector.create(logFileCont, {'log_loc': path.join(CAULDRON_PATH, 'sessionLogs', sessionID, 'mcLogs.log')});
+        fs.writeFileSync(path.join(logFile, '../', 'log_config.xml'), logFileCont)
+    } catch (e) {
+        fs.writeFileSync(path.join(logFile, '../', 'log_config.xml'), '');
+    }
 }
 
 

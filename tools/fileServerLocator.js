@@ -2,7 +2,8 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const jwt = require('jsonwebtoken');
-const FILE_SERVER_KEY = fs.readFileSync(path.join(__dirname,'../','files','file.key.pub')).toString();
+
+const FILE_SERVER_KEY =  fs.readFileSync(path.join(__dirname, '../', 'files', 'file.key.pub')).toString();
 const DEFAULT_FILES_LOCATION = "https://files.cauldronmc.com";
 
 async function grabStaticFileServer() {
@@ -19,7 +20,8 @@ async function grabStaticFileServer() {
         try {
             const response = await axios(config);
             let verificationKey = response.data;
-            let keyData = jwt.verify(verificationKey, FILE_SERVER_KEY);
+            let keyData;
+            keyData = jwt.verify(verificationKey, FILE_SERVER_KEY);
             /**
              * @param keyData          Information about the object.
              * @param keyData.domain   Information about the object's members.
