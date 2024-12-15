@@ -51,7 +51,7 @@ async function checkManifest(fileName, url, requiresConvert, type) {
     })
 }
 
-async function checkOther(fileName, url) {
+async function checkJAR(fileName, url) {
     return new Promise(async (resolve, reject) => {
         let isOnline = await checkInternet();
         let CAULDRON_PATH = grabPath();
@@ -63,7 +63,7 @@ async function checkOther(fileName, url) {
 
             if (isOnline) {
                 try {
-                    const downloadedFile = await downloadOther(url, path.join(CAULDRON_PATH, fileName))
+                    const downloadedFile = await downloadJAR(url, path.join(CAULDRON_PATH, fileName))
                     resolve(downloadedFile);
                 } catch (err) {
                     reject(err);
@@ -76,7 +76,7 @@ async function checkOther(fileName, url) {
     })
 }
 
-async function downloadOther(url, dir) {
+async function downloadJAR(url, dir) {
     return new Promise(async (resolve, reject) => {
         let config = {
             method: 'get',
