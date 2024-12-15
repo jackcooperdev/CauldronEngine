@@ -24,7 +24,8 @@
     "./fileTools": "./tools/fileTools.js",
     "./session": "./tools/sessionManager.js",
     "./online": "./tools/checkConnection.js",
-    "./plugins": "./plugins/plugins.js"
+    "./plugins": "./plugins/plugins.js",
+    "./files" : "./tools/fileServerLocator.js"
   },
   "author": "JackCooper",
   "license": "GPL-3.0-only",

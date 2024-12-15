@@ -18,6 +18,8 @@ const NEW_LOGS = require('../files/logs-locations.json');
 const {checkCompat} = require('./jvm');
 const {destroySession} = require('../tools/sessionManager');
 const {checkManifestPlugin, getDataPlugin, getIdentifierPlugin} = require('../plugins/plugins');
+const {findCustomLogger, FILES_LOCATION} = require("../tools/customLoggerFinder");
+const {grabStaticFileServer} = require("../tools/fileServerLocator");
 
 
 async function checkManifest(fileName, url, requiresConvert, type) {
@@ -204,12 +206,19 @@ async function getManifests(v, l, lv) {
             }
             let grabLogging;
             if (createdManifest.logging) {
-                grabLogging = await checkOther(path.join('assets', 'log_configs', createdManifest.logging.client.file.id), NEW_LOGS[createdManifest.logging.client.file.id].url);
+                let logLocation =  createdManifest.logging.client.file.url;
+                if (await findCustomLogger(createdManifest.logging.client.file.id)) {
+                    logLocation = `${await grabStaticFileServer()}/logs/${createdManifest.logging.client.file.id}`;
+                } else {
+                    cauldronLogger.warn("Destroying Session: No Custom Logger Detected (Create Issue with version number). Game will still boot");
+                    await destroySession();
+                }
+                grabLogging = await checkJAR(path.join('assets', 'log_configs', createdManifest.logging.client.file.id), logLocation);
             } else {
                 cauldronLogger.warn("Destroying Session: No Logger Detected. Game will still boot");
                 await destroySession();
             }
-            await checkOther(path.join('versions', createdManifest.id, createdManifest.id + '.jar'), createdManifest.downloads.client.url);
+            await checkJAR(path.join('versions', createdManifest.id, createdManifest.id + '.jar'), createdManifest.downloads.client.url);
 
             // Check for Duplicates in Libs
             let libs = createdManifest.libraries;
