@@ -220,12 +220,14 @@ async function getManifests(v, l, lv) {
             } else {
                 createdManifest = await attemptToConvert(getSpec);
             }
-            let grabLogging;
             if (createdManifest.logging) {
                 let logLocation =  createdManifest.logging.client.file.url;
                 if (await findCustomLogger(createdManifest.logging.client.file.id)) {
                     logLocation = `${await grabStaticFileServer()}/logs/${createdManifest.logging.client.file.id}`;
-                    grabLogging = await checkLog(path.join('assets', 'log_configs', createdManifest.logging.client.file.id), logLocation);
+                    if (!fs.existsSync(path.join(CAULDRON_PATH,'assets', 'log_configs', createdManifest.logging.client.file.id))) {
+                        cauldronLogger.info(`Downloading Custom Logger: ${createdManifest.logging.client.file.id}`);
+                        await checkLog(path.join('assets', 'log_configs', createdManifest.logging.client.file.id), logLocation);
+                    }
                 } else {
                     cauldronLogger.warn("Destroying Session: No Custom Logger Detected (Create Issue with version number). Game will still boot");
                     await destroySession();
@@ -277,7 +279,6 @@ async function getManifests(v, l, lv) {
             }
             let allManifests = {
                 spec: createdManifest,
-                logging: grabLogging,
                 jvmMeta: jvmMeta,
                 jvmMani: jvmMani,
                 jvmComp: createdManifest.javaVersion.component,

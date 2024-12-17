@@ -38,8 +38,7 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
                 sessionID = createSession(newSession);
             }
             cauldronLogger.info("Session ID: " + sessionID)
-            //Acquire Manifests (All)
-            // Finds ALL Manifests Required for version. Offline Failsafe
+            // Create Bulk Manifests
             const manifests = await getManifests(version, loader, lVersion);
             cauldronLogger.info("Manifests Got!")
             if (!manifests.jvmDownloaded) {
@@ -69,7 +68,7 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
                 cauldronLogger.info('All Files Acquired Building Launch File');
                 cauldronLogger.info('Creating JVM Arguments');
                 if (manifests.spec.logging) {
-                    await logInjector(path.join(CAULDRON_PATH, 'assets', 'log_configs', manifests.spec.logging.client.file.id), sessionID)
+                    await logInjector(path.join(CAULDRON_PATH, 'assets', 'log_configs', manifests.spec.logging.client.file.id), sessionID);
                 }
                 let validRules = await buildJVMRules(manifests.spec, libGet, manifests.versionData, overrides.jvm);
                 cauldronLogger.info('Generating Game Arguments');
