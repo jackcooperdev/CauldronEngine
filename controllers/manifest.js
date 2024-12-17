@@ -17,7 +17,7 @@ const {checkInternet} = require('../tools/checkConnection');
 const {checkCompat} = require('./jvm');
 const {destroySession} = require('../tools/sessionManager');
 const {checkManifestPlugin, getDataPlugin, getIdentifierPlugin} = require('../plugins/plugins');
-const {findCustomLogger, FILES_LOCATION} = require("../tools/customLoggerFinder");
+const { findCustomLogger } = require("../tools/customLoggerFinder");
 const {grabStaticFileServer} = require("../tools/fileServerLocator");
 
 
