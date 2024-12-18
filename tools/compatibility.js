@@ -2,7 +2,7 @@ const osCurrent = require('os').platform();
 const archCurrent = require('os').arch();
 const path = require('path')
 const homedir = require('os').homedir();
-
+require('dotenv').config();
 const shell = require('shelljs');
 
 
@@ -10,12 +10,16 @@ const shell = require('shelljs');
 
 
 function grabPath() {
-    const WORKING_DIR = '.cauldron';
+    let WORKING_DIR = '.cauldron';
     let pathReturn;
-    if (osCurrent === 'win32') {
-        pathReturn = path.join(homedir, 'AppData', 'Roaming', WORKING_DIR)
-    } else if (osCurrent === 'linux' || osCurrent === 'darwin') {
-        pathReturn = path.join(homedir, WORKING_DIR);
+    if (!process.env.CAULDRON_PATH) {
+        if (osCurrent === 'win32') {
+            pathReturn = path.join(homedir, 'AppData', 'Roaming', WORKING_DIR)
+        } else if (osCurrent === 'linux' || osCurrent === 'darwin') {
+            pathReturn = path.join(homedir, WORKING_DIR);
+        }
+    } else {
+        pathReturn = path.join(process.env.CAULDRON_PATH);
     }
     shell.mkdir('-p', path.join(pathReturn))
     return pathReturn

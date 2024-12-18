@@ -25,7 +25,7 @@
     "./session": "./tools/sessionManager.js",
     "./online": "./tools/checkConnection.js",
     "./plugins": "./plugins/plugins.js",
-    "./files" : "./tools/fileServerLocator.js"
+    "./files": "./tools/fileServerLocator.js"
   },
   "author": "JackCooper",
   "license": "GPL-3.0-only",
@@ -38,6 +38,7 @@
     "checksum": "^1.0.0",
     "cluster": "^0.7.7",
     "decompress": "^4.2.1",
+    "dotenv": "^16.4.7",
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
     "log4js": "^6.9.1",
