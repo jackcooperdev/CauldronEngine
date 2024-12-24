@@ -83,8 +83,8 @@ server.on('error', function (sock) {
     cauldronLogger.error(sock);
 })
 
-function setLoggerSession(id) {
+function attachLoggerSession(id) {
     loggerSession = id;
 }
 
-module.exports = { cauldronLogger, setLoggerSession}
+module.exports = { cauldronLogger, attachLoggerSession}

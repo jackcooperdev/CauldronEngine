@@ -11,54 +11,42 @@
     "test": "echo \"Error: no test specified\""
   },
   "exports": {
-    "./manifest": "./controllers/manifest.js",
-    "./launcher": "./controllers/launcher.js",
     "./assets": "./controllers/assets.js",
     "./jvm": "./controllers/jvm.js",
+    "./launcher": "./controllers/launcher.js",
     "./libraries": "./controllers/libraries.js",
+    "./manifest": "./controllers/manifest.js",
     "./queue": "./controllers/queue.js",
-    "./auth": "./tools/authVerifier.js",
-    "./launchbuild": "./tools/launchBuilder.js",
-    "./logger": "./tools/logger.js",
+
+    "./online": "./tools/checkConnection.js",
     "./compat": "./tools/compatibility.js",
     "./fileTools": "./tools/fileTools.js",
+    "./files": "./tools/fileServerLocator.js",
+    "./launchbuild": "./tools/launchBuilder.js",
     "./session": "./tools/sessionManager.js",
-    "./online": "./tools/checkConnection.js",
-    "./plugins": "./plugins/plugins.js",
-    "./files": "./tools/fileServerLocator.js"
+    "./logger": "./tools/logger.js",
+
+    "./plugins": "./plugins/plugins.js"
   },
   "author": "JackCooper",
   "license": "GPL-3.0-only",
   "dependencies": {
-    "@types/shelljs": "^0.8.15",
-    "archiver": "^7.0.1",
-    "await-spawn": "^4.0.2",
     "axios": "1.7.4",
     "bluebird": "^3.7.2",
     "checksum": "^1.0.0",
-    "cluster": "^0.7.7",
-    "decompress": "^4.2.1",
+    "cross-spawn": "^7.0.6",
     "dotenv": "^16.4.7",
     "jsonwebtoken": "^9.0.2",
-    "lodash": "^4.17.21",
     "log4js": "^6.9.1",
-    "lzma-native": "^8.0.6",
     "node-stream-zip": "^1.15.0",
     "nodejs-file-downloader": "^4.13.0",
-    "qs": "^6.13.1",
-    "queue-system": "^4.1.1",
-    "shelljs": "^0.8.5",
-    "ws": "^8.18.0"
+    "shelljs": "^0.8.5"
   },
   "devDependencies": {
-    "@types/archiver": "~6.0.3",
     "@types/bluebird": "~3.5.42",
     "@types/checksum": "~0.1.35",
-    "@types/decompress": "~4.2.7",
+    "@types/cross-spawn": "~6.0.6",
     "@types/jsonwebtoken": "~9.0.7",
-    "@types/lodash": "~4.17.13",
-    "@types/lzma-native": "~4.0.4",
-    "@types/qs": "~6.9.17",
-    "@types/ws": "~8.5.13"
+    "@types/shelljs": "~0.8.15"
   }
 }

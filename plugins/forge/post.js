@@ -7,7 +7,7 @@ const {getLibraries} = require('../../controllers/libraries');
 const {validate} = require('../../tools/fileTools');
 const {cauldronLogger} = require('../../tools/logger');
 const {convertNameToPath} = require('./utils');
-const spawn = require('await-spawn')
+const spawn = require('cross-spawn')
 
 
 async function postProcessing(manifests) {

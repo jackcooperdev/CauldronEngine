@@ -81,7 +81,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
             validRules.push(manifest.logging.client.argument)
         }
 
-        //Check if version requires proxy
+        //Check if a version requires proxy
         let proxyPort = false;
         let vArray = ["1.0", "1.1", "1.3", "1.4", "1.5"]
         let splitVersion = `${versionData.version.split(".")[0]}.${versionData.version.split(".")[1]}`

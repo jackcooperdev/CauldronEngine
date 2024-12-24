@@ -7,15 +7,15 @@ const {getAssets} = require("./assets");
 const {checkJVM} = require("./jvm");
 const {getLibraries} = require("./libraries");
 const {getManifests} = require('./manifest')
-const {cauldronLogger, setLoggerSession} = require('../tools/logger');
+const {cauldronLogger, attachLoggerSession} = require('../tools/logger');
 const {createSession, destroySession} = require("../tools/sessionManager");
 const {buildJVMRules, buildGameRules, buildFile, logInjector} = require("../tools/launchBuilder");
 const {getPostPlugin} = require('../plugins/plugins');
 
 
-async function launchGame(version, dry, loader, lVersion, authData, sessionID, overrides) {
-    if (!dry) {
-        dry = false;
+async function launchGame(version, installOnly, loader, lVersion, authData, sessionID, overrides) {
+    if (!installOnly) {
+        installOnly = false;
     }
     if (!overrides) {
         overrides = {'jvm': {}, 'game': {}, 'additG': {}};
@@ -29,13 +29,7 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
             getOperatingSystem();
             //Create SessionID If Not Declared
             if (!sessionID) {
-                let newSession = {
-                    type: 'game',
-                    version: version,
-                    loader: loader,
-                    overrides: overrides
-                };
-                sessionID = createSession(newSession);
+                sessionID = createSession();
             }
             cauldronLogger.info("Session ID: " + sessionID)
             // Create Bulk Manifests
@@ -64,7 +58,7 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
             }
             cauldronLogger.info('Starting Library Download')
             const libGet = await getLibraries(manifests.spec.libraries, manifests.versionData, manifests.spec.id);
-            if (!dry) {
+            if (!installOnly) {
                 cauldronLogger.info('All Files Acquired Building Launch File');
                 cauldronLogger.info('Creating JVM Arguments');
                 if (manifests.spec.logging) {
@@ -75,7 +69,7 @@ async function launchGame(version, dry, loader, lVersion, authData, sessionID, o
                 let gameRules = await buildGameRules(manifests.spec, authData, overrides.game, overrides.additG);
                 let launchPath = await buildFile(manifests.spec, manifests.jvmComp, validRules, gameRules);
                 cauldronLogger.info('Starting Game');
-                setLoggerSession(sessionID);
+                attachLoggerSession(sessionID);
                 exec(`cd ${CAULDRON_PATH} && ${launchPath}`);
                 resolve(sessionID);
             } else {

@@ -7,10 +7,9 @@ function createUUID() {
     );
 }
 
-function createSession(data) {
-    let newSession = data;
+function createSession() {
     let sessionID = createUUID();
-    currentSessions[sessionID] = newSession;
+    currentSessions[sessionID] = sessionID;
     return sessionID;
 }
 
