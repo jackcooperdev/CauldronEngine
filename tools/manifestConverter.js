@@ -5,19 +5,20 @@ const path = require('path')
 
 
 
-async function attemptToConvert(original, overides) {
-    var newTemplate = template;
+async function attemptToConvert(original) {
+    let newTemplate = template;
     // Fill Template As Much as Possible
-    for (idx in newTemplate) {
+    for (let idx in newTemplate) {
         newTemplate[idx] = original[idx]
-    };
+    }
+    let javaVersion;
     if (!newTemplate['javaVersion']) {
         javaVersion = { component: 'jre-legacy' };
         newTemplate['javaVersion'] = javaVersion;
-    };
+    }
 
-    if (!newTemplate['arguments'] || !newTemplate['arguments'].jvm || newTemplate['arguments'].jvm.length == 0) {
-        var arguments = [
+    if (!newTemplate['arguments'] || !newTemplate['arguments'].jvm || newTemplate['arguments'].jvm.length === 0) {
+        let arguments = [
             "-Djava.library.path=${natives_directory}",
             "-Dminecraft.launcher.brand=${launcher_name}",
             "-Dminecraft.client.jar=${client_jar}",
@@ -32,12 +33,12 @@ async function attemptToConvert(original, overides) {
             "-XX:MaxGCPauseMillis=50",
             "-XX:G1HeapRegionSize=32M"
         ]
-        if (osCurrent == 'win32') {
+        if (osCurrent === 'win32') {
             arguments.push("-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump");
             arguments.push("-Dos.version=10.0");
-        } else if (osCurrent == 'darwin') {
+        } else if (osCurrent === 'darwin') {
             //arguments.push("-XstartOnFirstThread")
-        };
+        }
         if (!newTemplate['arguments']) {
             newTemplate['arguments'] = {};
         }
@@ -45,71 +46,71 @@ async function attemptToConvert(original, overides) {
         if (original.minecraftArguments) {
             //gameArguments['game'] = 
             newTemplate['arguments']['game'] = original.minecraftArguments.split(" ");
-        };
-    };
+        }
+    }
     return newTemplate;
-};
+}
 
 
 async function convertAssets(original) {
-    return new Promise(async (resolve, reject) => {
-        var CAULDRON_PATH = grabPath();
-        var objs = original.objects;
-        var newData = new Array();
-        for (idx in objs) {
-            var obj = {
+    return new Promise(async (resolve) => {
+        let CAULDRON_PATH = grabPath();
+        let objs = original.objects;
+        let newData = [];
+        for (let idx in objs) {
+            let obj = {
                 origin: `https://resources.download.minecraft.net/${objs[idx].hash.substring(0, 2)}/${objs[idx].hash}`,
                 sha1: objs[idx].hash,
                 destination: path.join(CAULDRON_PATH, 'assets', 'objects', objs[idx].hash.substring(0, 2)),
                 fileName: objs[idx].hash
             };
             newData.push(obj);
-        };
+        }
         resolve(newData)
 
     })
 
-};
+}
 
 async function convertLegacyAssets(original) {
-    return new Promise(async (resolve, reject) => {
-        var CAULDRON_PATH = grabPath();
-        var objs = original.objects;
-        var newData = new Array();
-        for (idx in objs) {
-            var splitPath = idx.split("/");
-            var fileName = splitPath.pop();
-            var obj = {
+    return new Promise(async (resolve) => {
+        let CAULDRON_PATH = grabPath();
+        let objs = original.objects;
+        let newData = [];
+        for (let idx in objs) {
+            let splitPath = idx.split("/");
+            let fileName = splitPath.pop();
+            let obj = {
                 origin: `https://resources.download.minecraft.net/${objs[idx].hash.substring(0, 2)}/${objs[idx].hash}`,
                 sha1: objs[idx].hash,
                 destination: path.join(CAULDRON_PATH, 'assets', 'virtual', 'legacy', splitPath.join("/")),
                 fileName: fileName
             };
             newData.push(obj);
-        };
+        }
         resolve(newData);
     });
-};
+}
 
 async function convertPre16Assets(original) {
-    return new Promise(async (resolve, reject) => {
-        var CAULDRON_PATH = grabPath();
-        var objs = original.objects;
-        var newData = new Array();
-        for (idx in objs) {
-            var splitPath = idx.split("/");
-            var fileName = splitPath.pop();
-            var obj = {
+    return new Promise(async (resolve) => {
+        let CAULDRON_PATH = grabPath();
+        let objs = original.objects;
+        let newData = [];
+        for (let idx in objs) {
+            let splitPath = idx.split("/");
+            let fileName = splitPath.pop();
+            let obj = {
                 origin: `https://resources.download.minecraft.net/${objs[idx].hash.substring(0, 2)}/${objs[idx].hash}`,
                 sha1: objs[idx].hash,
                 destination: path.join(CAULDRON_PATH, 'resources', splitPath.join("/")),
                 fileName: fileName
             };
             newData.push(obj);
-        };
+        }
         resolve(newData);
     });
-};
+}
 
 
 

@@ -1,43 +1,47 @@
 const fs = require('fs');
-const homedir = require('os').homedir();
 const path = require('path');
 const shelljs = require('shelljs');
 const axios = require('axios');
 const osCurrent = require('os').platform();
 
-// Import Other Controllers
-const { processQueue } = require('./queue');
-
 // Import Tools
-const { grabPath } = require('../tools/compatibility');
-const { attemptToConvert, convertAssets, convertLegacyAssets, convertPre16Assets } = require('../tools/manifestConverter');
-const { cauldronLogger } = require('../tools/logger');
-const { checkInternet } = require('../tools/checkConnection');
-const NEW_LOGS = require('../files/logs-locations.json');
-const { checkCompat } = require('./jvm');
-const { destroySession } = require('../tools/sessionManager');
-const { checkManifestPlugin, getDataPlugin, getIdentifierPlugin } = require('../plugins/plugins');
+const {grabPath} = require('../tools/compatibility');
+const {
+    attemptToConvert,
+    convertAssets,
+    convertLegacyAssets,
+    convertPre16Assets
+} = require('../tools/manifestConverter');
+const {cauldronLogger} = require('../tools/logger');
+const {checkInternet} = require('../tools/checkConnection');
+const {checkCompat} = require('./jvm');
+const {destroySession} = require('../tools/sessionManager');
+const {checkManifestPlugin, getDataPlugin, getIdentifierPlugin} = require('../plugins/plugins');
+const { findCustomLogger } = require("../tools/customLoggerFinder");
+const {grabStaticFileServer} = require("../tools/fileServerLocator");
 
 
-async function checkManifest(fileName, url, requiresConvert, type) {
+async function checkManifest(fileName, url, type) {
     return new Promise(async (resolve, reject) => {
-        var isOnline = await checkInternet();
-        var CAULDRON_PATH = grabPath();
+        let isOnline = await checkInternet();
+        let CAULDRON_PATH = grabPath();
         try {
-            var expected = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, fileName)));
-            if (isOnline && !requiresConvert && type == 'main') {
+            let expected = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, fileName)).toString());
+            if (isOnline && type === 'main') {
                 // Only Update Main Manifest
-                downloadManifest(url, path.join(CAULDRON_PATH, fileName))
+                downloadManifest(url, path.join(CAULDRON_PATH, fileName)).then(function () {
+                    //cauldronLogger.info("Updated Local Manifest");
+                })
             }
-            resolve(expected)
+            resolve(expected);
         } catch (err) {
             cauldronLogger.warn(`${fileName} not found trying to download`);
             if (isOnline) {
                 try {
-                    const downloadedFile = await downloadManifest(url, path.join(CAULDRON_PATH, fileName), requiresConvert, type);
+                    const downloadedFile = await downloadManifest(url, path.join(CAULDRON_PATH, fileName), type);
                     resolve(downloadedFile);
                 } catch (err) {
-                    //////console.log(err)
+                    console.log(err);
                 }
 
             } else {
@@ -47,21 +51,22 @@ async function checkManifest(fileName, url, requiresConvert, type) {
     })
 }
 
-async function checkOther(fileName, url) {
+async function checkJAR(fileName, url) {
     return new Promise(async (resolve, reject) => {
-        var isOnline = await checkInternet();
-        var CAULDRON_PATH = grabPath();
+        let isOnline = await checkInternet();
+        let CAULDRON_PATH = grabPath();
         try {
-            var expected = fs.readFileSync(path.join(CAULDRON_PATH, fileName));
+            let expected = fs.readFileSync(path.join(CAULDRON_PATH, fileName));
             resolve(expected)
         } catch (err) {
             cauldronLogger.warn(`${fileName} not found trying to download`);
+
             if (isOnline) {
                 try {
-                    const downloadedFile = await downloadOther(url, path.join(CAULDRON_PATH, fileName))
+                    const downloadedFile = await downloadALL(url, path.join(CAULDRON_PATH, fileName))
                     resolve(downloadedFile);
                 } catch (err) {
-                    //////console.log(err)
+                    reject(err);
                 }
 
             } else {
@@ -71,9 +76,9 @@ async function checkOther(fileName, url) {
     })
 }
 
-async function downloadOther(url, dir) {
+async function downloadALL(url, dir) {
     return new Promise(async (resolve, reject) => {
-        var config = {
+        let config = {
             method: 'get',
             url: url,
             responseType: 'arraybuffer'
@@ -85,166 +90,209 @@ async function downloadOther(url, dir) {
             resolve(file.data);
         } catch (err) {
             reject(err.message)
-        };
+        }
     })
-};
+}
 
-var convertManifests = {
+
+async function checkLog(fileName, url) {
+    return new Promise(async (resolve, reject) => {
+        let isOnline = await checkInternet();
+        let CAULDRON_PATH = grabPath();
+        if (isOnline) {
+            try {
+                const downloadedFile = await downloadALL(url, path.join(CAULDRON_PATH, fileName))
+                resolve(downloadedFile);
+            } catch (err) {
+                reject(err);
+            }
+
+        }
+    })
+}
+
+let convertManifests = {
     'assets': convertAssets,
     'legacy': convertLegacyAssets,
     'pre-1.6': convertPre16Assets
 };
 
-async function downloadManifest(url, dir, requiresConvert, type) {
+async function downloadManifest(url, dir, type) {
     return new Promise(async (resolve, reject) => {
-        var config = {
+        let config = {
             method: 'get',
             url: url
         };
         try {
             const file = await axios(config);
             shelljs.mkdir('-p', path.join(dir, '../'));
-            var fileData = file.data;
-            if (requiresConvert) {
+            let fileData = file.data;
+            if (convertManifests[type]) {
                 fileData = await convertManifests[type](fileData);
             }
             fs.writeFileSync(dir, JSON.stringify(fileData));
             resolve(fileData);
         } catch (err) {
             reject(err.message)
-        };
+        }
     })
-};
+}
 
-async function getJVMManifest() {
+async function getPackwizJVM() {
     // Used to Assist Packwiz on client.
     // not used in launcher
     return new Promise(async (resolve, reject) => {
-        var CAULDRON_PATH = grabPath();
-           // Check for jvm file
-           if (!fs.existsSync(path.join(CAULDRON_PATH, 'jvm_installed.json'))) {
+        let CAULDRON_PATH = grabPath();
+        // Check for jvm file
+        if (!fs.existsSync(path.join(CAULDRON_PATH, 'jvm_installed.json'))) {
             fs.writeFileSync(path.join(CAULDRON_PATH, 'jvm_installed.json'), '{}');
-        };
+        }
         try {
 
             // JVM Manifests
             // Check For Meta
             const jvmMeta = await checkManifest(path.join('jvm', 'jvm-core.json'), 'https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json')
             const jvmCompat = await checkCompat('java-runtime-alpha', jvmMeta);
+            let jvmMani;
             if (jvmCompat) {
-                var jvmMani = await checkManifest(path.join('jvm', 'java-runtime-alpha.json'), jvmCompat[0].manifest.url);
+                jvmMani = await checkManifest(path.join('jvm', 'java-runtime-alpha.json'), jvmCompat[0].manifest.url);
             } else {
-                reject('Version Not Suppourted on ' + osCurrent);
-            };
+                reject('Version Not Supported on ' + osCurrent);
+            }
 
-            var allManifiests = {
+            let allManifests = {
                 jvmMeta: jvmMeta,
                 jvmMani: jvmMani,
                 jvmComp: 'java-runtime-alpha',
             };
-            resolve(allManifiests);
+            resolve(allManifests);
         } catch (err) {
             reject(err);
         }
 
     })
-};
+}
 
 
 async function getManifests(v, l, lv) {
     return new Promise(async (resolve, reject) => {
-        var CAULDRON_PATH = grabPath();
+        let CAULDRON_PATH = grabPath();
         try {
-            // Check for asset file
+            // Check for an asset installation file
             if (!fs.existsSync(path.join(CAULDRON_PATH, 'assets_installed.json'))) {
                 fs.writeFileSync(path.join(CAULDRON_PATH, 'assets_installed.json'), '{}');
-            };
-
-             // Check for jvm file
-             if (!fs.existsSync(path.join(CAULDRON_PATH, 'jvm_installed.json'))) {
-                fs.writeFileSync(path.join(CAULDRON_PATH, 'jvm_installed.json'), '{}');
-            };
-            const assetDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'assets_installed.json')));
-            const jvmDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'jvm_installed.json')));
-            // Convert to Actual Values
-            if (l != 'vanilla') {
-                gotVersion = await checkManifest(`cauldron_${l}_version_manifest.json`,await getDataPlugin(l),false,'main');
-            } else {
-                gotVersion = await checkManifest('cauldron_version_manifest.json', 'https://launchermeta.mojang.com/mc/game/version_manifest.json', false, 'main');
             }
-            const { version, loaderVersion, loader } = await whatIsThis(v, l, lv, gotVersion);
-            getMain = await checkManifest('cauldron_version_manifest.json', 'https://launchermeta.mojang.com/mc/game/version_manifest.json', false, 'main');
-            const foundVersionData = getMain.versions.find(versionName => versionName.id === version);
+
+            // Check for jvm file
+            if (!fs.existsSync(path.join(CAULDRON_PATH, 'jvm_installed.json'))) {
+                fs.writeFileSync(path.join(CAULDRON_PATH, 'jvm_installed.json'), '{}');
+            }
+
+            // Check for a library installations file
+            if (!fs.existsSync(path.join(CAULDRON_PATH, 'libs_installed.json'))) {
+                fs.writeFileSync(path.join(CAULDRON_PATH, 'libs_installed.json'), '{}');
+            }
+            const assetDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'assets_installed.json')).toString());
+            const jvmDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'jvm_installed.json')).toString());
+            const libDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'libs_installed.json')).toString());
+            // Convert to Actual Values
+            let vanillaManifest;
+            let pluginManifest;
+            if (l !== 'vanilla') {
+                vanillaManifest = await checkManifest('cauldron_version_manifest.json', 'https://launchermeta.mojang.com/mc/game/version_manifest.json', 'main');
+                pluginManifest = await checkManifest(`cauldron_${l}_version_manifest.json`, await getDataPlugin(l), 'main');
+            } else {
+                vanillaManifest = await checkManifest('cauldron_version_manifest.json', 'https://launchermeta.mojang.com/mc/game/version_manifest.json', 'main');
+            }
+            const {version, loaderVersion, loader} = await whatIsThis(v, l, lv, vanillaManifest, pluginManifest);
+            /**
+             * @param vanillaManifest
+             * @param vanillaManifest.versions
+             */
+            const foundVersionData = vanillaManifest.versions.find(versionName => versionName.id === version);
             if (!foundVersionData) {
-                throw new Error('Version Not Found')
-            };
-            const getSpec = await checkManifest(path.join('versions', foundVersionData.id, foundVersionData.id + '.json'), foundVersionData.url);
-            if (loader != 'vanilla') {
-                createdManifest = await checkManifestPlugin(loader,loaderVersion, version, getSpec,gotVersion);
+                reject('Version Not Found');
+            }
+            const getSpec = await checkManifest(path.join('versions', foundVersionData.id, foundVersionData.id + '.json'), foundVersionData.url, 'spec');
+            let createdManifest;
+            if (loader !== 'vanilla') {
+                createdManifest = await checkManifestPlugin(loader, loaderVersion, version, getSpec, pluginManifest);
             } else {
                 createdManifest = await attemptToConvert(getSpec);
-            };
+            }
             if (createdManifest.logging) {
-                var grabLogging = await checkOther(path.join('assets', 'log_configs', createdManifest.logging.client.file.id), NEW_LOGS[createdManifest.logging.client.file.id].url);
+                let logLocation =  createdManifest.logging.client.file.url;
+                if (await findCustomLogger(createdManifest.logging.client.file.id)) {
+                    logLocation = `${await grabStaticFileServer()}/logs/${createdManifest.logging.client.file.id}`;
+                    if (!fs.existsSync(path.join(CAULDRON_PATH,'assets', 'log_configs', createdManifest.logging.client.file.id))) {
+                        cauldronLogger.info(`Downloading Custom Logger: ${createdManifest.logging.client.file.id}`);
+                        await checkLog(path.join('assets', 'log_configs', createdManifest.logging.client.file.id), logLocation);
+                    }
+                } else {
+                    cauldronLogger.warn("Destroying Session: No Custom Logger Detected (Create Issue with version number). Game will still boot");
+                    await destroySession();
+                }
             } else {
                 cauldronLogger.warn("Destroying Session: No Logger Detected. Game will still boot");
-                destroySession();
+                await destroySession();
             }
-            //////console.log(createdManifest.downloads.client.url)
-            const grabClient = await checkOther(path.join('versions', createdManifest.id, createdManifest.id + '.jar'), createdManifest.downloads.client.url);
+            await checkJAR(path.join('versions', createdManifest.id, createdManifest.id + '.jar'), createdManifest.downloads.client.url);
 
             // Check for Duplicates in Libs
-            var libs = createdManifest.libraries;
+            let libs = createdManifest.libraries;
             const ids = libs.map(o => o.name)
-            const filtered = libs.filter(({ name }, index) => !ids.includes(name, index + 1));
-            createdManifest.libraries = filtered;
+            createdManifest.libraries = libs.filter(({name}, index) => !ids.includes(name, index + 1));
 
             // JVM Manifests
 
             // Check For Meta
-            const jvmMeta = await checkManifest(path.join('jvm', 'jvm-core.json'), 'https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json')
+            const jvmMeta = await checkManifest(path.join('jvm', 'jvm-core.json'), 'https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json', 'java')
             const jvmCompat = await checkCompat(createdManifest.javaVersion.component, jvmMeta);
+            let jvmMani;
             if (jvmCompat) {
-                var jvmMani = await checkManifest(path.join('jvm', createdManifest.javaVersion.component + '.json'), jvmCompat[0].manifest.url);
+                jvmMani = await checkManifest(path.join('jvm', createdManifest.javaVersion.component + '.json'), jvmCompat[0].manifest.url, 'java');
             } else {
-                reject('Version Not Suppourted on ' + osCurrent);
-            };
+                reject('Version Not Supported on ' + osCurrent);
+            }
             // Assets
-            const assetMani = await checkManifest(path.join('assets', 'indexes', createdManifest.assets + '.json'), createdManifest.assetIndex.url);
-            var specCond = createdManifest.assets
-            if (createdManifest.assets != 'legacy' && createdManifest.assets != 'pre-1.6') {
+            const assetMani = await checkManifest(path.join('assets', 'indexes', createdManifest.assets + '.json'), createdManifest.assetIndex.url, 'assetIndex');
+            let specCond = createdManifest.assets
+            if (createdManifest.assets !== 'legacy' && createdManifest.assets !== 'pre-1.6') {
                 specCond = 'assets'
-            };
-            const assetsConverted = await checkManifest(path.join('assets', 'indexes', createdManifest.assets + '-cauldron.json'), createdManifest.assetIndex.url, true, specCond);
+            }
+            const assetsConverted = await checkManifest(path.join('assets', 'indexes', createdManifest.assets + '-cauldron.json'), createdManifest.assetIndex.url, specCond);
 
-            // TODO: Add verification expiratition (Session Based???)
-            var haveAssetsBeenDownloaded = false;
+            // TODO: Add verification expiration (Session Based???)
+            let haveAssetsBeenDownloaded = false;
             if (assetDict[createdManifest.assets]) {
                 haveAssetsBeenDownloaded = true;
-            };
+            }
 
-            var hasJVMBeenDownloaded = false;
+            let hasJVMBeenDownloaded = false;
             if (jvmDict[createdManifest.javaVersion.component]) {
                 hasJVMBeenDownloaded = true;
-            };
+            }
 
-            var allManifiests = {
-                main: getMain,
+            let hasLibsBeenDownloaded = false;
+            if (libDict[createdManifest.id]) {
+                hasLibsBeenDownloaded = true;
+            }
+            let allManifests = {
                 spec: createdManifest,
-                logging: grabLogging,
                 jvmMeta: jvmMeta,
                 jvmMani: jvmMani,
                 jvmComp: createdManifest.javaVersion.component,
                 assets: assetMani,
-                aseetsInfo: assetsConverted,
+                assetsInfo: assetsConverted,
                 version: version,
-                versionData: { loader: loader, version: version, loaderVersion: loaderVersion },
+                versionData: {loader: loader, version: version, loaderVersion: loaderVersion},
                 loader: loader,
                 assetsDownloaded: haveAssetsBeenDownloaded,
-                jvmDownloaded:hasJVMBeenDownloaded,
+                jvmDownloaded: hasJVMBeenDownloaded,
+                libsDownloaded: hasLibsBeenDownloaded,
                 loaderVersion: loaderVersion
             };
-            resolve(allManifiests);
+            resolve(allManifests);
 
 
         } catch (err) {
@@ -252,38 +300,49 @@ async function getManifests(v, l, lv) {
         }
 
     })
-};
+}
 
 
 // What Is This? Function
 // Helps convert terms like release and snapshot into actual versions
-// Also grabs information for the selected loader (like loader version)
+// Also grabs information for the selected loader (like a loader version)
 
-async function whatIsThis(version, loader, lVersion, MANIFEST) {
+async function whatIsThis(version, loader, lVersion, vanillaManifest, additManifest) {
+
+
     if (!loader) {
         loader = 'vanilla';
-    };
-    var versionFound = "";
-    if (version == 'release' || version == 'latest') {
-        versionFound = MANIFEST.latest.release;
-    } else if (version == 'snapshot') {
-        versionFound = MANIFEST.latest.snapshot;
+    }
+    let versionFound;
+    /**
+     * @param MANIFEST
+     * @param MANIFEST.latest
+     */
+    if (version === 'release' || version === 'latest') {
+        versionFound = vanillaManifest.latest.release;
+
+    } else if (version === 'snapshot') {
+        versionFound = vanillaManifest.latest.snapshot;
     } else {
         versionFound = version
-    };
-    var rObject = { version: versionFound, loaderVersion: '', loader: loader }
+    }
+    let rObject = {version: versionFound, loaderVersion: '', loader: loader}
     try {
-        if (loader != 'vanilla') {
+
+        if (loader !== 'vanilla') {
+
             if (!lVersion) {
-                lVersion = await getIdentifierPlugin(loader,versionFound,MANIFEST)
-            };
+
+                lVersion = await getIdentifierPlugin(loader, versionFound, additManifest)
+            }
             rObject.loaderVersion = lVersion;
-        };
+        }
     } catch (err) {
+
         throw new Error(err.message)
-    };
+    }
     return rObject;
-};
+}
 
 
-module.exports = { getManifests, getJVMManifest,  checkManifest }
+module.exports = {getManifests, getPackwizJVM, checkManifest}

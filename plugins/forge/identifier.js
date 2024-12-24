@@ -1,7 +1,6 @@
-const { cauldronLogger } = require('../../tools/logger');
-const { destroySession } = require('../../tools/sessionManager');
-var unsupportedVersions = require('./files/blocked_versions.json');
-
+const {cauldronLogger} = require('../../tools/logger');
+const {destroySession} = require('../../tools/sessionManager');
+let unsupportedVersions = require('./files/blocked_versions.json');
 
 
 // Grabs ForgeVersion from ForgePromo
@@ -9,25 +8,33 @@ var unsupportedVersions = require('./files/blocked_versions.json');
 // Fails if in blacklist or version does not exist
 async function identifier(version, forgePromos) {
     return new Promise(async (resolve, reject) => {
+        try {
 
-        type = 'recommended';
+            let type = 'recommended';
 
-        if (unsupportedVersions.includes(version)) {
-            destroySession();
-            reject(`Sorry but Cauldron does not support ${version} forge yet. CODE: BLVER`);
-        };
-        var forgeVersion = forgePromos.promos[`${version}-${type}`];
-        if (!forgeVersion) {
-            forgeVersion = forgePromos.promos[`${version}-latest`];
-            if (!forgeVersion) {
-                reject('Version Does Not Exist')
+            if (unsupportedVersions.includes(version)) {
+                await destroySession();
+                reject(`Sorry but Cauldron does not support ${version} forge yet. CODE: BLVER`);
             }
-        };
-        cauldronLogger.info("Forge Plugin Created By @jackcooper04");
-        cauldronLogger.warn("Forge is still experimental. Expect Crashes");
-        resolve(forgeVersion);
+            /**
+             * @param forgePromos.promos
+             */
+            let forgeVersion = forgePromos.promos[`${version}-${type}`];
+            if (!forgeVersion) {
+                forgeVersion = forgePromos.promos[`${version}-latest`];
+                if (!forgeVersion) {
+                    reject('Version Does Not Exist')
+                }
+            }
+            cauldronLogger.info("Forge Plugin Created By @jackcooper04");
+            cauldronLogger.warn("Forge is still experimental. Expect Crashes");
+            resolve(forgeVersion);
+        } catch (e) {
+            cauldronLogger.error(e);
+        }
+
     })
-};
+}
 
 
-module.exports = { identifier };
+module.exports = {identifier};

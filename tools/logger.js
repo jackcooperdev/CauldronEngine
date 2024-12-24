@@ -17,7 +17,7 @@ log4js.configure({
 const mcLogger = log4js.getLogger("Minecraft");
 const cauldronLogger = log4js.getLogger('Cauldron')
 
-
+let server;
 try {
     server = net.createServer();
     server.listen(port, host, () => {
@@ -30,19 +30,19 @@ try {
 
 let sockets = [];
 
-var loggerSession = "";
+let loggerSession = "";
 
 server.on('connection', function (sock) {
     cauldronLogger.info('Minecraft Connected');
     sockets.push(sock);
     sock.on('data', function (data) {
-        var firstSplit = data.toString().split("\n");
-        for (idx in firstSplit) {
-            if (firstSplit[idx] != '') {
-                var dataMessage = firstSplit[idx].split("]: ");
+        let firstSplit = data.toString().split("\n");
+        for (let idx in firstSplit) {
+            if (firstSplit[idx] !== '') {
+                let dataMessage = firstSplit[idx].split("]: ");
                 if (dataMessage[1]) {
-                    var state = dataMessage[0].split("/")[1];
-                    var arr = dataMessage.shift();
+                    let state = dataMessage[0].split("/")[1];
+                    dataMessage.shift();
                     switch (state) {
                         case 'INFO':
                             mcLogger.info(dataMessage.join(" "));
@@ -62,29 +62,29 @@ server.on('connection', function (sock) {
                         default:
                             mcLogger.error(dataMessage.join(" "));
                             break;
-                    };
-                };
-            };
-        };
+                    }
+                }
+            }
+        }
     });
-    sock.on('close', function (data) {
+    sock.on('close', function () {
         let index = sockets.findIndex(function (o) {
             return o.remoteAddress === sock.remoteAddress && o.remotePort === sock.remotePort;
         })
         if (index !== -1) sockets.splice(index, 1);
         cauldronLogger.info('Minecraft Disconnected');
-            destroySession(loggerSession);
+            destroySession(loggerSession).then(function (){});
             loggerSession = "";
         
     });
 });
 
 server.on('error', function (sock) {
-    ////console.log(sock)
+    cauldronLogger.error(sock);
 })
 
-function setLoggerSession(id) {
+function attachLoggerSession(id) {
     loggerSession = id;
 }
 
-module.exports = { cauldronLogger, setLoggerSession}
+module.exports = { cauldronLogger, attachLoggerSession}

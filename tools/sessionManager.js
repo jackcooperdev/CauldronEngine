@@ -1,55 +1,45 @@
-const fs = require('fs');
-const path = require('path');
-const shelljs = require('shelljs');
-const { grabPath } = require('./compatibility');
-
-var currentSessions = {};
+let currentSessions = {};
 
 
 function createUUID() {
     return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
         (+c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> +c / 4).toString(16)
     );
-};
+}
 
-function createSession(data) {
-    var newSession = data;
-    var sessionID = createUUID();
-    currentSessions[sessionID] = newSession;
+function createSession() {
+    let sessionID = createUUID();
+    currentSessions[sessionID] = sessionID;
     return sessionID;
-};
+}
 
 function checkForGameSession() {
-    for (idx in currentSessions) {
-        if (currentSessions[idx].type == 'game') {
+    for (let idx in currentSessions) {
+        if (currentSessions[idx].type === 'game') {
             return true;
         }
-    };
+    }
     return false;
 }
 
 
-
-function getSession(sessionID) {
-    return currentSessions[sessionID];
-};
-
 async function destroySession(sessionID) {
     try {
         if (!sessionID) {
-            for (idx in currentSessions) {
-                if (currentSessions[idx].type == 'game') {
+            for (let idx in currentSessions) {
+                if (currentSessions[idx].type === 'game') {
                     delete currentSessions[idx];
+                    return;
                 }
             }
         } else {
             delete currentSessions[sessionID];
         }
     } catch (err) {
-        
+        // do nothing
     }
     
-};
+}
 
 
-module.exports = { createSession, getSession, destroySession, createUUID,checkForGameSession };
+module.exports = { createSession, destroySession,checkForGameSession };

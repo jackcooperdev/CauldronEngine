@@ -4,11 +4,10 @@ const fs = require('fs');
 const shelljs = require('shelljs');
 
 
-
-const { verifyInstallation } = require("../../controllers/queue");
-const { grabPath } = require("../../tools/compatibility");
-const { cauldronLogger } = require("../../tools/logger");
-const { getForgeInstallerURL, convertNameToPath, getSuffixUsed } = require("./utils");
+const {verifyInstallation} = require("../../controllers/queue");
+const {grabPath} = require("../../tools/compatibility");
+const {cauldronLogger} = require("../../tools/logger");
+const {getForgeInstallerURL, convertNameToPath, getSuffixUsed} = require("./utils");
 
 // Important Links
 const FORGE_PROMO = "https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json";
@@ -16,21 +15,21 @@ const LIBRARY_PATH = "https://libraries.minecraft.net/"
 
 
 //Files
-var reqLegMod = require('./files/requires_legacy_mod.json');
-var template = require('../../files/manifestTemplate.json');
-var extraCompat = require('./files/force_compat.json');
-const { attemptToConvert } = require('../../tools/manifestConverter');
+let reqLegMod = require('./files/requires_legacy_mod.json');
+let template = require('../../files/manifestTemplate.json');
+const {attemptToConvert} = require('../../tools/manifestConverter');
+const {grabStaticFileServer} = require("../../tools/fileServerLocator");
 
 async function getManifest(fVersion, version, versionCache) {
     return new Promise(async (resolve, reject) => {
-        var CAULDRON_PATH = grabPath();
+        let CAULDRON_PATH = grabPath();
         try {
-            // Aquire Installer URL (online or from cache)
-            var grabForgeInstaller = await getForgeInstallerURL(version, fVersion);
+            // Acquire Installer URL (online or from cache)
+            let grabForgeInstaller = await getForgeInstallerURL(version, fVersion);
             cauldronLogger.info("Forge Installer Path: " + grabForgeInstaller);
 
             // Build Installer Download File 
-            var installObj = {
+            let installObj = {
                 origin: grabForgeInstaller,
                 sha1: 'NONE',
                 destination: path.join(CAULDRON_PATH, 'forge-installers'),
@@ -38,16 +37,15 @@ async function getManifest(fVersion, version, versionCache) {
             };
 
             // Download / Skip Downloading Installer
-            var downloadInstaller = await verifyInstallation([installObj]);
+            await verifyInstallation([installObj]);
 
-            //console.log(path.join(CAULDRON_PATH, 'forge-installers', installObj.fileName))
 
-            // Extract File and aquire install_profile.json
-            const installer = new StreamZip.async({ file: path.join(CAULDRON_PATH, 'forge-installers', installObj.fileName) });
-            const installerFiles = await installer.entries();
+            // Extract File and acquire install_profile.json
+            const installer = new StreamZip.async({file: path.join(CAULDRON_PATH, 'forge-installers', installObj.fileName)});
+            await installer.entries();
             const profileFileBuffer = await installer.entryData('install_profile.json');
-            const profileFile = JSON.parse(profileFileBuffer);
-
+            const profileFile = JSON.parse(profileFileBuffer.toString());
+            let manifestData;
             // Determine Manifest Format
             if (!profileFile.json) {
                 cauldronLogger.info("Manifest Format: Legacy");
@@ -72,7 +70,7 @@ async function getManifest(fVersion, version, versionCache) {
 
 
             // Close and Remove Installer File
-            installer.close();
+            await installer.close();
 
 
             //Convert To Default Format and fill in blank values (prob JVM args)
@@ -81,42 +79,71 @@ async function getManifest(fVersion, version, versionCache) {
             resolve(converted);
 
         } catch (error) {
-            //console.log(error)
+            reject(error);
         }
     });
-};
+}
 
-// Handle Regular Maniests (~1.12.2 and above)
+// Handle Regular Manifests (~1.12.2 and above)
 
 async function handleRegFormat(fVersion, version, versionCache, profileFile, installer) {
     return new Promise(async (resolve, reject) => {
-        var CAULDRON_PATH = grabPath();
+        let CAULDRON_PATH = grabPath();
         try {
             // Remove LegacyFixer if present
             if (fs.existsSync(path.join(CAULDRON_PATH, 'mods', 'legacyjavafixer-1.0.jar'))) {
                 fs.rmSync(path.join(CAULDRON_PATH, 'mods', 'legacyjavafixer-1.0.jar'))
-            };
+            }
 
             const versionFileBuffer = await installer.entryData('version.json');
             const versionFile = JSON.parse(versionFileBuffer);
 
             // Extract Main Forge and Remove Lib if present
-            var mainForge = versionFile.libraries.shift();
-            var libraries = versionFile.libraries;
+            let mainForge = versionFile.libraries.shift();
+            let libraries = versionFile.libraries;
             if (libraries[0].name.includes("client")) {
                 libraries.shift();
-            };
+            }
 
             // Create new Manifest Data from Template
-            var manifestData = template;
+            let manifestData = template;
 
-            // Set ID and Mainclass
+            // Set ID and Main class
             manifestData.id = `forge-${version}-${fVersion}`;
             manifestData.mainClass = versionFile.mainClass;
 
+
+            let vanillaLibraries = versionCache.libraries;
+            let handledLibraries = [];
+
+            for (let idx in libraries) {
+                let splitName = libraries[idx].name.split(":")
+                splitName.pop()
+                let convertedName = splitName.join(":");
+                let obj = versionCache.libraries.find((o, i) => {
+                    if (!handledLibraries.includes(convertedName)) {
+                        let splitOName = o.name.split(":");
+                        splitOName.pop();
+                        if (splitOName.join(":") === convertedName && !handledLibraries.includes(convertedName)) {
+
+
+                            handledLibraries.push(convertedName);
+                            versionCache.libraries.splice(i, 1);
+
+                        }
+                    }
+
+
+                });
+
+
+            }
+
             //No Need to convert library list as its already in standard format.
             manifestData.libraries = [...versionCache.libraries, ...libraries];
-
+            /**
+             * @param versionFile.minecraftArguments
+             */
             if (!versionFile.minecraftArguments) {
                 manifestData.arguments.game = [...versionFile.arguments.game, ...versionCache.arguments.game];
                 if (versionFile.arguments.jvm) {
@@ -127,7 +154,7 @@ async function handleRegFormat(fVersion, version, versionCache, profileFile, ins
 
             } else {
                 manifestData.arguments.game = versionFile.minecraftArguments.split(" ");
-            };
+            }
 
             //Add Vanilla Data to manifest
             manifestData.assetIndex = versionCache.assetIndex;
@@ -140,30 +167,31 @@ async function handleRegFormat(fVersion, version, versionCache, profileFile, ins
             shelljs.mkdir('-p', path.join(CAULDRON_PATH, 'libraries', mainForge.downloads.artifact.path, '../'));
 
             // Check for universal download link. If none extract from maven
-            if (mainForge.downloads.artifact.url != "") {
-                var obj = {
+            if (mainForge.downloads.artifact.url !== "") {
+                let obj = {
                     origin: mainForge.downloads.artifact.url,
                     sha1: mainForge.downloads.artifact.sha1,
                     destination: path.join(CAULDRON_PATH, 'libraries', mainForge.downloads.artifact.path, '../'),
                     fileName: path.basename(mainForge.downloads.artifact.path)
                 };
-                var checkForMod = await verifyInstallation([obj]);
+
+                await verifyInstallation([obj]);
             } else {
                 cauldronLogger.info("No Universal Download Link. Assuming Path");
-                var forgePath = path.join('net', 'minecraftforge', 'forge', `${version}-${fVersion}`)
+                let forgePath = path.join('net', 'minecraftforge', 'forge', `${version}-${fVersion}`)
                 const entries = await installer.entries();
-                var filesInMaven = new Array();
+                let filesInMaven = [];
                 for (const entry of Object.values(entries)) {
                     if (entry.name.includes(forgePath.split("\\").join("/")) && !entry.isDirectory) {
                         filesInMaven.push(entry.name);
-                    };
-                };
-                for (fIdx in filesInMaven) {
-                    var removeMaven = filesInMaven[fIdx].split("maven")[1];
+                    }
+                }
+                for (let fIdx in filesInMaven) {
+                    let removeMaven = filesInMaven[fIdx].split("maven")[1];
                     const mFileBuffer = await installer.entryData(filesInMaven[fIdx]);
                     fs.writeFileSync(path.join(CAULDRON_PATH, 'libraries', removeMaven), mFileBuffer);
-                };
-            };
+                }
+            }
 
             //Convert To Default Format and fill in blank values (prob JVM args)
 
@@ -171,9 +199,9 @@ async function handleRegFormat(fVersion, version, versionCache, profileFile, ins
 
             // Close Installer File
             installer.close();
-
             resolve(converted)
         } catch (error) {
+
             reject(error);
         }
     })
@@ -183,52 +211,52 @@ async function handleRegFormat(fVersion, version, versionCache, profileFile, ins
 // Handle Legacy Manifests (~1.12.2 and below)
 async function handleLegacyFormat(fVersion, version, versionCache, profileFile, installer) {
     return new Promise(async (resolve, reject) => {
-        var CAULDRON_PATH = grabPath();
+        let CAULDRON_PATH = grabPath();
         try {
-
-            // Aquire Java Fixer if version needs it
+            let FILE_SERVER = await grabStaticFileServer();
+            // Acquire Java Fixer if version needs it
             if (reqLegMod.includes(version)) {
-                var obj = [{
-                    origin: "https://files.cauldronmc.com/other/legacyjavafixer-1.0.jar",
+                let obj = [{
+                    origin: `${FILE_SERVER}/other/legacyjavafixer-1.0.jar`,
                     sha1: 'a11b502bef19f49bfc199722b94da5f3d7b470a8',
                     destination: path.join(CAULDRON_PATH, 'mods'),
                     fileName: 'legacyjavafixer-1.0.jar'
                 }];
-                var checkForMod = await verifyInstallation(obj);
+                await verifyInstallation(obj);
             } else {
                 if (fs.existsSync(path.join(CAULDRON_PATH, 'mods', 'legacyjavafixer-1.0.jar'))) {
                     fs.rmSync(path.join(CAULDRON_PATH, 'mods', 'legacyjavafixer-1.0.jar'))
-                };
-            };
+                }
+            }
 
             // Replace versionInfo Variable
-            var versionInfo = profileFile.versionInfo;
+            let versionInfo = profileFile.versionInfo;
 
             // Get Default Template
-            var manifestData = template;
+            let manifestData = template;
 
             // Replace Game Arguments and Main Class
             manifestData.mainClass = versionInfo.mainClass;
             manifestData.arguments.game = versionInfo.minecraftArguments.split(" ");
 
             // Get Forge Libraries
-            var forgeLibs = versionInfo.libraries;
+            let forgeLibs = versionInfo.libraries;
 
             // Process and convert forge libraries into standard format
-            for (idx in forgeLibs) {
+            for (let idx in forgeLibs) {
                 // Attempt to extract URL from Library
-                var url = forgeLibs[idx].url;
+                let url = forgeLibs[idx].url;
                 // If URL is not extracted use default Minecraft Library Path
                 if (!url) {
                     url = LIBRARY_PATH;
-                };
+                }
                 // Convert Library Name To Path and URL
-                var pathChunks = convertNameToPath(forgeLibs[idx].name);
-                var libraryPath = `${pathChunks.chunkOne}/${pathChunks.chunkTwo}/${pathChunks.chunkThree}/${pathChunks.chunkTwo}-${pathChunks.chunkThree}.jar`;
-                var libraryURL = `${url}${libraryPath}`;
+                let pathChunks = convertNameToPath(forgeLibs[idx].name);
+                let libraryPath = `${pathChunks.chunkOne}/${pathChunks.chunkTwo}/${pathChunks.chunkThree}/${pathChunks.chunkTwo}-${pathChunks.chunkThree}.jar`;
+                let libraryURL = `${url}${libraryPath}`;
 
                 // Check if Current Forge Library is the forge version file
-                if (pathChunks.chunkTwo == 'forge') {
+                if (pathChunks.chunkTwo === 'forge') {
                     // Create Directory to Forge Version File
                     shelljs.mkdir('-p', path.join(CAULDRON_PATH, 'libraries', `net/minecraftforge/forge`, `${version}-${fVersion}`));
                     const versionFileBuffer = await installer.entryData(`forge-${version}-${fVersion}${getSuffixUsed()}-universal.jar`);
@@ -236,12 +264,11 @@ async function handleLegacyFormat(fVersion, version, versionCache, profileFile, 
                     fs.writeFileSync(path.join(CAULDRON_PATH, 'libraries', `net/minecraftforge/forge`, `${version}-${fVersion}`, `forge-${version}-${fVersion}.jar`), versionFileBuffer);
                     // Set Manifest ID
                     manifestData.id = `${pathChunks.chunkTwo}-${version}-${fVersion}`;
-                } else if (pathChunks.chunkTwo == 'minecraftforge') {
+                } else if (pathChunks.chunkTwo === 'minecraftforge') {
                     // ~1.6 Compatability
                     // Create Directory to Forge Version File
                     shelljs.mkdir('-p', path.join(CAULDRON_PATH, 'libraries', `net/minecraftforge/minecraftforge`, `${fVersion}`));
                     const versionFileBuffer = await installer.entryData(`minecraftforge-universal-${version}-${fVersion}${getSuffixUsed()}.jar`);
-                    //console.log(versionFileBuffer)
                     // //Write Buffer to File
                     fs.writeFileSync(path.join(CAULDRON_PATH, 'libraries', `net/minecraftforge/minecraftforge`, `${fVersion}`, `minecraftforge-${version}-${fVersion}.jar`), versionFileBuffer);
                     // // Set Manifest ID
@@ -250,39 +277,37 @@ async function handleLegacyFormat(fVersion, version, versionCache, profileFile, 
                     // All Other Libraries
                     // Convert Other VALID libraries into standard format.
                     // NOTE: In this stage libraries aren't filtered based on OS this is done later
-                  
-                    var rules = [];
-                    var artifact = {};
-                    var classifiers = {};
+
+                    let rules = [];
+                    let artifact = {};
+                    let classifiers = {};
 
                     // Check For Rules
                     if (forgeLibs[idx].rules) {
                         rules = forgeLibs[idx].rules;
-                    };
+                    }
 
                     // Check For Natives
 
                     if (forgeLibs[idx].natives) {
-                        var lNatives = forgeLibs[idx].natives
-                        for (nIdx in lNatives) {
-                            var obj = {
+                        let lNatives = forgeLibs[idx].natives
+                        for (let nIdx in lNatives) {
+                            classifiers[lNatives[nIdx]] = {
                                 "path": `${pathChunks.chunkOne}/${pathChunks.chunkTwo}/${pathChunks.chunkThree}/${pathChunks.chunkTwo}-${pathChunks.chunkThree}-${lNatives[nIdx]}.jar`,
                                 "sha1": "NONE",
                                 "url": `${url}${pathChunks.chunkOne}/${pathChunks.chunkTwo}/${pathChunks.chunkThree}/${pathChunks.chunkTwo}-${pathChunks.chunkThree}-${lNatives[nIdx]}.jar`
                             }
-                            classifiers[lNatives[nIdx]] = obj
-                        };
+                        }
                     } else {
-                        var obj = {
+                        artifact = {
                             url: libraryURL,
                             sha1: 'NONE',
                             path: `${pathChunks.chunkOne}/${pathChunks.chunkTwo}/${pathChunks.chunkThree}/${pathChunks.chunkTwo}-${pathChunks.chunkThree}.jar`,
                         };
-                        artifact = obj;
-                    };
+                    }
 
                     //Create New Library
-                    var newLib = {
+                    let newLib = {
                         downloads: {
                             artifact: artifact,
                             classifiers: classifiers
@@ -291,32 +316,32 @@ async function handleLegacyFormat(fVersion, version, versionCache, profileFile, 
                         name: forgeLibs[idx].name,
                         rules: rules
                     };
-                    var removeUndefined = JSON.parse(JSON.stringify(newLib));
-                    if (Object.keys(removeUndefined.downloads.classifiers).length == 0) {
+                    let removeUndefined = JSON.parse(JSON.stringify(newLib));
+                    if (Object.keys(removeUndefined.downloads.classifiers).length === 0) {
                         delete removeUndefined.downloads.classifiers;
-                    };
+                    }
                     // Clean Up
-                    if (removeUndefined.rules.length == 0) {
+                    if (removeUndefined.rules.length === 0) {
                         delete removeUndefined.rules;
-                    };
+                    }
 
                     // Add Library to Manifest Data
                     manifestData.libraries.push(removeUndefined);
 
-                };
+                }
 
-            };
+            }
             resolve(manifestData);
         } catch (error) {
             reject(error);
         }
     });
-};
+}
 
 
 function getData() {
     return FORGE_PROMO;
-};
+}
 
 
-module.exports = { getManifest, getData };
+module.exports = {getManifest, getData};
