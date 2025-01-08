@@ -345,4 +345,4 @@ async function whatIsThis(version, loader, lVersion, vanillaManifest, additManif
 }
 
 
-module.exports = {getManifests, getPackwizJVM, checkManifest}
+module.exports = {getManifests, getPackwizJVM, checkManifest, whatIsThis}

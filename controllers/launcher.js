@@ -70,7 +70,13 @@ async function launchGame(version, installOnly, loader, lVersion, authData, sess
                 let launchPath = await buildFile(manifests.spec, manifests.jvmComp, validRules, gameRules);
                 cauldronLogger.info('Starting Game');
                 attachLoggerSession(sessionID);
-                exec(`cd ${CAULDRON_PATH} && ${launchPath}`);
+                let launchDirectory = `${CAULDRON_PATH}`
+                if (overrides['game']) {
+                    if (overrides['game']['game_directory']) {
+                        launchDirectory = `${overrides['game']['game_directory']}`
+                    }
+                }
+                exec(`cd ${launchDirectory} && ${launchPath}`);
                 resolve(sessionID);
             } else {
                 await destroySession(sessionID);

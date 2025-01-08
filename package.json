@@ -17,7 +17,6 @@
     "./libraries": "./controllers/libraries.js",
     "./manifest": "./controllers/manifest.js",
     "./queue": "./controllers/queue.js",
-
     "./online": "./tools/checkConnection.js",
     "./compat": "./tools/compatibility.js",
     "./fileTools": "./tools/fileTools.js",
@@ -25,12 +24,12 @@
     "./launchbuild": "./tools/launchBuilder.js",
     "./session": "./tools/sessionManager.js",
     "./logger": "./tools/logger.js",
-
     "./plugins": "./plugins/plugins.js"
   },
   "author": "JackCooper",
   "license": "GPL-3.0-only",
   "dependencies": {
+    "await-spawn": "^4.0.2",
     "axios": "1.7.4",
     "bluebird": "^3.7.2",
     "checksum": "^1.0.0",
