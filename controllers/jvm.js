@@ -60,7 +60,6 @@ async function checkJVM(name, jvmMani) {
         if (getOperatingSystem() === 'linux') {
             await shelljs.chmod('+x', path.join(CAULDRON_PATH, 'jvm', name, 'bin', 'java'));
         }
-        cauldronLogger.info(`Java Installation Verified`);
         let currentJVMFile = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, 'jvm_installed.json')).toString());
         currentJVMFile[name] = {
             installed: true,
