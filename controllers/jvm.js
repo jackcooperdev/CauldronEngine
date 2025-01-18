@@ -2,7 +2,6 @@ const fs = require('fs');
 const shelljs = require('shelljs');
 const path = require('path');
 
-const {cauldronLogger} = require('../tools/logger');
 const {verifyInstallation} = require('./queue');
 const {grabPath, getOperatingSystem} = require('../tools/compatibility');
 

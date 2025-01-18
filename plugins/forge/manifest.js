@@ -1,3 +1,5 @@
+// noinspection JSUnusedGlobalSymbols
+
 const path = require('path');
 const StreamZip = require('node-stream-zip');
 const fs = require('fs');
@@ -113,14 +115,13 @@ async function handleRegFormat(fVersion, version, versionCache, profileFile, ins
             manifestData.mainClass = versionFile.mainClass;
 
 
-            let vanillaLibraries = versionCache.libraries;
             let handledLibraries = [];
 
             for (let idx in libraries) {
                 let splitName = libraries[idx].name.split(":")
                 splitName.pop()
                 let convertedName = splitName.join(":");
-                let obj = versionCache.libraries.find((o, i) => {
+                versionCache.libraries.find((o, i) => {
                     if (!handledLibraries.includes(convertedName)) {
                         let splitOName = o.name.split(":");
                         splitOName.pop();
@@ -139,7 +140,7 @@ async function handleRegFormat(fVersion, version, versionCache, profileFile, ins
 
             }
 
-            //No Need to convert library list as its already in standard format.
+            //No Need to convert a library list as its already in standard format.
             manifestData.libraries = [...versionCache.libraries, ...libraries];
             /**
              * @param versionFile.minecraftArguments
@@ -166,7 +167,7 @@ async function handleRegFormat(fVersion, version, versionCache, profileFile, ins
 
             shelljs.mkdir('-p', path.join(CAULDRON_PATH, 'libraries', mainForge.downloads.artifact.path, '../'));
 
-            // Check for universal download link. If none extract from maven
+            // Check for a universal download link. If none extract from maven
             if (mainForge.downloads.artifact.url !== "") {
                 let obj = {
                     origin: mainForge.downloads.artifact.url,
@@ -255,7 +256,7 @@ async function handleLegacyFormat(fVersion, version, versionCache, profileFile, 
                 let libraryPath = `${pathChunks.chunkOne}/${pathChunks.chunkTwo}/${pathChunks.chunkThree}/${pathChunks.chunkTwo}-${pathChunks.chunkThree}.jar`;
                 let libraryURL = `${url}${libraryPath}`;
 
-                // Check if Current Forge Library is the forge version file
+                // Check if the Current Forge Library is the forge version file
                 if (pathChunks.chunkTwo === 'forge') {
                     // Create Directory to Forge Version File
                     shelljs.mkdir('-p', path.join(CAULDRON_PATH, 'libraries', `net/minecraftforge/forge`, `${version}-${fVersion}`));
@@ -306,7 +307,7 @@ async function handleLegacyFormat(fVersion, version, versionCache, profileFile, 
                         };
                     }
 
-                    //Create New Library
+                    //Create a New Library
                     let newLib = {
                         downloads: {
                             artifact: artifact,

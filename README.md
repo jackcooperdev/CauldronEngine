@@ -1,17 +1,19 @@
 # Cauldron Engine
- 
+
+> This Documentation is correct for version [0.5.4](https://github.com/jackcooper04/CauldronEngine/releases/tag/0.5.4) of CauldronEngine
+
 ## What does this do?
 Cauldron Engine is a Node.js based minecraft launcher. It handles downloading and booting Minecraft Instances. It supports all vanilla versions of minecraft. Additionally, there is support for plugins where additional loaders (such as forge) can be booted.
 
-## Can I use this?
-Yes, however be aware that this engine has been made to work for Cauldron and while I have tried to make it as accessible as possible there may be issues when implementing into other projects. Also, there may be issues with authentication that will be addressed in the documentation. This project is licensed under [GPL 3.0](https://choosealicense.com/licenses/gpl-3.0/) so please make sure that your project follows the license guidelines.
+## License Information
+This project is licensed under [GPL 3.0](https://choosealicense.com/licenses/gpl-3.0/) so please make sure that your project follows the license guidelines.
 
 ## Setup
 
-To Install the package run the following command
+To Install the package, run the following command
 
 ```
-npm i @jackcooper04/cauldronengine --save
+npm i @jackcooper04/cauldronengine
 ```
 
 ## Using CauldronEngine
@@ -50,6 +52,7 @@ Plugins are used to allow for other loaders to be used for more information go [
 
 ## Information
 
-For information on how a launcher works this blog post by Ryan Cao explains it brilliantly. [Inside a Minecraft Launcher](https://ryanccn.dev/posts/inside-a-minecraft-launcher/)
+For information on how a launcher works, this blog post by Ryan Cao explains it brilliantly.
+[Inside a Minecraft Launcher](https://ryanccn.dev/posts/inside-a-minecraft-launcher/)
 
 [Wiki.vg](https://wiki.vg/) provides lots of information on how various parts of Minecraft works.

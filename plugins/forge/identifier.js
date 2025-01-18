@@ -4,7 +4,7 @@ let unsupportedVersions = require('./files/blocked_versions.json');
 
 
 // Grabs ForgeVersion from ForgePromo
-// Attempts to find recommended version else forces latest
+// Attempts to find a recommended version else forces latest
 // Fails if in blacklist or version does not exist
 async function identifier(version, forgePromos) {
     return new Promise(async (resolve, reject) => {

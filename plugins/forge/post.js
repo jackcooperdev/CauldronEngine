@@ -1,3 +1,5 @@
+// noinspection JSUnusedGlobalSymbols
+
 const StreamZip = require('node-stream-zip');
 const fs = require('fs')
 const path = require('path')
