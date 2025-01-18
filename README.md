@@ -1,8 +1,3 @@
----
-title: Cauldron Engine
-description: 'Index page for Cauldron Engine'
----
-
 # Cauldron Engine
 
 > This Documentation is correct for version [0.5.4](https://github.com/jackcooper04/CauldronEngine/releases/tag/0.5.4) of CauldronEngine
