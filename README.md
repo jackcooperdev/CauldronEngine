@@ -1,3 +1,8 @@
+---
+title: Cauldron Engine
+description: 'Index page for Cauldron Engine'
+---
+
 # Cauldron Engine
 
 > This Documentation is correct for version [0.5.4](https://github.com/jackcooper04/CauldronEngine/releases/tag/0.5.4) of CauldronEngine
@@ -55,4 +60,6 @@ Plugins are used to allow for other loaders to be used for more information go [
 For information on how a launcher works, this blog post by Ryan Cao explains it brilliantly.
 [Inside a Minecraft Launcher](https://ryanccn.dev/posts/inside-a-minecraft-launcher/)
 
-[Wiki.vg](https://wiki.vg/) provides lots of information on how various parts of Minecraft works.
+Wiki.vg was a great resource that provided lots of information on how various parts of Minecraft works.
+It has been merged into Minecraft Wiki
+and can be viewed [here](https://minecraft.wiki/w/Microsoft_authentication#Navigation)
