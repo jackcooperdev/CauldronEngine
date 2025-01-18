@@ -1,3 +1,5 @@
+// noinspection JSUnusedGlobalSymbols
+
 const fs = require('fs');
 const path = require('path');
 const shelljs = require('shelljs');
@@ -139,8 +141,8 @@ async function downloadManifest(url, dir, type) {
 }
 
 async function getPackwizJVM() {
-    // Used to Assist Packwiz on client.
-    // not used in launcher
+    // Used to Assist Packwiz on a client.
+    // Not used in launcher
     return new Promise(async (resolve, reject) => {
         let CAULDRON_PATH = grabPath();
         // Check for jvm file
@@ -345,4 +347,4 @@ async function whatIsThis(version, loader, lVersion, vanillaManifest, additManif
 }
 
 
-module.exports = {getManifests, getPackwizJVM, checkManifest}
+module.exports = {getManifests, getPackwizJVM, checkManifest, whatIsThis}

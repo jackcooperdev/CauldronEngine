@@ -9,7 +9,7 @@ const {cauldronLogger} = require('../tools/logger');
 const {checkInternet} = require('../tools/checkConnection');
 
 
-async function getLibraries(libList, versionData, maniID) {
+async function getLibraries(libList, versionData, maniID, customName) {
     return new Promise(async (resolve, reject) => {
         let CAULDRON_PATH = grabPath();
         try {
@@ -96,17 +96,21 @@ async function getLibraries(libList, versionData, maniID) {
                     }
                 }
             }
-            if (await checkInternet() && !currentLibraryFile[maniID]) {
+            let checkName = maniID;
+            if (customName) {
+                checkName = customName;
+            }
+            if (await checkInternet() && !currentLibraryFile[checkName] ) {
                 await verifyInstallation(dQueue, false);
-                currentLibraryFile[maniID] = {
+                currentLibraryFile[checkName] = {
                     installed: true,
                     lastChecked: new Date().getTime()
                 };
-                cauldronLogger.info(`Libraries Downloaded`);
+                cauldronLogger.info(`Libraries Downloaded: ${checkName}`);
                 fs.writeFileSync(path.join(CAULDRON_PATH, 'libs_installed.json'), JSON.stringify(currentLibraryFile));
                 resolve(libArray);
             } else {
-                cauldronLogger.info(`Libraries Restored`);
+                cauldronLogger.info(`Libraries Restored: ${checkName}`);
                 resolve(libArray);
             }
 

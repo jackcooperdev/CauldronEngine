@@ -1,3 +1,5 @@
+// noinspection JSUnusedGlobalSymbols
+
 const StreamZip = require('node-stream-zip');
 const fs = require('fs')
 const path = require('path')
@@ -7,7 +9,7 @@ const {getLibraries} = require('../../controllers/libraries');
 const {validate} = require('../../tools/fileTools');
 const {cauldronLogger} = require('../../tools/logger');
 const {convertNameToPath} = require('./utils');
-const spawn = require('cross-spawn')
+const spawn = require('await-spawn')
 
 
 async function postProcessing(manifests) {
@@ -36,8 +38,9 @@ async function postProcessing(manifests) {
                     // This defaults to CauldronAgents port number (8778) and is on the path /libraries.
                     // TESTING ALTERNATIVE SOLUTIONS
                     //  REQUIRES an INVESTIGATION INTO WHAT VERSIONS NEED IT
-                    relLib.downloads.artifact.url = path.join(CAULDRON_PATH, 'libraries', relLib.downloads.artifact.path);
-                    //versionFile.libraries[0] = relLib;
+                    //relLib.downloads.artifact.url = path.join(CAULDRON_PATH, 'libraries', relLib.downloads.artifact.path);
+                    relLib.downloads.artifact.url = `http://localhost:8778/libraries/${relLib.downloads.artifact.path}`
+                    versionFile.libraries[0] = relLib;
 
                     // Some Actions require the forge JSON file to be accessible.
                     fs.writeFileSync(path.join(CAULDRON_PATH, 'versions', `forge-${version}-${loaderVersion}`, `forge-${version}-${loaderVersion}.json`), JSON.stringify(versionFile));
@@ -45,7 +48,7 @@ async function postProcessing(manifests) {
 
                     //Acquire Libraries (These Libraries are required but do not need to be included in the launch file)
                     let nonDeclaredLibs = profileFile.libraries;
-                    await getLibraries(nonDeclaredLibs, manifests.versionData, manifests.spec.id);
+                    await getLibraries(nonDeclaredLibs, manifests.versionData, manifests.spec.id,`${manifests.spec.id}-post`);
 
                     // Acquire Forge Data
                     /**
@@ -112,11 +115,10 @@ async function postProcessing(manifests) {
                     }
 
                     // We only care about the PATCHED File due to the fact it's the only one where the checksums will match
-
-                    if (checkFiles.length !== 0) {
+                    let override = false;
+                    if (checkFiles.length !== 0 || override) {
                         let processors = profileFile.processors;
-                        cauldronLogger.info(`Forge Post Proccessing Jobs: ${processors.length}`);
-
+                        cauldronLogger.info("Starting Forge Post Processing Jobs");
                         for (let pIdx in processors) {
                             let currentProcessor = processors[pIdx];
                             /**
@@ -156,7 +158,6 @@ async function postProcessing(manifests) {
                             classPaths.push(lPath)
 
                             let actualArgs = processors[pIdx].args.join(" ");
-
                             if (!processors[pIdx].sides || processors[pIdx].sides.includes("client")) {
                                 let command = `-cp ${classPaths.join(";")} ${mainClass} ${actualArgs}`;
                                 //Mappings path replacement
@@ -166,15 +167,15 @@ async function postProcessing(manifests) {
                                 }
                                 // Inject params
                                 command = injector.create(command, params);
-                                cauldronLogger.info(`Forge Post Proccessing Job: ${Number(pIdx) + 1}/${processors.length} Starting`);
                                 await spawn(path.join(CAULDRON_PATH, 'jvm', manifests.jvmComp, 'bin', 'java'), command.split(" "));
-
-                                cauldronLogger.info(`Forge Post Proccessing Job: ${Number(pIdx) + 1}/${processors.length} Done!`);
                             }
+
                         }
+                        cauldronLogger.info("Finished Forge Post Processing Jobs");
                         await installer.close();
                         resolve(true);
                     } else {
+                        cauldronLogger.info("Skipping Forge Post Processing Jobs")
                         await installer.close();
                         resolve(true);
                     }
@@ -185,6 +186,7 @@ async function postProcessing(manifests) {
             }
 
         } catch (err) {
+            console.log(err)
             reject(err);
         }
     })
