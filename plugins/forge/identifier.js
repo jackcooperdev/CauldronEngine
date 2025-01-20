@@ -26,7 +26,7 @@ async function identifier(version, forgePromos) {
                     reject('Version Does Not Exist')
                 }
             }
-            cauldronLogger.info("Forge Plugin Created By @jackcooper04");
+            cauldronLogger.info("Forge Plugin Created By @jackcooperdev");
             cauldronLogger.warn("Forge is still experimental. Expect Crashes");
             resolve(forgeVersion);
         } catch (e) {
