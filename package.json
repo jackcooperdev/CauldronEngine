@@ -1,9 +1,9 @@
 {
-  "name": "@jackcooper04/cauldronengine",
+  "name": "@jackcooperdev/cauldronengine",
   "version": "0.5.3",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jackcooper04/CauldronEngine.git"
+    "url": "https://github.com/jackcooperdev/CauldronEngine.git"
   },
   "description": "Launch Controller for CauldronMC Project",
   "main": "index.js",

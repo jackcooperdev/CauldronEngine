@@ -19,5 +19,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Started CHANGELOG.md for future changes
 
 
-[unreleased]: https://github.com/jackcooper04/CauldronEngine/compare/master...development
-[0.5.4]: https://github.com/jackcooper04/CauldronEngine/compare/0.5.3...0.5.4
+[unreleased]: https://github.com/jackcooperdev/CauldronEngine/compare/master...development
+[0.5.4]: https://github.com/jackcooperdev/CauldronEngine/compare/0.5.3...0.5.4
