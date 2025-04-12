@@ -16,7 +16,7 @@ log4js.configure({
         file: { type: "file", filename: path.join(grabPath(),'cauldron_engine_logs','logs.log'), maxLogSize: 10485760, backups: 3, compress: true},
         //network: { type: "tcp", host: "127.0.0.1",layout:{ type: "coloured" }, port:25568 },
     },
-    categories: { default: { appenders: ["filtered","file"], level: "debug" } },
+    categories: { default: { appenders: ["file"], level: "debug" },app: { appenders: ["filtered"], level: "error" }, },
 });
 
 const mcLogger = log4js.getLogger("Minecraft");
