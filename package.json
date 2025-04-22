@@ -1,37 +1,37 @@
 {
   "name": "@jackcooperdev/cauldronengine",
-  "version": "0.5.4",
+  "version": "0.5.5",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/jackcooperdev/CauldronEngine.git"
   },
   "description": "Launch Controller for CauldronMC Project",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\""
   },
   "exports": {
-    "./assets": "./controllers/assets.js",
-    "./jvm": "./controllers/jvm.js",
-    "./launcher": "./controllers/launcher.js",
-    "./libraries": "./controllers/libraries.js",
-    "./manifest": "./controllers/manifest.js",
-    "./queue": "./controllers/queue.js",
-    "./online": "./tools/checkConnection.js",
-    "./compat": "./tools/compatibility.js",
-    "./fileTools": "./tools/fileTools.js",
-    "./files": "./tools/fileServerLocator.js",
-    "./launchbuild": "./tools/launchBuilder.js",
-    "./session": "./tools/sessionManager.js",
-    "./logger": "./tools/logger.js",
-    "./plugins": "./plugins/plugins.js"
+    "./assets": "./src/controllers/assets.js",
+    "./jvm": "./src/controllers/jvm.js",
+    "./launcher": "./src/controllers/launcher.js",
+    "./libraries": "./src/controllers/libraries.js",
+    "./manifest": "./src/controllers/manifest.js",
+    "./queue": "./src/controllers/queue.js",
+    "./online": "./src/tools/checkConnection.js",
+    "./compat": "./src/tools/compatibility.js",
+    "./fileTools": "./src/tools/fileTools.js",
+    "./files": "./src/tools/fileServerLocator.js",
+    "./launchbuild": "./src/tools/launchBuilder.js",
+    "./session": "./src/tools/sessionManager.js",
+    "./logger": "./src/tools/logger.js",
+    "./plugins": "./src/plugins/plugins.js"
   },
   "author": "JackCooper",
   "license": "GPL-3.0-only",
   "dependencies": {
     "await-spawn": "^4.0.2",
-    "axios": "1.7.4",
-
+    "axios": "1.8.2",
     "bluebird": "^3.7.2",
     "checksum": "^1.0.0",
     "cross-spawn": "^7.0.6",
