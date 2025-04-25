@@ -7,7 +7,6 @@
     "url": "https://github.com/jackcooperdev/CauldronEngine.git"
   },
   "description": "Launch Controller for CauldronMC Project",
-  "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\""
   },
@@ -34,10 +33,12 @@
     "axios": "1.8.2",
     "bluebird": "^3.7.2",
     "checksum": "^1.0.0",
+    "consola": "^3.4.2",
     "cross-spawn": "^7.0.6",
     "dotenv": "^16.4.7",
     "jsonwebtoken": "^9.0.2",
     "log4js": "^6.9.1",
+    "logging": "^3.3.0",
     "node-stream-zip": "^1.15.0",
     "nodejs-file-downloader": "^4.13.0",
     "shelljs": "^0.8.5"

@@ -44,38 +44,37 @@ async function launchGame(
       if (!sessionID) {
         sessionID = createSession();
       }
-      cauldronLogger.info("Session ID: " + sessionID);
+      cauldronLogger.debug("Session ID: " + sessionID);
       // Create Bulk Manifests
       const manifests = await getManifests(version, loader, lVersion);
-      cauldronLogger.info("Manifests Got!");
+      cauldronLogger.success("Manifests Got!");
       if (!manifests.jvmDownloaded) {
-        cauldronLogger.info(`Getting JVM: ${manifests.jvmComp}`);
+        cauldronLogger.start(`Getting JVM: ${manifests.jvmComp}`);
         await checkJVM(manifests.jvmComp, manifests.jvmMani);
-        cauldronLogger.info("JVM Passed!");
+        cauldronLogger.success("JVM Passed!");
       } else {
-        cauldronLogger.info("Skipping JVM");
+        cauldronLogger.success("Skipping JVM");
       }
 
       if (loader !== "vanilla") {
         await getPostPlugin(loader, manifests);
       }
       if (!manifests.assetsDownloaded) {
-        cauldronLogger.info("Starting Asset Download");
-        cauldronLogger.info(`Index No: ${manifests.spec.assets}`);
-        cauldronLogger.info(`Index URL: ${manifests.spec.assetIndex.url}`);
+        cauldronLogger.start("Starting Asset Download");
+        cauldronLogger.debug(`Index No: ${manifests.spec.assets}`);
+        cauldronLogger.debug(`Index URL: ${manifests.spec.assetIndex.url}`);
         await getAssets(manifests.spec.assets, manifests.assetsInfo);
       } else {
-        cauldronLogger.info("Skipping Assets");
+        cauldronLogger.success("Skipping Assets");
       }
-      cauldronLogger.info("Starting Library Download");
+      cauldronLogger.start("Starting Library Download");
       const libGet = await getLibraries(
         manifests.spec.libraries,
         manifests.versionData,
         manifests.spec.id,
       );
       if (!installOnly) {
-        cauldronLogger.info("All Files Acquired Building Launch File");
-        cauldronLogger.info("Creating JVM Arguments");
+        cauldronLogger.success("All Files Acquired Building Launch File");
         if (manifests.spec.logging) {
           await logInjector(
             path.join(
@@ -93,7 +92,7 @@ async function launchGame(
           manifests.versionData,
           overrides.jvm,
         );
-        cauldronLogger.info("Generating Game Arguments");
+        cauldronLogger.success("Created JVM Arguments")
         let gameRules = await buildGameRules(
           manifests.spec,
           authData,
@@ -106,7 +105,7 @@ async function launchGame(
           validRules,
           gameRules,
         );
-        cauldronLogger.info("Starting Game");
+        cauldronLogger.success("Created Game Arguments");
         attachLoggerSession(sessionID);
         let launchDirectory = `${CAULDRON_PATH}`;
         if (overrides["game"]) {
@@ -115,10 +114,11 @@ async function launchGame(
           }
         }
         exec(`cd ${launchDirectory} && ${launchPath}`);
+        cauldronLogger.success("Started Game")
         resolve(sessionID);
       } else {
         await destroySession(sessionID);
-        cauldronLogger.info("Game Installed");
+        cauldronLogger.success("Game Installed");
         resolve(true);
       }
     } catch (err) {

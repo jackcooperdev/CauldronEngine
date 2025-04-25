@@ -1,36 +1,24 @@
 import log4js from "log4js";
 import net from "net";
 import { destroySession } from "./sessionManager.js";
+import createLogger from 'logging';
+import logging from 'logging';
 const port = 9500;
 import path from "path";
 import { grabPath } from "./compatibility.js";
+import { createConsola } from "consola";
 const host = "127.0.0.1";
 log4js.configure({
   appenders: {
     out: { type: "console" },
-    filtered: {
-      type: "noLogFilter",
-      exclude: "Listening For Minecraft Instances on port",
-      appender: "out",
-    },
-    file: {
-      type: "file",
-      filename: path.join(grabPath(), "cauldron_engine_logs", "logs.log"),
-      maxLogSize: 10485760,
-      backups: 3,
-      compress: true,
-    },
-    //network: { type: "tcp", host: "127.0.0.1",layout:{ type: "coloured" }, port:25568 },
   },
   categories: {
-    default: { appenders: ["file", "filtered"], level: "debug" },
-    app: { appenders: ["filtered"], level: "error" },
+    default: { appenders: ["out"], level: "debug" },
   },
 });
-
 const mcLogger = log4js.getLogger("Minecraft");
-const cauldronLogger = log4js.getLogger("Cauldron");
-
+const cauldronLogger = createConsola({level:3});
+let loggerSession = "";
 function startMCListening() {
   let server;
   try {
@@ -46,7 +34,7 @@ function startMCListening() {
 
   let sockets = [];
 
-  let loggerSession = "";
+
 
   server.on("connection", function (sock) {
     cauldronLogger.info("Minecraft Connected");
@@ -93,6 +81,7 @@ function startMCListening() {
       if (index !== -1) sockets.splice(index, 1);
       cauldronLogger.info("Minecraft Disconnected");
       destroySession(loggerSession).then(function () {});
+      server.close();
       loggerSession = "";
     });
   });
