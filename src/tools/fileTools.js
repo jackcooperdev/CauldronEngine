@@ -2,57 +2,57 @@ import Downloader from "nodejs-file-downloader";
 import fs from "fs";
 import path from "path";
 import checksum from "checksum";
-import { checkInternet } from "./checkConnection.js";
+import {checkInternet} from "./checkConnection.js";
 
 async function download(url, location, fileName) {
-  return new Promise(async (resolve) => {
-    if (await checkInternet()) {
-      const downloader = new Downloader({
-        url: url, //If the file name already exists, a new file with the name 200MB1.zip is created.
-        directory: location, //This folder will be created if it doesn't exist.
-        cloneFiles: false,
-        fileName: fileName,
-        maxAttempts: 10,
-      });
-      try {
-        await downloader.download(); //Downloader.download() resolves with some useful properties.
-        resolve(true);
-      } catch (error) {
-        console.log(error);
-        //IMPORTANT: Handle a possible error. An error is thrown in case of network errors, or status codes of 400 and above.
-        //Note that if the maxAttempts is set to higher than 1, the error is thrown only if all attempts fail.
-        resolve(false);
-      }
-    } else {
-      resolve(true);
-    }
-  });
+    return new Promise(async (resolve) => {
+        if (await checkInternet()) {
+            const downloader = new Downloader({
+                url: url, //If the file name already exists, a new file with the name 200MB1.zip is created.
+                directory: location, //This folder will be created if it doesn't exist.
+                cloneFiles: false,
+                fileName: fileName,
+                maxAttempts: 10,
+            });
+            try {
+                await downloader.download(); //Downloader.download() resolves with some useful properties.
+                resolve(true);
+            } catch (error) {
+                console.log(error);
+                //IMPORTANT: Handle a possible error. An error is thrown in case of network errors, or status codes of 400 and above.
+                //Note that if the maxAttempts is set to higher than 1, the error is thrown only if all attempts fail.
+                resolve(false);
+            }
+        } else {
+            resolve(true);
+        }
+    });
 }
 
 async function validate(file) {
-  return new Promise(async (resolve) => {
-    if (file.destination === "no path") {
-      resolve("pass");
-      return;
-    }
-    if (
-      file.sha1 === "NONE" &&
-      fs.existsSync(path.join(file.destination, file.fileName))
-    ) {
-      resolve("pass");
-      return;
-    }
-    checksum.file(
-      path.join(file.destination, file.fileName),
-      function (err, sum) {
-        if (sum === file.sha1) {
-          resolve(true);
-        } else {
-          resolve(file);
+    return new Promise(async (resolve) => {
+        if (file.destination === "no path") {
+            resolve("pass");
+            return;
         }
-      },
-    );
-  });
+        if (
+            file.sha1 === "NONE" &&
+            fs.existsSync(path.join(file.destination, file.fileName))
+        ) {
+            resolve("pass");
+            return;
+        }
+        checksum.file(
+            path.join(file.destination, file.fileName),
+            function (err, sum) {
+                if (sum === file.sha1) {
+                    resolve(true);
+                } else {
+                    resolve(file);
+                }
+            },
+        );
+    });
 }
 
-export { download, validate };
+export {download, validate};

@@ -7,10 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Moved Main CauldronLogger to Consola from Log4JS
 
 ## [0.5.5] - 22-04-2025
 
 ### Changed
+
 - Migrated From CommonJS To ESM
 
 ## [0.5.4] - 18-01-2025
@@ -23,5 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Started CHANGELOG.md for future changes
 
 [unreleased]: https://github.com/jackcooperdev/CauldronEngine/compare/master...development
+
 [0.5.4]: https://github.com/jackcooperdev/CauldronEngine/compare/0.5.3...0.5.4
+
 [0.5.5]: https://github.com/jackcooperdev/CauldronEngine/compare/0.5.4...0.5.5
