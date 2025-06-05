@@ -1,4 +1,4 @@
-// noinspection JSUnusedGlobalSymbols
+// noinspection JSUnusedGlobalSymbols,JSAnnotator
 
 import path from "path";
 
@@ -8,21 +8,17 @@ import shelljs from "shelljs";
 import {verifyInstallation} from "../../controllers/queue.js";
 import {grabPath} from "../../tools/compatibility.js";
 import {cauldronLogger} from "../../tools/logger.js";
-import {
-    getForgeInstallerURL,
-    convertNameToPath,
-    getSuffixUsed,
-} from "./utils.js";
+import {getForgeInstallerURL, convertNameToPath, getSuffixUsed,} from "./utils.js";
 
 // Important Links
-const FORGE_PROMO =
-    "https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json";
+const FORGE_PROMO = "https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json";
 const LIBRARY_PATH = "https://libraries.minecraft.net/";
 
 //Files
 import reqLegMod from "./files/requires_legacy_mod.json" with {type: "json"};
-
 import template from "../../files/manifestTemplate.json" with {type: "json"};
+
+// Other imports
 import {attemptToConvert} from "../../tools/manifestConverter.js";
 import {grabStaticFileServer} from "../../tools/fileServerLocator.js";
 
@@ -118,22 +114,12 @@ async function getManifest(fVersion, version, versionCache) {
 
 // Handle Regular Manifests (~1.12.2 and above)
 
-async function handleRegFormat(
-    fVersion,
-    version,
-    versionCache,
-    profileFile,
-    installer,
-) {
+async function handleRegFormat(fVersion, version, versionCache, profileFile, installer) {
     return new Promise(async (resolve, reject) => {
         let CAULDRON_PATH = grabPath();
         try {
             // Remove LegacyFixer if present
-            if (
-                fs.existsSync(
-                    path.join(CAULDRON_PATH, "mods", "legacyjavafixer-1.0.jar"),
-                )
-            ) {
+            if (fs.existsSync(path.join(CAULDRON_PATH, "mods", "legacyjavafixer-1.0.jar"),)) {
                 fs.rmSync(path.join(CAULDRON_PATH, "mods", "legacyjavafixer-1.0.jar"));
             }
 
@@ -204,15 +190,8 @@ async function handleRegFormat(
             manifestData.logging = versionCache.logging;
             manifestData.javaVersion = versionCache.javaVersion;
 
-            shelljs.mkdir(
-                "-p",
-                path.join(
-                    CAULDRON_PATH,
-                    "libraries",
-                    mainForge.downloads.artifact.path,
-                    "../",
-                ),
-            );
+            // Manual Step TODO: KEEP THIS
+            shelljs.mkdir("-p", path.join(CAULDRON_PATH, "libraries", mainForge.downloads.artifact.path, "../",),);
 
             // Check for a universal download link. If none extract from maven
             if (mainForge.downloads.artifact.url !== "") {
@@ -256,7 +235,7 @@ async function handleRegFormat(
                     );
                 }
             }
-
+            // TODO: Universal Needed?? Inject if errors
             //Convert To Default Format and fill in blank values (prob JVM args)
 
             const converted = await attemptToConvert(manifestData);
@@ -271,13 +250,7 @@ async function handleRegFormat(
 }
 
 // Handle Legacy Manifests (~1.12.2 and below)
-async function handleLegacyFormat(
-    fVersion,
-    version,
-    versionCache,
-    profileFile,
-    installer,
-) {
+async function handleLegacyFormat(fVersion, version, versionCache, profileFile, installer,) {
     return new Promise(async (resolve, reject) => {
         let CAULDRON_PATH = grabPath();
         try {
@@ -294,11 +267,7 @@ async function handleLegacyFormat(
                 ];
                 await verifyInstallation(obj);
             } else {
-                if (
-                    fs.existsSync(
-                        path.join(CAULDRON_PATH, "mods", "legacyjavafixer-1.0.jar"),
-                    )
-                ) {
+                if (fs.existsSync(path.join(CAULDRON_PATH, "mods", "legacyjavafixer-1.0.jar"),)) {
                     fs.rmSync(
                         path.join(CAULDRON_PATH, "mods", "legacyjavafixer-1.0.jar"),
                     );
@@ -334,57 +303,24 @@ async function handleLegacyFormat(
                 // Check if the Current Forge Library is the forge version file
                 if (pathChunks.chunkTwo === "forge") {
                     // Create Directory to Forge Version File
-                    shelljs.mkdir(
-                        "-p",
-                        path.join(
-                            CAULDRON_PATH,
-                            "libraries",
-                            `net/minecraftforge/forge`,
-                            `${version}-${fVersion}`,
-                        ),
+                    shelljs.mkdir("-p", path.join(CAULDRON_PATH, "libraries", `net/minecraftforge/forge`, `${version}-${fVersion}`,),
                     );
                     const versionFileBuffer = await installer.entryData(
                         `forge-${version}-${fVersion}${getSuffixUsed()}-universal.jar`,
                     );
                     //Write Buffer to File
-                    fs.writeFileSync(
-                        path.join(
-                            CAULDRON_PATH,
-                            "libraries",
-                            `net/minecraftforge/forge`,
-                            `${version}-${fVersion}`,
-                            `forge-${version}-${fVersion}.jar`,
-                        ),
-                        versionFileBuffer,
-                    );
+                    fs.writeFileSync(path.join(CAULDRON_PATH, "libraries", `net/minecraftforge/forge`, `${version}-${fVersion}`, `forge-${version}-${fVersion}.jar`,), versionFileBuffer,);
                     // Set Manifest ID
                     manifestData.id = `${pathChunks.chunkTwo}-${version}-${fVersion}`;
                 } else if (pathChunks.chunkTwo === "minecraftforge") {
                     // ~1.6 Compatability
                     // Create Directory to Forge Version File
-                    shelljs.mkdir(
-                        "-p",
-                        path.join(
-                            CAULDRON_PATH,
-                            "libraries",
-                            `net/minecraftforge/minecraftforge`,
-                            `${fVersion}`,
-                        ),
-                    );
+                    shelljs.mkdir("-p", path.join(CAULDRON_PATH, "libraries", `net/minecraftforge/minecraftforge`, `${fVersion}`,),);
                     const versionFileBuffer = await installer.entryData(
                         `minecraftforge-universal-${version}-${fVersion}${getSuffixUsed()}.jar`,
                     );
                     // //Write Buffer to File
-                    fs.writeFileSync(
-                        path.join(
-                            CAULDRON_PATH,
-                            "libraries",
-                            `net/minecraftforge/minecraftforge`,
-                            `${fVersion}`,
-                            `minecraftforge-${version}-${fVersion}.jar`,
-                        ),
-                        versionFileBuffer,
-                    );
+                    fs.writeFileSync(path.join(CAULDRON_PATH, "libraries", `net/minecraftforge/minecraftforge`, `${fVersion}`, `minecraftforge-${version}-${fVersion}.jar`,), versionFileBuffer,);
                     // // Set Manifest ID
                     manifestData.id = `${pathChunks.chunkTwo}-${fVersion}`;
                 } else {

@@ -21,10 +21,7 @@ async function getForgeInstallerURL(version, forgeVersion) {
         fs.writeFileSync(path.join(CAULDRON_PATH, "forge-installers.json"), "{}");
     } else {
         acquiredForges = JSON.parse(
-            fs
-                .readFileSync(path.join(CAULDRON_PATH, "forge-installers.json"))
-                .toString(),
-        );
+            fs.readFileSync(path.join(CAULDRON_PATH, "forge-installers.json")).toString(),);
     }
     if (acquiredForges[`${version}-${forgeVersion}`]) {
         url = acquiredForges[`${version}-${forgeVersion}`].url;
@@ -44,10 +41,7 @@ async function getForgeInstallerURL(version, forgeVersion) {
                     };
                     acquiredForges[`${version}-${forgeVersion}`]["url"] = url;
                     acquiredForges[`${version}-${forgeVersion}`]["suffix"] = suffixUsed;
-                    fs.writeFileSync(
-                        path.join(CAULDRON_PATH, "forge-installers.json"),
-                        JSON.stringify(acquiredForges),
-                    );
+                    fs.writeFileSync(path.join(CAULDRON_PATH, "forge-installers.json"), JSON.stringify(acquiredForges));
                     break;
                 }
             }
@@ -61,18 +55,14 @@ async function getForgeInstallerURL(version, forgeVersion) {
             );
         }
         if (!url) {
-            throw new Error(
-                `Sorry but Cauldron does not support ${version} - ${forgeVersion} forge yet. CODE: URLNFOUNDA`,
-            );
+            throw new Error(`Sorry but Cauldron does not support ${version} - ${forgeVersion} forge yet. CODE: URLNFOUNDA`,);
         }
     }
     let verifyInstaller = await checkInstaller(url);
     if (verifyInstaller) {
         return url;
     } else {
-        throw new Error(
-            `Sorry but Cauldron does not support ${version} - ${forgeVersion} forge yet. CODE: URLNFOUNDB`,
-        );
+        throw new Error(`Sorry but Cauldron does not support ${version} - ${forgeVersion} forge yet. CODE: URLNFOUNDB`,);
     }
 }
 

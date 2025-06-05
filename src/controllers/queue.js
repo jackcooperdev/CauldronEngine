@@ -12,17 +12,14 @@ function removeItem(array, item) {
     }
 }
 
-async function checkDownloadAndCheck(item) {
+async function checkDownloadAndCheck(item,friendly) {
     return new Promise(async (resolve) => {
         try {
             let validateItem = await validate(item);
             while (typeof validateItem == "object") {
-                await download(
-                    validateItem.origin,
-                    validateItem.destination,
-                    validateItem.fileName,
-                );
+                await download(validateItem.origin, validateItem.destination, validateItem.fileName);
                 validateItem = await validate(item);
+
             }
             resolve("pass");
         } catch (e) {
@@ -30,13 +27,13 @@ async function checkDownloadAndCheck(item) {
         }
     });
 }
-
 async function verifyInstallation(queue, isAssetDownload) {
     return new Promise(async (resolve) => {
         let concurrency = queue.length;
         if (isAssetDownload) {
             concurrency = queue.length / 2;
         }
+
         const procQueue = await Promise.map(queue, checkDownloadAndCheck, {
             concurrency: concurrency,
         });
@@ -45,4 +42,23 @@ async function verifyInstallation(queue, isAssetDownload) {
     });
 }
 
-export {verifyInstallation};
+
+async function processQueue(queue, isAssetDownload, friendly) {
+    return new Promise(async (resolve) => {
+        let concurrency = queue.length;
+        if (isAssetDownload) {
+            concurrency = queue.length / 2;
+        }
+
+        const procQueue = await Promise.map(
+            queue,
+            (item) => checkDownloadAndCheck(item, friendly), // Wrap your function
+            { concurrency: concurrency }
+        );
+        removeItem(procQueue, "pass");
+        resolve(procQueue);
+    });
+}
+
+
+export {verifyInstallation, processQueue};

@@ -9,24 +9,67 @@ import {checkJVM} from "./jvm.js";
 import {getLibraries} from "./libraries.js";
 import {getManifests} from "./manifest.js";
 import {cauldronLogger, attachLoggerSession} from "../tools/logger.js";
-import {createSession, destroySession} from "../tools/sessionManager.js";
 import {
     buildJVMRules,
     buildGameRules,
     buildFile,
     logInjector,
 } from "../tools/launchBuilder.js";
+import { MultiProgressBars } from 'multi-progress-bars';
+import * as chalk from 'chalk';
+import ora from 'ora';
 import {getPostPlugin} from "../plugins/plugins.js";
+import cliProgress from "cli-progress";
+import Promise from "bluebird";
+import {postProcessing} from "../tools/postProcessors/forge.js";
 
-async function launchGame(
-    version,
-    installOnly,
-    loader,
-    lVersion,
-    authData,
-    sessionID,
-    overrides,
-) {
+
+function createUUID() {
+    return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) =>
+        (
+            +c ^
+            (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (+c / 4)))
+        ).toString(16),
+    );
+}
+
+
+async function handleGrabDeps(manifests, multibar) {
+    const dependencyPromises = [];
+    let librariesOutput;
+
+    if (!manifests.jvmDownloaded) {
+        dependencyPromises.push(checkJVM(manifests.jvmComp, manifests.jvmMani, multibar));
+    }
+
+    if (!manifests.assetsDownloaded) {
+        cauldronLogger.debug(`Index No: ${manifests.spec.assets}`);
+        cauldronLogger.debug(`Index URL: ${manifests.spec.assetIndex.url}`);
+        dependencyPromises.push(getAssets(manifests.spec.assets, manifests.assetsInfo, multibar));
+    }
+
+    const librariesPromise = getLibraries(manifests.spec.libraries, manifests.versionData, manifests.spec.id, undefined, multibar);
+    dependencyPromises.push(librariesPromise);
+
+    try {
+        const results = await Promise.all(dependencyPromises);
+        let resultIndex = 0;
+        if (!manifests.jvmDownloaded) {
+            resultIndex++;
+        }
+        if (!manifests.assetsDownloaded) {
+            resultIndex++;
+        }
+        librariesOutput = results[resultIndex];
+        return librariesOutput; // Return the output of getLibraries
+    } catch (error) {
+        console.error("Error during dependency processing:", error);
+        throw error; // Re-throw the error to be handled by the caller
+    }
+}
+
+
+async function launchGame(version, installOnly, loader, lVersion, authData, overrides) {
     if (!installOnly) {
         installOnly = false;
     }
@@ -36,76 +79,38 @@ async function launchGame(
     if (!loader) {
         loader = "vanilla";
     }
-    return new Promise(async (resolve) => {
+    return new Promise(async (resolve,reject) => {
         let CAULDRON_PATH = grabPath();
+        const spinner = ora('Starting Boot')
         try {
+            let verifiedLoaders = ["vanilla","forge"]
+            const loaderAccepted = verifiedLoaders.includes(loader);
+            if (!loaderAccepted) {
+                reject('Loader Not Supported! Code: LSUPNF')
+                return;
+            }
             getOperatingSystem();
-            //Create SessionID If Not Declared
-            if (!sessionID) {
-                sessionID = createSession();
-            }
+            let sessionID = createUUID()
             cauldronLogger.debug("Session ID: " + sessionID);
-            // Create Bulk Manifests
+            //Create Bulk Manifests
             const manifests = await getManifests(version, loader, lVersion);
-            cauldronLogger.success("Manifests Got!");
-            if (!manifests.jvmDownloaded) {
-                cauldronLogger.start(`Getting JVM: ${manifests.jvmComp}`);
-                await checkJVM(manifests.jvmComp, manifests.jvmMani);
-                cauldronLogger.success("JVM Passed!");
-            } else {
-                cauldronLogger.success("Skipping JVM");
-            }
+
+            let libGet = await handleGrabDeps(manifests);
 
             if (loader !== "vanilla") {
-                await getPostPlugin(loader, manifests);
-            }
-            if (!manifests.assetsDownloaded) {
-                cauldronLogger.start("Starting Asset Download");
-                cauldronLogger.debug(`Index No: ${manifests.spec.assets}`);
-                cauldronLogger.debug(`Index URL: ${manifests.spec.assetIndex.url}`);
-                await getAssets(manifests.spec.assets, manifests.assetsInfo);
-            } else {
-                cauldronLogger.success("Skipping Assets");
-            }
-            cauldronLogger.start("Starting Library Download");
-            const libGet = await getLibraries(
-                manifests.spec.libraries,
-                manifests.versionData,
-                manifests.spec.id,
-            );
-            if (!installOnly) {
-                cauldronLogger.success("All Files Acquired Building Launch File");
-                if (manifests.spec.logging) {
-                    await logInjector(
-                        path.join(
-                            CAULDRON_PATH,
-                            "assets",
-                            "log_configs",
-                            manifests.spec.logging.client.file.id,
-                        ),
-                        sessionID,
-                    );
+                if (manifests.needsPost) {
+                    libGet = await postProcessing(manifests,libGet);
                 }
-                let validRules = await buildJVMRules(
-                    manifests.spec,
-                    libGet,
-                    manifests.versionData,
-                    overrides.jvm,
-                );
-                cauldronLogger.success("Created JVM Arguments")
-                let gameRules = await buildGameRules(
-                    manifests.spec,
-                    authData,
-                    overrides.game,
-                    overrides.additG,
-                );
-                let launchPath = await buildFile(
-                    manifests.spec,
-                    manifests.jvmComp,
-                    validRules,
-                    gameRules,
-                );
-                cauldronLogger.success("Created Game Arguments");
+                //await getPostPlugin(loader, manifests);
+            }
+            if (!installOnly) {
+                if (manifests.spec.logging) {
+                    await logInjector(path.join(CAULDRON_PATH, "assets", "log_configs", manifests.spec.logging.client.file.id,), sessionID);
+                }
+                let validRules = await buildJVMRules(manifests.spec, libGet, manifests.versionData, overrides.jvm);
+
+                let gameRules = await buildGameRules(manifests.spec, authData, overrides.game, overrides.additG);
+                let launchPath = await buildFile(manifests.spec, manifests.jvmComp, validRules, gameRules);
                 attachLoggerSession(sessionID);
                 let launchDirectory = `${CAULDRON_PATH}`;
                 if (overrides["game"]) {
@@ -113,18 +118,15 @@ async function launchGame(
                         launchDirectory = `${overrides["game"]["game_directory"]}`;
                     }
                 }
+
                 exec(`cd ${launchDirectory} && ${launchPath}`);
-                cauldronLogger.success("Started Game")
                 resolve(sessionID);
             } else {
-                await destroySession(sessionID);
-                cauldronLogger.success("Game Installed");
                 resolve(true);
             }
         } catch (err) {
-            await destroySession(sessionID);
-            cauldronLogger.error(err.message);
-            resolve(err.message);
+            spinner.fail(err.message)
+            reject(err.message);
         }
     });
 }

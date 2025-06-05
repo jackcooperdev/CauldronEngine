@@ -1,5 +1,4 @@
 import {cauldronLogger} from "../../tools/logger.js";
-import {destroySession} from "../../tools/sessionManager.js";
 import unsupportedVersions from "./files/blocked_versions.json" with {type: "json"};
 
 // Grabs ForgeVersion from ForgePromo
@@ -11,7 +10,6 @@ async function identifier(version, forgePromos) {
             let type = "recommended";
 
             if (unsupportedVersions.includes(version)) {
-                await destroySession();
                 reject(
                     `Sorry but Cauldron does not support ${version} forge yet. CODE: BLVER`,
                 );

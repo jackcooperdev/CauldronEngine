@@ -6,10 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Universal Loader Support (Post files not included)
 
 ### Changed
 
 - Moved Main CauldronLogger to Consola from Log4JS
+- General Code Review
+- Started Rework Of Plugin / Loader Support System 
+- Moved Post Processors for plugins to separate folders
+
+### Removed
+
+- Removed Session Management
+- Individual Loader Support
 
 ## [0.5.5] - 22-04-2025
 

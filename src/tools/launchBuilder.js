@@ -9,6 +9,7 @@ import systemPKG from "../../package.json" with {type: "json"};
 import defaultJVM from "../files/defaultJVMArguments.json" with {type: "json"};
 import {getJVMArgsPlugin} from "../plugins/plugins.js";
 
+
 const osCurrent = os.platform();
 
 // Variable Injector
@@ -49,22 +50,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
                 cusJVM[idx] = overrides[idx];
             }
         }
-        if (versionData.loader !== "vanilla") {
-            libraryList.push(
-                path.join(
-                    CAULDRON_PATH,
-                    "libraries",
-                    "net",
-                    "minecraftforge",
-                    "forge",
-                    `${versionData.version}-${versionData.loaderVersion}`,
-                    `forge-${versionData.version}-${versionData.loaderVersion}.jar`,
-                ),
-            );
-        }
-        libraryList.push(
-            path.join(CAULDRON_PATH, "versions", manifest.id, `${manifest.id}.jar`),
-        );
+        libraryList.push(path.join(CAULDRON_PATH, "versions", manifest.id, `${manifest.id}.jar`),);
         let jvmRules = manifest.arguments.jvm;
         let validRules = [];
         for (let idx in jvmRules) {
@@ -136,20 +122,20 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
             }
         }
         // Run Plugin Code
-        if (versionData.loader !== "vanilla") {
-            const plugin = await getJVMArgsPlugin(versionData.loader, {
-                manifest,
-                libraryList,
-                versionData,
-                overrides,
-            });
-            if (plugin) {
-                manifest = plugin.manifest;
-                libraryList = plugin.libraryList;
-                versionData = plugin.versionData;
-                overrides = plugin.overides;
-            }
-        }
+        // if (versionData.loader !== "vanilla") {
+        //     const plugin = await getJVMArgsPlugin(versionData.loader, {
+        //         manifest,
+        //         libraryList,
+        //         versionData,
+        //         overrides,
+        //     });
+        //     if (plugin) {
+        //         manifest = plugin.manifest;
+        //         libraryList = plugin.libraryList;
+        //         versionData = plugin.versionData;
+        //         overrides = plugin.overides;
+        //     }
+        // }
 
         // Convert Library List into Joined List
         let classPathSep;
@@ -161,22 +147,12 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
             classPath = libraryList.join(":");
             classPathSep = ":";
         }
-
         let relVariables = {
-            natives_directory: path.join(
-                CAULDRON_PATH,
-                "versions",
-                manifest.id,
-                "natives",
-            ),
+            natives_directory: path.join(CAULDRON_PATH, "versions", manifest.id, "natives",),
             launcher_name: cusJVM.launcher_name,
+            version_name: manifest.id,
             launcher_version: systemPKG.version,
-            client_jar: path.join(
-                CAULDRON_PATH,
-                "versions",
-                manifest.id,
-                manifest.id + ".jar",
-            ),
+            client_jar: path.join(CAULDRON_PATH, "versions", manifest.id, manifest.id + ".jar",),
             classpath: classPath,
             path: path.join(CAULDRON_PATH, "assets", "log_configs", "log_config.xml"),
             ram: cusJVM.ram,
@@ -191,6 +167,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
                 validRules[rIdx] = injector.create(validRules[rIdx], relVariables);
             }
         }
+        console.log(validRules)
         resolve(validRules);
     });
 }

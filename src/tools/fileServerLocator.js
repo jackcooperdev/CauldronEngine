@@ -3,13 +3,12 @@ import fs from "fs";
 import path from "path";
 import jwt from "jsonwebtoken";
 import {fileURLToPath} from "url";
+import {cauldronLogger} from "./logger.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const FILE_SERVER_KEY = fs
-    .readFileSync(path.join(__dirname, "../", "files", "file.key.pub"))
-    .toString();
+const FILE_SERVER_KEY = fs.readFileSync(path.join(__dirname, "../", "files", "file.key.pub")).toString();
 const DEFAULT_FILES_LOCATION = "https://files.cauldronmc.com";
 
 async function grabStaticFileServer() {
@@ -36,7 +35,7 @@ async function grabStaticFileServer() {
             if (keyData.domain !== FILE_SERVER_LOCATION) {
                 reject("FILE_SERVER_INVALID");
             }
-
+            cauldronLogger.debug(`Using File Server: ${FILE_SERVER_LOCATION}`);
             resolve(FILE_SERVER_LOCATION);
         } catch (e) {
             reject("FILE_SERVER_INVALID");

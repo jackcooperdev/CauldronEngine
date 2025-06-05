@@ -1,27 +1,13 @@
 import {cauldronLogger} from "../tools/logger.js";
 
-async function checkManifestPlugin(
-    loader,
-    loaderVersion,
-    version,
-    getSpec,
-    getLoaderManifest,
-) {
+async function checkManifestPlugin(loader, loaderVersion, version, getSpec, getLoaderManifest,) {
     return new Promise(async (resolve, reject) => {
         try {
             const {getManifest} = await import(`./${loader}/manifest.js`);
-            const data = await getManifest(
-                loaderVersion,
-                version,
-                getSpec,
-                getLoaderManifest,
-            );
+            const data = await getManifest(loaderVersion, version, getSpec, getLoaderManifest,);
             resolve(data);
         } catch (err) {
-            reject({
-                message:
-                    "This Loader Is Not Supported! (Plugin May be missing a manifest file as well) (a)",
-            });
+            reject({message: "This Loader Is Not Supported! (Plugin May be missing a manifest file as well) (a)",});
         }
     });
 }
@@ -33,10 +19,7 @@ async function getDataPlugin(loader) {
             const data = getData();
             resolve(data);
         } catch (err) {
-            reject({
-                message:
-                    "This Loader Is Not Supported! (Plugin May be missing a manifest file as well) (b)",
-            });
+            reject({message: "This Loader Is Not Supported! (Plugin May be missing a manifest file as well) (b)",});
         }
     });
 }
@@ -60,33 +43,22 @@ async function getPostPlugin(loader, manifest) {
             const data = await postProcessing(manifest);
             resolve(data);
         } catch (err) {
-            cauldronLogger.warn(
-                "Plugin Does not support the post function. There may be errors ahead",
-            );
-            //resolve(false);
+            cauldronLogger.warn("Plugin Does not support the post function. There may be errors ahead",);
         }
     });
 }
 
 async function getJVMArgsPlugin(loader, args) {
-    return new Promise(async (resolve) => {
+    return new Promise(async (resolve,reject) => {
         try {
             const {jvm} = await import(`./${loader}/launch.js`);
             const data = await jvm(args);
             resolve(data);
         } catch (err) {
-            cauldronLogger.warn(
-                "Plugin Does not support the jvmArgs function. There may be errors ahead",
-            );
-            resolve(false);
+            cauldronLogger.error(err);
+            reject(err);
         }
     });
 }
 
-export {
-    checkManifestPlugin,
-    getDataPlugin,
-    getIdentifierPlugin,
-    getPostPlugin,
-    getJVMArgsPlugin,
-};
+export {checkManifestPlugin, getDataPlugin, getIdentifierPlugin, getPostPlugin, getJVMArgsPlugin,};

@@ -1,6 +1,5 @@
 import log4js from "log4js";
 import net from "net";
-import {destroySession} from "./sessionManager.js";
 import {createConsola} from "consola";
 
 const port = 9500;
@@ -78,8 +77,6 @@ function startMCListening() {
                 );
             });
             if (index !== -1) sockets.splice(index, 1);
-            destroySession(loggerSession).then(function () {
-            });
             server.close();
             loggerSession = "";
         });

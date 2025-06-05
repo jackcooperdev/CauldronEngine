@@ -1,7 +1,7 @@
 import fs from "fs";
 import shelljs from "shelljs";
 import path from "path";
-import {verifyInstallation} from "./queue.js";
+import {processQueue, verifyInstallation} from "./queue.js";
 import {grabPath, getOperatingSystem} from "../tools/compatibility.js";
 
 async function checkCompat(jVersion, jvmData) {
@@ -17,10 +17,7 @@ async function checkJVM(name, jvmMani) {
     return new Promise(async (resolve) => {
         let CAULDRON_PATH = grabPath();
         shelljs.mkdir("-p", path.join(CAULDRON_PATH, "jvm", name));
-        fs.writeFileSync(
-            path.join(CAULDRON_PATH, "jvm", name + ".json"),
-            JSON.stringify(jvmMani),
-        );
+        fs.writeFileSync(path.join(CAULDRON_PATH, "jvm", name + ".json"), JSON.stringify(jvmMani));
         let files = jvmMani.files;
         // Build Dir Structure
         for (let idx in files) {
@@ -55,26 +52,18 @@ async function checkJVM(name, jvmMani) {
                 });
             }
         }
-        await verifyInstallation(dQueue);
+        await processQueue(dQueue,false,'jvm');
         if (getOperatingSystem() === "linux") {
-            await shelljs.chmod(
-                "+x",
-                path.join(CAULDRON_PATH, "jvm", name, "bin", "java"),
-            );
+            await shelljs.chmod("+x", path.join(CAULDRON_PATH, "jvm", name, "bin", "java"));
         }
         let currentJVMFile = JSON.parse(
-            fs
-                .readFileSync(path.join(CAULDRON_PATH, "jvm_installed.json"))
-                .toString(),
+            fs.readFileSync(path.join(CAULDRON_PATH, "jvm_installed.json")).toString()
         );
         currentJVMFile[name] = {
             installed: true,
             lastChecked: new Date().getTime(),
         };
-        fs.writeFileSync(
-            path.join(CAULDRON_PATH, "jvm_installed.json"),
-            JSON.stringify(currentJVMFile),
-        );
+        fs.writeFileSync(path.join(CAULDRON_PATH, "jvm_installed.json"), JSON.stringify(currentJVMFile));
         resolve(true);
     });
 }

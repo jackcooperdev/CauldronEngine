@@ -14,28 +14,16 @@ async function jvm(data) {
             if (forceComp[versionData.version]) {
                 if (forceComp[versionData.version][0] === "legacy") {
                     // Legacy Compat
-                    libraryList.push(
-                        path.join(
-                            CAULDRON_PATH,
-                            "libraries",
-                            "net/minecraftforge/minecraftforge",
-                            versionData.loaderVersion,
-                            `minecraftforge-${versionData.version}-${versionData.loaderVersion}.jar`,
-                        ),
-                    );
+                    libraryList.push(path.join(CAULDRON_PATH, "libraries", "net/minecraftforge/minecraftforge", versionData.loaderVersion, `minecraftforge-${versionData.version}-${versionData.loaderVersion}.jar`,),);
                 }
                 for (let fIdx in forceComp[versionData.version]) {
-                    libraryList.push(
-                        path.join(
-                            CAULDRON_PATH,
-                            "libraries",
-                            "net/minecraftforge/forge",
-                            `${versionData.version}-${versionData.loaderVersion}`,
-                            `forge-${versionData.version}-${versionData.loaderVersion}-${forceComp[versionData.version][fIdx]}.jar`,
-                        ),
-                    );
+                    console.log(path.join(CAULDRON_PATH, "libraries", "net/minecraftforge/forge", `${versionData.version}-${versionData.loaderVersion}`, `forge-${versionData.version}-${versionData.loaderVersion}-${forceComp[versionData.version][fIdx]}.jar`))
+                    libraryList.push(path.join(CAULDRON_PATH, "libraries", "net/minecraftforge/forge", `${versionData.version}-${versionData.loaderVersion}`, `forge-${versionData.version}-${versionData.loaderVersion}-${forceComp[versionData.version][fIdx]}.jar`,),);
+
                 }
+                process.exit(0)
             }
+
 
             resolve({manifest, libraryList, versionData, overrides});
         } catch (err) {
