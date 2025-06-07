@@ -90,11 +90,7 @@ async function postProcessing(manifests, libs) {
                             let splitDir = forgeData[fIdx].client
                                 .replace(/[\[\]]/g, "")
                                 .split(":");
-                            if (
-                                fIdx === "MAPPINGS" ||
-                                fIdx === "MOJMAPS" ||
-                                fIdx === "MERGED_MAPPINGS"
-                            ) {
+                            if (fIdx === "MAPPINGS" || fIdx === "MOJMAPS" || fIdx === "MERGED_MAPPINGS") {
                                 params[fIdx] = path.join(CAULDRON_PATH, "libraries", splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2], `${splitDir[1]}-${splitDir[2]}-${splitDir[3]}`.replace("@", ".",),);
                             } else {
                                 params[fIdx] = path.join(CAULDRON_PATH, "libraries", splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2], `${splitDir[1]}-${splitDir[2]}-${splitDir[3]}.jar`,);
@@ -168,43 +164,23 @@ async function postProcessing(manifests, libs) {
                                     .split(":")[0]
                                     .split(".")
                                     .join("/");
-                                let secondChunk =
-                                    processors[pIdx].classpath[cpIdx].split(":")[1];
-                                let thirdChunk =
-                                    processors[pIdx].classpath[cpIdx].split(":")[2];
-                                let lPathTemp = path.join(
-                                    CAULDRON_PATH,
-                                    "libraries",
-                                    firstChunk,
-                                    secondChunk,
-                                    thirdChunk,
-                                    `${secondChunk}-${thirdChunk}.jar`,
-                                );
+                                let secondChunk = processors[pIdx].classpath[cpIdx].split(":")[1];
+                                let thirdChunk = processors[pIdx].classpath[cpIdx].split(":")[2];
+                                let lPathTemp = path.join(CAULDRON_PATH, "libraries", firstChunk, secondChunk, thirdChunk, `${secondChunk}-${thirdChunk}.jar`,);
                                 classPaths.push(lPathTemp);
                             }
                             classPaths.push(lPath);
-                            // FIXME: client-file missing causing erroor
                             let actualArgs = processors[pIdx].args.join(" ");
-                            if (
-                                !processors[pIdx].sides ||
-                                processors[pIdx].sides.includes("client")
-                            ) {
+                            if (!processors[pIdx].sides || processors[pIdx].sides.includes("client")) {
                                 let command = `-cp ${classPaths.join(";")} ${mainClass} ${actualArgs}`;
                                 //Mappings path replacement
                                 if (forgeData.MAPPINGS) {
-                                    command = command.replace(
-                                        forgeData.MAPPINGS.client.replace(":mappings@txt", "@zip"),
-                                        "{MAPPING_PATH}",
-                                    );
-                                    command = command.replace(
-                                        forgeData.MAPPINGS.client.replace(":mappings@tsrg", "@zip"),
-                                        "{MAPPING_PATH}",
-                                    );
+                                    command = command.replace(forgeData.MAPPINGS.client.replace(":mappings@txt", "@zip"), "{MAPPING_PATH}",);
+                                    command = command.replace(forgeData.MAPPINGS.client.replace(":mappings@tsrg", "@zip"), "{MAPPING_PATH}",);
                                 }
                                 // Inject params
                                 command = injector.create(command, params);
                                 await spawn(path.join(CAULDRON_PATH, "jvm", manifests.jvmComp, "bin", "java",), command.split(" "),);
-
                                 let knownClientPatchers = ["net.minecraftforge.binarypatcher.ConsoleTool"]
                                 if (knownClientPatchers.includes(mainClass)) {
                                     let clientPath = path.join(CAULDRON_PATH, 'libraries', 'net/minecraftforge/forge', `${manifests.version}-${manifests.loaderVersion}`, `forge-${manifests.version}-${manifests.loaderVersion}-client.jar`);
@@ -221,7 +197,7 @@ async function postProcessing(manifests, libs) {
                                         }
                                     };
                                     currentVersionFile.libraries.push(newLib);
-                                    fs.writeFileSync(path.join(CAULDRON_PATH, "versions", `forge-${manifests.version}-${manifests.loaderVersion}`, `forge-${manifests.version}-${manifests.loaderVersion}.json`), JSON.stringify(currentVersionFile, null, 2 ));
+                                    fs.writeFileSync(path.join(CAULDRON_PATH, "versions", `forge-${manifests.version}-${manifests.loaderVersion}`, `forge-${manifests.version}-${manifests.loaderVersion}.json`), JSON.stringify(currentVersionFile, null, 2));
                                     libs.push(clientPath)
                                 }
 

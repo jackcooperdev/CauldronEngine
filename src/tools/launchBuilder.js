@@ -4,10 +4,8 @@ import shell from "shelljs";
 import os from "os";
 import {exec} from "child_process";
 import {grabPath, getOperatingSystem} from "./compatibility.js";
-import requiresLibPatch from "../files/requiresLibPatch.json" with {type: "json"};
 import systemPKG from "../../package.json" with {type: "json"};
 import defaultJVM from "../files/defaultJVMArguments.json" with {type: "json"};
-import {getJVMArgsPlugin} from "../plugins/plugins.js";
 
 
 const osCurrent = os.platform();
@@ -70,7 +68,6 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
                 }
             }
         }
-
         /**
          * @param manifest.logging.client.argument
          */
@@ -86,56 +83,16 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
             proxyPort = 80;
         } else if (versionData.version.startsWith("a1.1.")) {
             proxyPort = 11702;
-        } else if (
-            versionData.version.startsWith("a1.") ||
-            versionData.version.startsWith("b1.")
-        ) {
+        } else if (versionData.version.startsWith("a1.") || versionData.version.startsWith("b1.")) {
             proxyPort = 11705;
-        } else if (
-            vArray.includes(versionData.version) ||
-            versionData.version.startsWith(vArray) ||
-            vArray.includes(splitVersion)
-        ) {
+        } else if (vArray.includes(versionData.version) || versionData.version.startsWith(vArray) || vArray.includes(splitVersion)) {
             proxyPort = 11707;
         }
         if (proxyPort) {
             validRules.push("-Dhttp.proxyHost=betacraft.uk");
             validRules.push("-Dhttp.proxyPort=" + proxyPort);
         }
-        let libOccurrences = {};
-        let repeatedLibs = {};
-        for (let idx in libraryList) {
-            let libPath =
-                libraryList[idx].split("\\")[libraryList[idx].split("\\").length - 3];
-            if (libOccurrences[libPath]) {
-                libOccurrences[libPath].push(libraryList[idx]);
-                repeatedLibs[libPath] = libOccurrences[libPath];
-            } else {
-                libOccurrences[libPath] = [libraryList[idx]];
-            }
-        }
 
-        if (requiresLibPatch[versionData.loader].includes(versionData.version)) {
-            for (let rLibs in repeatedLibs) {
-                let index = libraryList.indexOf(repeatedLibs[rLibs][0]);
-                libraryList.splice(index, 1);
-            }
-        }
-        // Run Plugin Code
-        // if (versionData.loader !== "vanilla") {
-        //     const plugin = await getJVMArgsPlugin(versionData.loader, {
-        //         manifest,
-        //         libraryList,
-        //         versionData,
-        //         overrides,
-        //     });
-        //     if (plugin) {
-        //         manifest = plugin.manifest;
-        //         libraryList = plugin.libraryList;
-        //         versionData = plugin.versionData;
-        //         overrides = plugin.overides;
-        //     }
-        // }
 
         // Convert Library List into Joined List
         let classPathSep;
@@ -167,7 +124,6 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
                 validRules[rIdx] = injector.create(validRules[rIdx], relVariables);
             }
         }
-        console.log(validRules)
         resolve(validRules);
     });
 }
@@ -215,12 +171,7 @@ async function buildGameRules(manifest, loggedUser, overrides, addit) {
             server_ip: gameVars.server_ip,
         };
         if (manifest.assets === "legacy") {
-            gameVariables.game_assets = path.join(
-                CAULDRON_PATH,
-                "assets",
-                "virtual",
-                "legacy",
-            );
+            gameVariables.game_assets = path.join(CAULDRON_PATH, "assets", "virtual", "legacy",);
         } else if (manifest.assets === "pre-1.6") {
             gameVariables.game_assets = path.join(CAULDRON_PATH, "resources");
         } else {
@@ -250,16 +201,7 @@ async function buildFile(manifest, jreVersion, validRules, gameRules) {
     let mainClass = manifest.mainClass;
     let javaPath;
     if (osCurrent === "darwin") {
-        javaPath = path.join(
-            CAULDRON_PATH,
-            "jvm",
-            jreVersion,
-            "jre.bundle",
-            "Contents",
-            "Home",
-            "bin",
-            "java",
-        );
+        javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "jre.bundle", "Contents", "Home", "bin", "java",);
     } else {
         javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "bin", "java");
     }
@@ -268,18 +210,12 @@ async function buildFile(manifest, jreVersion, validRules, gameRules) {
     shell.mkdir("-p", path.join(CAULDRON_PATH, "scripts"));
 
     if (osCurrent === "linux" || osCurrent === "darwin") {
-        fs.writeFileSync(
-            path.join(CAULDRON_PATH, "scripts", "launch.sh"),
-            `${launchCommand}`,
-        );
+        fs.writeFileSync(path.join(CAULDRON_PATH, "scripts", "launch.sh"), `${launchCommand}`,);
         exec(`cd ${path.join(CAULDRON_PATH, "scripts")} && chmod +x launch.sh`);
         exec(`cd ${path.join(javaPath, "../")} && chmod +x java`);
         return path.join(CAULDRON_PATH, "scripts", "launch.sh");
     } else if (osCurrent === "win32") {
-        fs.writeFileSync(
-            path.join(CAULDRON_PATH, "scripts", "launch.bat"),
-            `${launchCommand}`,
-        );
+        fs.writeFileSync(path.join(CAULDRON_PATH, "scripts", "launch.bat"), `${launchCommand}`,);
         return path.join(CAULDRON_PATH, "scripts", "launch.bat");
     }
 }

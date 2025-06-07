@@ -13,13 +13,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Moved Main CauldronLogger to Consola from Log4JS
 - General Code Review
-- Started Rework Of Plugin / Loader Support System 
+- Rework Of Plugin / Loader Support System 
 - Moved Post Processors for plugins to separate folders
 
 ### Removed
 
 - Removed Session Management
 - Individual Loader Support
+- Library Patching on Launch
+- Static File Server
+- Custom Logger Finder
 
 ## [0.5.5] - 22-04-2025
 

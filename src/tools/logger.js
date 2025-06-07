@@ -7,8 +7,7 @@ const host = "127.0.0.1";
 log4js.configure({
     appenders: {
         out: {type: "console"},
-    },
-    categories: {
+    }, categories: {
         default: {appenders: ["out"], level: "debug"},
     },
 });
@@ -23,9 +22,7 @@ function startMCListening() {
     try {
         server = net.createServer();
         server.listen(port, host, () => {
-            cauldronLogger.info(
-                "Listening For Minecraft Instances on port " + port + ".",
-            );
+            cauldronLogger.info("Listening For Minecraft Instances on port " + port + ".",);
         });
     } catch (e) {
         cauldronLogger.error(e)
@@ -71,10 +68,7 @@ function startMCListening() {
         });
         sock.on("close", function () {
             let index = sockets.findIndex(function (o) {
-                return (
-                    o.remoteAddress === sock.remoteAddress &&
-                    o.remotePort === sock.remotePort
-                );
+                return (o.remoteAddress === sock.remoteAddress && o.remotePort === sock.remotePort);
             });
             if (index !== -1) sockets.splice(index, 1);
             server.close();

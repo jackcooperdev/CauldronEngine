@@ -52,18 +52,15 @@ async function checkJVM(name, jvmMani) {
                 });
             }
         }
-        await processQueue(dQueue,false,'jvm');
+        await processQueue(dQueue, false, 'jvm');
         if (getOperatingSystem() === "linux") {
             await shelljs.chmod("+x", path.join(CAULDRON_PATH, "jvm", name, "bin", "java"));
         }
-        let currentJVMFile = JSON.parse(
-            fs.readFileSync(path.join(CAULDRON_PATH, "jvm_installed.json")).toString()
-        );
+        let currentJVMFile = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, "config/jvm_installed.json")).toString());
         currentJVMFile[name] = {
-            installed: true,
-            lastChecked: new Date().getTime(),
+            installed: true, lastChecked: new Date().getTime(),
         };
-        fs.writeFileSync(path.join(CAULDRON_PATH, "jvm_installed.json"), JSON.stringify(currentJVMFile));
+        fs.writeFileSync(path.join(CAULDRON_PATH, "config/jvm_installed.json"), JSON.stringify(currentJVMFile));
         resolve(true);
     });
 }

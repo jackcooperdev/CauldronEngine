@@ -7,23 +7,26 @@ import axios from "axios";
 import os from "os";
 // Import Tools
 import {grabPath} from "../tools/compatibility.js";
-import {addOSSpecArguments, convertAssets, convertLegacyAssets, convertPre16Assets,} from "../tools/manifestConverter.js";
+import {
+    addOSSpecArguments,
+    convertAssets,
+    convertLegacyAssets,
+    convertPre16Assets,
+} from "../tools/manifestConverter.js";
 import {cauldronLogger} from "../tools/logger.js";
 import {checkInternet} from "../tools/checkConnection.js";
 import {checkCompat} from "./jvm.js";
 
 
 const osCurrent = os.platform();
-const RESOURCES_PATH = "https://devresources.cauldronmc.com"
+const RESOURCES_PATH = "https://resources.cauldronmc.com"
 
 async function checkManifest(fileName, url, type) {
     return new Promise(async (resolve, reject) => {
         let isOnline = await checkInternet();
         let CAULDRON_PATH = grabPath();
         try {
-            let expected = JSON.parse(
-                fs.readFileSync(path.join(CAULDRON_PATH, fileName)).toString(),
-            );
+            let expected = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, fileName)).toString(),);
             if (isOnline && type === "main") {
                 // Only Update Main Manifest
                 await downloadManifest(url, path.join(CAULDRON_PATH, fileName))
@@ -70,9 +73,7 @@ async function checkJAR(fileName, url) {
 async function downloadALL(url, dir) {
     return new Promise(async (resolve, reject) => {
         let config = {
-            method: "get",
-            url: url,
-            responseType: "arraybuffer",
+            method: "get", url: url, responseType: "arraybuffer",
         };
         try {
             const file = await axios(config);
@@ -101,16 +102,13 @@ async function checkLog(fileName, url) {
 }
 
 let convertManifests = {
-    assets: convertAssets,
-    legacy: convertLegacyAssets,
-    "pre-1.6": convertPre16Assets,
+    assets: convertAssets, legacy: convertLegacyAssets, "pre-1.6": convertPre16Assets,
 };
 
 async function downloadManifest(url, dir, type) {
     return new Promise(async (resolve, reject) => {
         let config = {
-            method: "get",
-            url: url,
+            method: "get", url: url,
         };
         try {
             const file = await axios(config);
@@ -119,7 +117,7 @@ async function downloadManifest(url, dir, type) {
             if (convertManifests[type]) {
                 fileData = await convertManifests[type](fileData);
             }
-            fs.writeFileSync(dir, JSON.stringify(fileData, null, 2 ));
+            fs.writeFileSync(dir, JSON.stringify(fileData, null, 2));
             resolve(fileData);
         } catch (err) {
             reject(err.message);
@@ -143,18 +141,13 @@ async function getPackwizJVM() {
             const jvmCompat = await checkCompat("java-runtime-alpha", jvmMeta);
             let jvmMani;
             if (jvmCompat) {
-                jvmMani = await checkManifest(
-                    path.join("jvm", "java-runtime-alpha.json"),
-                    jvmCompat[0].manifest.url,
-                );
+                jvmMani = await checkManifest(path.join("jvm", "java-runtime-alpha.json"), jvmCompat[0].manifest.url,);
             } else {
                 reject("Version Not Supported on " + osCurrent);
             }
 
             let allManifests = {
-                jvmMeta: jvmMeta,
-                jvmMani: jvmMani,
-                jvmComp: "java-runtime-alpha",
+                jvmMeta: jvmMeta, jvmMani: jvmMani, jvmComp: "java-runtime-alpha",
             };
             resolve(allManifests);
         } catch (err) {
@@ -167,31 +160,28 @@ async function getManifests(v, l, lv) {
     return new Promise(async (resolve, reject) => {
         let CAULDRON_PATH = grabPath();
         try {
-
+            if (!fs.existsSync(path.join(CAULDRON_PATH, "config"))) {
+                fs.mkdirSync(path.join(CAULDRON_PATH, "config"))
+            }
             // Check / Create Persistence Files
             // Check for an asset installation file
-            if (!fs.existsSync(path.join(CAULDRON_PATH, "assets_installed.json"))) {
-                fs.writeFileSync(path.join(CAULDRON_PATH, "assets_installed.json"), "{}",);
+
+            if (!fs.existsSync(path.join(CAULDRON_PATH, "config/assets_installed.json"))) {
+                fs.writeFileSync(path.join(CAULDRON_PATH, "config/assets_installed.json"), "{}",);
             }
 
             // Check for jvm file
-            if (!fs.existsSync(path.join(CAULDRON_PATH, "jvm_installed.json"))) {
-                fs.writeFileSync(path.join(CAULDRON_PATH, "jvm_installed.json"), "{}");
+            if (!fs.existsSync(path.join(CAULDRON_PATH, "config/jvm_installed.json"))) {
+                fs.writeFileSync(path.join(CAULDRON_PATH, "config/jvm_installed.json"), "{}");
             }
 
             // Check for a library installations file
-            if (!fs.existsSync(path.join(CAULDRON_PATH, "libs_installed.json"))) {
-                fs.writeFileSync(path.join(CAULDRON_PATH, "libs_installed.json"), "{}");
+            if (!fs.existsSync(path.join(CAULDRON_PATH, "config/libs_installed.json"))) {
+                fs.writeFileSync(path.join(CAULDRON_PATH, "config/libs_installed.json"), "{}");
             }
-            const assetDict = JSON.parse(
-                fs.readFileSync(path.join(CAULDRON_PATH, "assets_installed.json")).toString(),
-            );
-            const jvmDict = JSON.parse(
-                fs.readFileSync(path.join(CAULDRON_PATH, "jvm_installed.json")).toString(),
-            );
-            const libDict = JSON.parse(
-                fs.readFileSync(path.join(CAULDRON_PATH, "libs_installed.json")).toString(),
-            );
+            const assetDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, "config/assets_installed.json")).toString(),);
+            const jvmDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, "config/jvm_installed.json")).toString(),);
+            const libDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, "config/libs_installed.json")).toString(),);
 
             // Convert to Actual Values
             let manifest;
@@ -213,17 +203,26 @@ async function getManifests(v, l, lv) {
              * @param vanillaManifest.versions
              */
             const foundVersionData = manifest.versions.find((versionName) => versionName.id === version);
-            console.log(foundVersionData);
             if (!foundVersionData) {
-                reject({"message":"Version not found"});
+                if (l === "vanilla") {
+                    reject({"message": "Version not found"});
+                } else {
+                    reject({"message": "Version not supported for loader: " + l});
+                }
+
                 return;
             }
 
             // Set Loader Version
             lv = foundVersionData.loaderVersion;
 
+            // If loaderVersion is not found check in manifest
 
-            // TODO: Fix Plugin versions appearing as vanilla in versions folder (id manipulation?)
+            if (!lv) {
+                lv = manifest.version;
+            }
+
+
             let specLocation = foundVersionData.id;
 
             if (l !== "vanilla") {
@@ -270,7 +269,7 @@ async function getManifests(v, l, lv) {
 
             if (createdManifest.requiresPost === true) {
                 let expectedPostLocation = `${RESOURCES_PATH}/loaders/${l}/${v}-${lv}/post.json`
-                postData = await checkManifest(path.join("versions", specLocation,  "post.json",), expectedPostLocation, "spec");
+                postData = await checkManifest(path.join("versions", specLocation, "post.json",), expectedPostLocation, "spec");
             }
             // TODO: Add verification expiration (Session Based???)
             let haveAssetsBeenDownloaded = false;
@@ -296,9 +295,7 @@ async function getManifests(v, l, lv) {
                 assetsInfo: assetsConverted,
                 version: version,
                 versionData: {
-                    loader: l,
-                    version: version,
-                    loaderVersion: lv,
+                    loader: l, version: version, loaderVersion: lv,
                 },
                 loader: l,
                 assetsDownloaded: haveAssetsBeenDownloaded,
@@ -308,6 +305,7 @@ async function getManifests(v, l, lv) {
                 needsPost: createdManifest.requiresPost,
                 postData: postData
             };
+
             resolve(allManifests);
         } catch (err) {
             console.error(err);

@@ -10,15 +10,13 @@ async function download(url, location, fileName) {
             const downloader = new Downloader({
                 url: url, //If the file name already exists, a new file with the name 200MB1.zip is created.
                 directory: location, //This folder will be created if it doesn't exist.
-                cloneFiles: false,
-                fileName: fileName,
-                maxAttempts: 10,
+                cloneFiles: false, fileName: fileName, maxAttempts: 10,
             });
             try {
                 await downloader.download(); //Downloader.download() resolves with some useful properties.
                 resolve(true);
             } catch (error) {
-                console.log(error);
+                //console.log(error);
                 //IMPORTANT: Handle a possible error. An error is thrown in case of network errors, or status codes of 400 and above.
                 //Note that if the maxAttempts is set to higher than 1, the error is thrown only if all attempts fail.
                 resolve(false);
@@ -35,23 +33,17 @@ async function validate(file) {
             resolve("pass");
             return;
         }
-        if (
-            file.sha1 === "NONE" &&
-            fs.existsSync(path.join(file.destination, file.fileName))
-        ) {
+        if (file.sha1 === "NONE" && fs.existsSync(path.join(file.destination, file.fileName))) {
             resolve("pass");
             return;
         }
-        checksum.file(
-            path.join(file.destination, file.fileName),
-            function (err, sum) {
-                if (sum === file.sha1) {
-                    resolve(true);
-                } else {
-                    resolve(file);
-                }
-            },
-        );
+        checksum.file(path.join(file.destination, file.fileName), function (err, sum) {
+            if (sum === file.sha1) {
+                resolve(true);
+            } else {
+                resolve(file);
+            }
+        },);
     });
 }
 

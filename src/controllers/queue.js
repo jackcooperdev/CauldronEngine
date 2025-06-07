@@ -12,7 +12,7 @@ function removeItem(array, item) {
     }
 }
 
-async function checkDownloadAndCheck(item,friendly) {
+async function checkDownloadAndCheck(item, friendly) {
     return new Promise(async (resolve) => {
         try {
             let validateItem = await validate(item);
@@ -27,13 +27,13 @@ async function checkDownloadAndCheck(item,friendly) {
         }
     });
 }
+
 async function verifyInstallation(queue, isAssetDownload) {
     return new Promise(async (resolve) => {
         let concurrency = queue.length;
         if (isAssetDownload) {
             concurrency = queue.length / 2;
         }
-
         const procQueue = await Promise.map(queue, checkDownloadAndCheck, {
             concurrency: concurrency,
         });
@@ -50,11 +50,8 @@ async function processQueue(queue, isAssetDownload, friendly) {
             concurrency = queue.length / 2;
         }
 
-        const procQueue = await Promise.map(
-            queue,
-            (item) => checkDownloadAndCheck(item, friendly), // Wrap your function
-            { concurrency: concurrency }
-        );
+        const procQueue = await Promise.map(queue, (item) => checkDownloadAndCheck(item, friendly), // Wrap your function
+            {concurrency: concurrency});
         removeItem(procQueue, "pass");
         resolve(procQueue);
     });

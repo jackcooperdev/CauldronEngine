@@ -10,34 +10,23 @@ import {getLibraries} from "./libraries.js";
 import {getManifests} from "./manifest.js";
 import {cauldronLogger, attachLoggerSession} from "../tools/logger.js";
 import {
-    buildJVMRules,
-    buildGameRules,
-    buildFile,
-    logInjector,
+    buildJVMRules, buildGameRules, buildFile, logInjector,
 } from "../tools/launchBuilder.js";
-import { MultiProgressBars } from 'multi-progress-bars';
-import * as chalk from 'chalk';
 import ora from 'ora';
-import {getPostPlugin} from "../plugins/plugins.js";
-import cliProgress from "cli-progress";
 import Promise from "bluebird";
 import {postProcessing} from "../tools/postProcessors/forge.js";
+import fs from "fs";
 
 
 function createUUID() {
-    return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) =>
-        (
-            +c ^
-            (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (+c / 4)))
-        ).toString(16),
-    );
+    return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (+c / 4)))).toString(16),);
 }
 
 
 async function handleGrabDeps(manifests, multibar) {
     const dependencyPromises = [];
     let librariesOutput;
-
+    cauldronLogger.info("Downloading Assets and Libraries")
     if (!manifests.jvmDownloaded) {
         dependencyPromises.push(checkJVM(manifests.jvmComp, manifests.jvmMani, multibar));
     }
@@ -48,7 +37,7 @@ async function handleGrabDeps(manifests, multibar) {
         dependencyPromises.push(getAssets(manifests.spec.assets, manifests.assetsInfo, multibar));
     }
 
-    const librariesPromise = getLibraries(manifests.spec.libraries, manifests.versionData, manifests.spec.id, undefined, multibar);
+    const librariesPromise = getLibraries(manifests.spec.libraries, manifests.versionData, manifests.spec.id, undefined);
     dependencyPromises.push(librariesPromise);
 
     try {
@@ -79,11 +68,11 @@ async function launchGame(version, installOnly, loader, lVersion, authData, over
     if (!loader) {
         loader = "vanilla";
     }
-    return new Promise(async (resolve,reject) => {
+    return new Promise(async (resolve, reject) => {
         let CAULDRON_PATH = grabPath();
         const spinner = ora('Starting Boot')
         try {
-            let verifiedLoaders = ["vanilla","forge"]
+            let verifiedLoaders = ["vanilla", "forge", "fabric"]
             const loaderAccepted = verifiedLoaders.includes(loader);
             if (!loaderAccepted) {
                 reject('Loader Not Supported! Code: LSUPNF')
@@ -99,9 +88,8 @@ async function launchGame(version, installOnly, loader, lVersion, authData, over
 
             if (loader !== "vanilla") {
                 if (manifests.needsPost) {
-                    libGet = await postProcessing(manifests,libGet);
+                    libGet = await postProcessing(manifests, libGet);
                 }
-                //await getPostPlugin(loader, manifests);
             }
             if (!installOnly) {
                 if (manifests.spec.logging) {
@@ -118,7 +106,6 @@ async function launchGame(version, installOnly, loader, lVersion, authData, over
                         launchDirectory = `${overrides["game"]["game_directory"]}`;
                     }
                 }
-
                 exec(`cd ${launchDirectory} && ${launchPath}`);
                 resolve(sessionID);
             } else {

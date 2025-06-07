@@ -12,7 +12,7 @@ async function getLibraries(libList, versionData, maniID, customName) {
         let CAULDRON_PATH = grabPath();
         try {
             let currentLibraryFile = JSON.parse(fs
-                .readFileSync(path.join(CAULDRON_PATH, "libs_installed.json"))
+                .readFileSync(path.join(CAULDRON_PATH, "config/libs_installed.json"))
                 .toString(),);
             let actualOS = getOperatingSystem();
             // Download Queue
@@ -26,7 +26,6 @@ async function getLibraries(libList, versionData, maniID, customName) {
             if (fs.existsSync(path.join(CAULDRON_PATH, "versions", maniID, "natives"))) {
                 nativeLock = true;
             }
-
             // Loop through libraries.
             for (let idx in libList) {
                 let libAllowed = true;
@@ -47,6 +46,13 @@ async function getLibraries(libList, versionData, maniID, customName) {
                             }
                         }
                     }
+                }
+
+                if (libList[idx].downloads.artifact) {
+                    if (libList[idx].downloads.artifact.url === "") {
+                        libAllowed = false;
+                    }
+
                 }
 
                 // Only Continue if Needed
@@ -110,7 +116,7 @@ async function getLibraries(libList, versionData, maniID, customName) {
                     installed: true, lastChecked: new Date().getTime(),
                 };
                 cauldronLogger.debug(`Libraries Downloaded: ${checkName}`);
-                fs.writeFileSync(path.join(CAULDRON_PATH, "libs_installed.json"), JSON.stringify(currentLibraryFile),);
+                fs.writeFileSync(path.join(CAULDRON_PATH, "config/libs_installed.json"), JSON.stringify(currentLibraryFile),);
                 resolve(libArray);
             } else {
                 cauldronLogger.debug(`Libraries Restored: ${checkName}`);
