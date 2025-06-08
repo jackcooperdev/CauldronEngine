@@ -1,15 +1,15 @@
 {
   "name": "@jackcooperdev/cauldronengine",
-  "version": "0.5.5",
+  "version": "0.5.8",
   "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/jackcooperdev/CauldronEngine.git"
   },
   "description": "Launch Controller for CauldronMC Project",
-  "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\""
+    "test": "echo \"Error: no test specified\"",
+    "launch": "npx run-func src/tools/launchBuilder.js readFileAndLaunch"
   },
   "exports": {
     "./assets": "./src/controllers/assets.js",
@@ -34,19 +34,16 @@
     "axios": "1.8.2",
     "bluebird": "^3.7.2",
     "checksum": "^1.0.0",
-    "cross-spawn": "^7.0.6",
-    "dotenv": "^16.4.7",
-    "jsonwebtoken": "^9.0.2",
+    "consola": "^3.4.2",
     "log4js": "^6.9.1",
     "node-stream-zip": "^1.15.0",
     "nodejs-file-downloader": "^4.13.0",
+    "ora": "^8.2.0",
     "shelljs": "^0.8.5"
   },
   "devDependencies": {
     "@types/bluebird": "~3.5.42",
     "@types/checksum": "~0.1.35",
-    "@types/cross-spawn": "~6.0.6",
-    "@types/jsonwebtoken": "~9.0.7",
-    "@types/shelljs": "~0.8.15"
+    "@types/shelljs": "~0.8.16"
   }
 }
