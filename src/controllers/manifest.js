@@ -131,8 +131,8 @@ async function getPackwizJVM() {
     return new Promise(async (resolve, reject) => {
         let CAULDRON_PATH = grabPath();
         // Check for jvm file
-        if (!fs.existsSync(path.join(CAULDRON_PATH, "jvm_installed.json"))) {
-            fs.writeFileSync(path.join(CAULDRON_PATH, "jvm_installed.json"), "{}");
+        if (!fs.existsSync(path.join(CAULDRON_PATH, "config","jvm_installed.json"))) {
+            fs.writeFileSync(path.join(CAULDRON_PATH, "config","jvm_installed.json"), "{}");
         }
         try {
             // JVM Manifests
