@@ -1,11 +1,12 @@
 {
   "name": "@jackcooperdev/cauldronengine",
-  "version": "0.5.8",
+  "version": "0.5.9",
   "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/jackcooperdev/CauldronEngine.git"
   },
+  "main": "src/index.js",
   "description": "Launch Controller for CauldronMC Project",
   "scripts": {
     "test": "echo \"Error: no test specified\"",
@@ -21,11 +22,9 @@
     "./online": "./src/tools/checkConnection.js",
     "./compat": "./src/tools/compatibility.js",
     "./fileTools": "./src/tools/fileTools.js",
-    "./files": "./src/tools/fileServerLocator.js",
     "./launchbuild": "./src/tools/launchBuilder.js",
     "./session": "./src/tools/sessionManager.js",
-    "./logger": "./src/tools/logger.js",
-    "./plugins": "./src/plugins/plugins.js"
+    "./logger": "./src/tools/logger.js"
   },
   "author": "JackCooper",
   "license": "GPL-3.0-only",
