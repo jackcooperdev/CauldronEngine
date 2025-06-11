@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 11-06-2025
+### Fixed
+- Issue With ReadMe File
+
+
 ## [0.6.0] - 11-06-2025
 ### Added
 - Universal Loader Support (Post files not included)
@@ -41,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Started CHANGELOG.md for future changes
 
 [unreleased]: https://github.com/jackcooperdev/CauldronEngine/compare/master...development
+[0.6.1]: https://github.com/jackcooperdev/CauldronEngine/compare/0.6.0...0.6.1
 [0.6.0]: https://github.com/jackcooperdev/CauldronEngine/compare/0.5.4...0.6.0
 [0.5.4]: https://github.com/jackcooperdev/CauldronEngine/compare/0.5.3...0.5.4
 
