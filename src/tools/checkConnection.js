@@ -1,4 +1,4 @@
-import dns from "dns";
+const dns = require("dns");
 
 async function checkInternet() {
     return new Promise(async (resolve) => {
@@ -12,4 +12,4 @@ async function checkInternet() {
     });
 }
 
-export {checkInternet};
+module.exports =  {checkInternet};

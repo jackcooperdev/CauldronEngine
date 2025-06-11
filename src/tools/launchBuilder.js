@@ -1,11 +1,17 @@
-import fs from "fs";
-import path from "path";
-import shell from "shelljs";
-import os from "os";
-import {exec} from "child_process";
-import {grabPath, getOperatingSystem} from "./compatibility.js";
-import systemPKG from "../../package.json" with {type: "json"};
-import defaultJVM from "../files/defaultJVMArguments.json" with {type: "json"};
+const fs = require("fs");
+const path = require("path");
+const os = require("os");
+const { exec } = require("child_process");
+const { grabPath, getOperatingSystem } = require("./compatibility.js");
+
+
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
+// const systemPKG = JSON.parse(fs.readFileSync(path.join(__dirname, '../../package.json'), 'utf8'));
+const defaultJVM = {
+    "launcher_name": "CauldronEngine",
+    "ram": "2"
+}
 
 
 const osCurrent = os.platform();
@@ -33,7 +39,7 @@ async function logInjector(logFile, sessionID) {
         });
         fs.writeFileSync(path.join(logFile, "../", "log_config.xml"), logFileCont);
     } catch (e) {
-        shell.mkdir("-p", path.join(logFile, "../"));
+        fs.mkdirSync(path.join(logFile, "../"), { recursive: true });
         fs.writeFileSync(path.join(logFile, "../", "log_config.xml"), "");
     }
 }
@@ -108,7 +114,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
             natives_directory: path.join(CAULDRON_PATH, "versions", manifest.id, "natives",),
             launcher_name: cusJVM.launcher_name,
             version_name: manifest.id,
-            launcher_version: systemPKG.version,
+            launcher_version: "1.0",
             client_jar: path.join(CAULDRON_PATH, "versions", manifest.id, manifest.id + ".jar",),
             classpath: classPath,
             path: path.join(CAULDRON_PATH, "assets", "log_configs", "log_config.xml"),
@@ -207,17 +213,20 @@ async function buildFile(manifest, jreVersion, validRules, gameRules) {
     }
 
     let launchCommand = `${javaPath} ${validRules.join(" ")} ${mainClass} ${gameRules.join(" ")}`;
-    shell.mkdir("-p", path.join(CAULDRON_PATH, "scripts"));
+    const scriptDir = path.join(CAULDRON_PATH, "scripts");
+    fs.mkdirSync(scriptDir, { recursive: true });
 
     if (osCurrent === "linux" || osCurrent === "darwin") {
-        fs.writeFileSync(path.join(CAULDRON_PATH, "scripts", "launch.sh"), `${launchCommand}`,);
-        exec(`cd ${path.join(CAULDRON_PATH, "scripts")} && chmod +x launch.sh`);
-        exec(`cd ${path.join(javaPath, "../")} && chmod +x java`);
-        return path.join(CAULDRON_PATH, "scripts", "launch.sh");
+        const scriptPath = path.join(scriptDir, "launch.sh");
+        fs.writeFileSync(scriptPath, launchCommand);
+        exec(`chmod +x "${scriptPath}"`);
+        exec(`chmod +x "${javaPath}"`);
+        return scriptPath;
     } else if (osCurrent === "win32") {
-        fs.writeFileSync(path.join(CAULDRON_PATH, "scripts", "launch.bat"), `${launchCommand}`,);
-        return path.join(CAULDRON_PATH, "scripts", "launch.bat");
+        const scriptPath = path.join(scriptDir, "launch.bat");
+        fs.writeFileSync(scriptPath, launchCommand);
+        return scriptPath;
     }
 }
 
-export {buildJVMRules, buildGameRules, buildFile, logInjector};
+module.exports =  {buildJVMRules, buildGameRules, buildFile, logInjector};

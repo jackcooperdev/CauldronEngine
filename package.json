@@ -1,7 +1,7 @@
 {
   "name": "@jackcooperdev/cauldronengine",
-  "version": "0.5.9",
-  "type": "module",
+  "version": "0.6.0",
+  "type": "commonjs",
   "repository": {
     "type": "git",
     "url": "https://github.com/jackcooperdev/CauldronEngine.git"
@@ -23,7 +23,6 @@
     "./compat": "./src/tools/compatibility.js",
     "./fileTools": "./src/tools/fileTools.js",
     "./launchbuild": "./src/tools/launchBuilder.js",
-    "./session": "./src/tools/sessionManager.js",
     "./logger": "./src/tools/logger.js"
   },
   "author": "JackCooper",
@@ -37,12 +36,10 @@
     "log4js": "^6.9.1",
     "node-stream-zip": "^1.15.0",
     "nodejs-file-downloader": "^4.13.0",
-    "ora": "^8.2.0",
-    "shelljs": "^0.8.5"
+    "ora-classic": "^5.4.2"
   },
   "devDependencies": {
     "@types/bluebird": "~3.5.42",
-    "@types/checksum": "~0.1.35",
-    "@types/shelljs": "~0.8.16"
+    "@types/checksum": "~0.1.35"
   }
 }
