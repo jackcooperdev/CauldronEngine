@@ -15,7 +15,7 @@ function removeItem(array, item) {
     }
 }
 
-async function checkDownloadAndCheck(item, friendly) {
+async function checkDownloadAndCheck(item) {
     return new Promise(async (resolve) => {
         try {
             let validateItem = await validate(item);

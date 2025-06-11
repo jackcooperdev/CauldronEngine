@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const { processQueue, verifyInstallation } = require("./queue.js");
+const { processQueue } = require("./queue.js");
 const { grabPath, getOperatingSystem } = require("../tools/compatibility.js");
 
 async function checkCompat(jVersion, jvmData) {

@@ -16,7 +16,6 @@ const {
 const ora = require('ora-classic');
 const Promise = require("bluebird"); // Note: If using global Promise, you might not need this line
 const { postProcessing } = require("../tools/postProcessors/forge.js");
-const fs = require("fs");
 
 function createUUID() {
     return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (+c / 4)))).toString(16),);

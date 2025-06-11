@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { cauldronLogger } = require("../tools/logger.js");
 const { grabPath } = require("../tools/compatibility.js");
-const { processQueue, verifyInstallation } = require("./queue.js");
+const { processQueue } = require("./queue.js");
 
 async function getAssets(assetsIndex, assetFiles) {
     let CAULDRON_PATH = grabPath();

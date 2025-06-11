@@ -36,7 +36,7 @@ async function postProcessing(manifests, libs) {
                 if (profileFile.processors.length === 0) {
                     resolve(true);
                 } else {
-                    const versionFile = manifests.spec;
+                    //const versionFile = manifests.spec;
 
                     // let relLib = versionFile.libraries[0];
                     // // Some actions require the websocket forge file to be accessible via a URL. This patches the url to a localhost path.
