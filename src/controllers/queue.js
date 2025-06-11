@@ -51,14 +51,14 @@ async function verifyInstallation(queue, isAssetDownload) {
 }
 
 
-async function processQueue(queue, isAssetDownload, friendly) {
+async function processQueue(queue, isAssetDownload) {
     return new Promise(async (resolve) => {
         let concurrency = queue.length;
         if (isAssetDownload) {
             concurrency = queue.length / 2;
         }
 
-        const procQueue = await Promise.map(queue, (item) => checkDownloadAndCheck(item, friendly), // Wrap your function
+        const procQueue = await Promise.map(queue, (item) => checkDownloadAndCheck(item), // Wrap your function
             {concurrency: concurrency});
         removeItem(procQueue, "pass");
         resolve(procQueue);

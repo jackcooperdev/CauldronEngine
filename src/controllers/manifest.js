@@ -164,9 +164,9 @@ async function getManifests(v, l, lv) {
             ensureFile(path.join(CAULDRON_PATH, "config/jvm_installed.json"));
             ensureFile(path.join(CAULDRON_PATH, "config/libs_installed.json"));
 
-            const assetDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, "config/assets_installed.json")));
-            const jvmDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, "config/jvm_installed.json")));
-            const libDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, "config/libs_installed.json")));
+            const assetDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, "config/assets_installed.json")).toString());
+            const jvmDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, "config/jvm_installed.json")).toString());
+            const libDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, "config/libs_installed.json")).toString());
 
             let manifest, vanillaManifest;
 
