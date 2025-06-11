@@ -1,6 +1,6 @@
-import log4js from "log4js";
-import net from "net";
-import {createConsola} from "consola";
+const log4js = require("log4js");
+const net = require("net");
+const { createConsola } = require("consola");
 
 const port = 9500;
 const host = "127.0.0.1";
@@ -85,4 +85,4 @@ function attachLoggerSession(id) {
     loggerSession = id;
 }
 
-export {cauldronLogger, attachLoggerSession, startMCListening};
+module.exports =  {cauldronLogger, attachLoggerSession, startMCListening};

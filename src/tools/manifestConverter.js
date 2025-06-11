@@ -1,7 +1,6 @@
-import {grabPath} from "./compatibility.js";
-
-import path from "path";
-import os from "os";
+const { grabPath } = require("./compatibility.js");
+const path = require("path");
+const os = require("os");
 
 const osCurrent = os.platform();
 
@@ -75,6 +74,6 @@ async function convertPre16Assets(original) {
     });
 }
 
-export {
+module.exports =  {
     addOSSpecArguments, convertAssets, convertLegacyAssets, convertPre16Assets,
 };
