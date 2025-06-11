@@ -1,92 +1,78 @@
-import fs from "fs";
-import path from "path";
-import shell from "shelljs";
-import StreamZip from "node-stream-zip";
-import {grabPath, getOperatingSystem} from "../tools/compatibility.js";
-import {processQueue, verifyInstallation} from "./queue.js";
-import {cauldronLogger} from "../tools/logger.js";
-import {checkInternet} from "../tools/checkConnection.js";
+const fs = require("fs");
+const path = require("path");
+const StreamZip = require("node-stream-zip");
+const { grabPath, getOperatingSystem } = require("../tools/compatibility.js");
+const { processQueue, verifyInstallation } = require("./queue.js");
+const { cauldronLogger } = require("../tools/logger.js");
+const { checkInternet } = require("../tools/checkConnection.js");
 
 async function getLibraries(libList, versionData, maniID, customName) {
     return new Promise(async (resolve, reject) => {
         let CAULDRON_PATH = grabPath();
         try {
-            let currentLibraryFile = JSON.parse(fs
-                .readFileSync(path.join(CAULDRON_PATH, "config/libs_installed.json"))
-                .toString(),);
+            let currentLibraryFile = JSON.parse(
+                fs.readFileSync(path.join(CAULDRON_PATH, "config/libs_installed.json")).toString()
+            );
             let actualOS = getOperatingSystem();
-            // Download Queue
             let dQueue = [];
-            // List of Library Paths (Used for Launch)
             let libArray = [];
             cauldronLogger.debug(`Operating System: ${actualOS}`);
 
-            // Check if Natives Need to be installed.
             let nativeLock = false;
             if (fs.existsSync(path.join(CAULDRON_PATH, "versions", maniID, "natives"))) {
                 nativeLock = true;
             }
-            // Loop through libraries.
+
             for (let idx in libList) {
                 let libAllowed = true;
-                // Determine If the Client Needs / is allowed to use the library (Default to true)
+
                 if (libList[idx].rules) {
                     for (let rIdx in libList[idx].rules) {
                         if (libList[idx].rules[rIdx].action === "allow") {
-                            if (libList[idx].rules[rIdx].os) {
-                                if (libList[idx].rules[rIdx].os.name !== actualOS) {
-                                    libAllowed = false;
-                                }
-                            }
+                            if (libList[idx].rules[rIdx].os?.name !== actualOS) libAllowed = false;
                         } else {
-                            if (libList[idx].rules[rIdx].os) {
-                                if (libList[idx].rules[rIdx].os.name === actualOS) {
-                                    libAllowed = false;
-                                }
-                            }
+                            if (libList[idx].rules[rIdx].os?.name === actualOS) libAllowed = false;
                         }
                     }
                 }
 
-                if (libList[idx].downloads.artifact) {
-                    if (libList[idx].downloads.artifact.url === "") {
-                        libAllowed = false;
-                    }
-
+                if (libList[idx].downloads.artifact?.url === "") {
+                    libAllowed = false;
                 }
 
-                // Only Continue if Needed
                 if (libAllowed) {
-                    // Check for Download Artifact and convert and push to download queue and add to a library array.
                     if (libList[idx].downloads.artifact) {
-                        shell.mkdir("-p", path.join(CAULDRON_PATH, "libraries", libList[idx].downloads.artifact.path, "../",),);
+                        const libPath = path.join(
+                            CAULDRON_PATH,
+                            "libraries",
+                            path.dirname(libList[idx].downloads.artifact.path)
+                        );
+                        fs.mkdirSync(libPath, { recursive: true });
+
                         let obj = {
                             origin: libList[idx].downloads.artifact.url,
                             sha1: libList[idx].downloads.artifact.sha1,
-                            destination: path.join(CAULDRON_PATH, "libraries", libList[idx].downloads.artifact.path, "../",),
-                            fileName: libList[idx].downloads.artifact.path.split("/")[libList[idx].downloads.artifact.path.split("/").length - 1],
+                            destination: libPath,
+                            fileName: path.basename(libList[idx].downloads.artifact.path),
                         };
                         dQueue.push(obj);
                         if (!obj.destination.includes("versions")) {
                             libArray.push(path.join(obj.destination, obj.fileName));
                         }
-
                     }
 
                     if (libList[idx].downloads.classifiers && (await checkInternet()) && !nativeLock) {
-                        let natives = libList[idx].downloads.classifiers[libList[idx].natives[actualOS]];
-                        if (!natives) {
-                            if (libList[idx].natives && libList[idx].natives[actualOS] && libList[idx].natives[actualOS].includes("arch")) {
-                                let newOS = `natives-${actualOS}-64`;
-                                natives = libList[idx].downloads.classifiers[newOS];
-                            }
+                        let natives = libList[idx].downloads.classifiers[libList[idx].natives?.[actualOS]];
+                        if (!natives && libList[idx].natives?.[actualOS]?.includes("arch")) {
+                            let newOS = `natives-${actualOS}-64`;
+                            natives = libList[idx].downloads.classifiers[newOS];
                         }
                         if (natives) {
                             let obj = {
                                 origin: natives.url,
                                 sha1: natives.sha1,
-                                destination: path.join(CAULDRON_PATH, "versions", maniID, "natives",),
-                                fileName: natives.path.split("/")[natives.path.split("/").length - 1],
+                                destination: path.join(CAULDRON_PATH, "versions", maniID, "natives"),
+                                fileName: path.basename(natives.path),
                             };
                             if (!currentLibraryFile[maniID]) {
                                 await verifyInstallation([obj]);
@@ -96,27 +82,33 @@ async function getLibraries(libList, versionData, maniID, customName) {
                             });
                             const entries = await zip.entries();
                             for (const entry of Object.values(entries)) {
-                                if (!entry.name.includes("META-INF") && !entry.name.includes(".git") && !entry.name.includes(".sha1")) {
-                                    await zip.extract(entry.name, path.join(CAULDRON_PATH, "versions", maniID, "natives"),);
+                                if (
+                                    !entry.name.includes("META-INF") &&
+                                    !entry.name.includes(".git") &&
+                                    !entry.name.includes(".sha1")
+                                ) {
+                                    await zip.extract(entry.name, path.join(CAULDRON_PATH, "versions", maniID, "natives"));
                                 }
                             }
                             await zip.close();
-                            fs.rmSync(path.join(CAULDRON_PATH, "versions", maniID, "natives", obj.fileName,),);
+                            fs.rmSync(path.join(CAULDRON_PATH, "versions", maniID, "natives", obj.fileName));
                         }
                     }
                 }
             }
-            let checkName = maniID;
-            if (customName) {
-                checkName = customName;
-            }
+
+            let checkName = customName || maniID;
             if ((await checkInternet()) && !currentLibraryFile[checkName]) {
-                await processQueue(dQueue, false, 'libraries');
+                await processQueue(dQueue, false, "libraries");
                 currentLibraryFile[checkName] = {
-                    installed: true, lastChecked: new Date().getTime(),
+                    installed: true,
+                    lastChecked: new Date().getTime(),
                 };
                 cauldronLogger.debug(`Libraries Downloaded: ${checkName}`);
-                fs.writeFileSync(path.join(CAULDRON_PATH, "config/libs_installed.json"), JSON.stringify(currentLibraryFile),);
+                fs.writeFileSync(
+                    path.join(CAULDRON_PATH, "config/libs_installed.json"),
+                    JSON.stringify(currentLibraryFile)
+                );
                 resolve(libArray);
             } else {
                 cauldronLogger.debug(`Libraries Restored: ${checkName}`);
@@ -128,4 +120,4 @@ async function getLibraries(libList, versionData, maniID, customName) {
     });
 }
 
-export {getLibraries};
+module.exports =  { getLibraries };

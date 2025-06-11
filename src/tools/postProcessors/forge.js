@@ -1,15 +1,14 @@
 // noinspection JSUnusedGlobalSymbols
 
-import StreamZip from "node-stream-zip";
+const StreamZip = require("node-stream-zip");
+const fs = require("fs");
+const path = require("path");
+const { getOperatingSystem, grabPath } = require("../compatibility.js");
+const { getLibraries } = require("../../controllers/libraries.js");
+const { validate } = require("../fileTools.js");
+const { cauldronLogger } = require("../logger.js");
 
-import fs from "fs";
-import path from "path";
-import {grabPath} from "../compatibility.js";
-import {getLibraries} from "../../controllers/libraries.js";
-import {validate} from "../fileTools.js";
-import {cauldronLogger} from "../logger.js";
-
-import spawn from "await-spawn";
+const spawn = require("await-spawn");
 
 function convertNameToPath(name) {
     let split = name.split(":");
@@ -172,7 +171,14 @@ async function postProcessing(manifests, libs) {
                             classPaths.push(lPath);
                             let actualArgs = processors[pIdx].args.join(" ");
                             if (!processors[pIdx].sides || processors[pIdx].sides.includes("client")) {
-                                let command = `-cp ${classPaths.join(";")} ${mainClass} ${actualArgs}`;
+                                let classPathSep;
+                                let osCurrent = getOperatingSystem();
+                                if (osCurrent === "windows") {
+                                    classPathSep = ";";
+                                } else {
+                                    classPathSep = ":";
+                                }
+                                let command = `-cp ${classPaths.join(classPathSep)} ${mainClass} ${actualArgs}`;
                                 //Mappings path replacement
                                 if (forgeData.MAPPINGS) {
                                     command = command.replace(forgeData.MAPPINGS.client.replace(":mappings@txt", "@zip"), "{MAPPING_PATH}",);
@@ -180,7 +186,8 @@ async function postProcessing(manifests, libs) {
                                 }
                                 // Inject params
                                 command = injector.create(command, params);
-                                await spawn(path.join(CAULDRON_PATH, "jvm", manifests.jvmComp, "bin", "java",), command.split(" "),);
+                                await spawn(path.join(CAULDRON_PATH, "jvm", manifests.jvmComp, "bin", "java",), command.split(" "));
+
                                 let knownClientPatchers = ["net.minecraftforge.binarypatcher.ConsoleTool"]
                                 if (knownClientPatchers.includes(mainClass)) {
                                     let clientPath = path.join(CAULDRON_PATH, 'libraries', 'net/minecraftforge/forge', `${manifests.version}-${manifests.loaderVersion}`, `forge-${manifests.version}-${manifests.loaderVersion}-client.jar`);
@@ -231,4 +238,4 @@ let injector = {
         };
     })(),
 };
-export {postProcessing};
+module.exports =  {postProcessing};

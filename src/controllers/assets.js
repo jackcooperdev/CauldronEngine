@@ -1,8 +1,8 @@
-import fs from "fs";
-import path from "path";
-import {cauldronLogger} from "../tools/logger.js";
-import {grabPath} from "../tools/compatibility.js";
-import {processQueue, verifyInstallation} from "./queue.js";
+const fs = require("fs");
+const path = require("path");
+const { cauldronLogger } = require("../tools/logger.js");
+const { grabPath } = require("../tools/compatibility.js");
+const { processQueue, verifyInstallation } = require("./queue.js");
 
 async function getAssets(assetsIndex, assetFiles) {
     let CAULDRON_PATH = grabPath();
@@ -22,4 +22,4 @@ async function getAssets(assetsIndex, assetFiles) {
     });
 }
 
-export {getAssets};
+module.exports =  {getAssets};

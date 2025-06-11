@@ -1,14 +1,15 @@
-import os from "os";
-import path from "path";
-import shell from "shelljs";
+const os = require("os");
+const path = require("path");
+const fs = require("fs");
 
 const osCurrent = os.platform();
 const archCurrent = os.arch();
-const homedir = path.join(os.homedir());
+const homedir = os.homedir();
 
 function grabPath() {
-    let WORKING_DIR = ".cauldron";
+    const WORKING_DIR = ".cauldron";
     let pathReturn;
+
     if (!process.env.CAULDRON_PATH) {
         if (osCurrent === "win32") {
             pathReturn = path.join(homedir, "AppData", "Roaming", WORKING_DIR);
@@ -16,49 +17,49 @@ function grabPath() {
             pathReturn = path.join(homedir, WORKING_DIR);
         }
     } else {
-        pathReturn = path.join(process.env.CAULDRON_PATH);
+        pathReturn = path.resolve(process.env.CAULDRON_PATH);
     }
-    shell.mkdir("-p", path.join(pathReturn));
+
+    fs.mkdirSync(pathReturn, { recursive: true });
     return pathReturn;
 }
 
-let osConvertStandard = {win32: "windows", linux: "linux", darwin: "osx"};
+const osConvertStandard = {
+    win32: "windows",
+    linux: "linux",
+    darwin: "osx"
+};
 
 function getOperatingSystem(isJVM) {
-    if (!isJVM) {
-        let actualOS = osConvertStandard[osCurrent];
-        if (!actualOS) {
-            throw new Error("Unsupported Operating System");
-        } else {
-            return actualOS;
-        }
-    } else {
-        let actualOS = osConvertStandard[osCurrent];
-        if (!actualOS) {
-            throw new Error("Unsupported Operating System");
-        } else {
-            if (actualOS === "linux") {
-                return actualOS;
-            }
-            if (actualOS === "windows") {
-                if (archCurrent === "x64") {
-                    return "windows-x64";
-                } else if (archCurrent.includes("arch")) {
-                    return "windows-arm64";
-                } else {
-                    return "windows-x86";
-                }
-            }
+    const actualOS = osConvertStandard[osCurrent];
 
-            if (actualOS === "darwin") {
-                if (archCurrent.includes("arm")) {
-                    return "mac-os-arm64";
-                }
-            } else {
-                return "macos";
-            }
+    if (!actualOS) {
+        throw new Error("Unsupported Operating System");
+    }
+
+    if (!isJVM) {
+        return actualOS;
+    }
+
+    if (actualOS === "linux") {
+        return actualOS;
+    }
+
+    if (actualOS === "windows") {
+        if (archCurrent === "x64") {
+            return "windows-x64";
+        } else if (archCurrent.includes("arm")) {
+            return "windows-arm64";
+        } else {
+            return "windows-x86";
         }
     }
+
+    if (actualOS === "osx") {
+        return archCurrent.includes("arm") ? "mac-os-arm64" : "macos";
+    }
+
+    throw new Error("Unsupported OS/architecture combination");
 }
 
-export {grabPath, getOperatingSystem};
+module.exports =  { grabPath, getOperatingSystem };

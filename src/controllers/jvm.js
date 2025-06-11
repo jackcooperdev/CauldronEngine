@@ -1,68 +1,78 @@
-import fs from "fs";
-import shelljs from "shelljs";
-import path from "path";
-import {processQueue, verifyInstallation} from "./queue.js";
-import {grabPath, getOperatingSystem} from "../tools/compatibility.js";
+const fs = require("fs");
+const path = require("path");
+const { processQueue, verifyInstallation } = require("./queue.js");
+const { grabPath, getOperatingSystem } = require("../tools/compatibility.js");
 
 async function checkCompat(jVersion, jvmData) {
-    let actualPlatform = getOperatingSystem(true);
-    if (jvmData[actualPlatform][jVersion] !== undefined) {
-        return jvmData[actualPlatform][jVersion];
-    } else {
-        return false;
-    }
+    const actualPlatform = getOperatingSystem(true);
+    return jvmData[actualPlatform]?.[jVersion] ?? false;
 }
 
 async function checkJVM(name, jvmMani) {
     return new Promise(async (resolve) => {
-        let CAULDRON_PATH = grabPath();
-        shelljs.mkdir("-p", path.join(CAULDRON_PATH, "jvm", name));
-        fs.writeFileSync(path.join(CAULDRON_PATH, "jvm", name + ".json"), JSON.stringify(jvmMani));
-        let files = jvmMani.files;
-        // Build Dir Structure
-        for (let idx in files) {
+        const CAULDRON_PATH = grabPath();
+
+        // Create main JVM directory
+        fs.mkdirSync(path.join(CAULDRON_PATH, "jvm", name), { recursive: true });
+        fs.writeFileSync(
+            path.join(CAULDRON_PATH, "jvm", `${name}.json`),
+            JSON.stringify(jvmMani)
+        );
+
+        const files = jvmMani.files;
+
+        // Create directory structure
+        for (const idx in files) {
             if (files[idx].type === "directory") {
-                shelljs.mkdir("-p", path.join(CAULDRON_PATH, "jvm", name, idx));
-            }
-        }
-        let dQueue = [];
-        for (let sIdx in files) {
-            let selectedFile = files[sIdx];
-            let downUrl;
-            /**
-             * @param selectedFile.executable
-             * @param selectedFile.lzma
-             */
-            if (selectedFile.type === "file") {
-                let downloadPath = path.join(CAULDRON_PATH, "jvm", name, sIdx);
-                try {
-                    if (selectedFile.executable) {
-                        downUrl = selectedFile.downloads.raw.url;
-                    } else {
-                        downUrl = selectedFile.downloads.raw.url;
-                    }
-                } catch (err) {
-                    downUrl = selectedFile.downloads.raw.url;
-                }
-                dQueue.push({
-                    origin: downUrl,
-                    destination: path.join(downloadPath, "../"),
-                    sha1: selectedFile.downloads.raw.sha1,
-                    fileName: sIdx.split("/")[sIdx.split("/").length - 1],
+                fs.mkdirSync(path.join(CAULDRON_PATH, "jvm", name, idx), {
+                    recursive: true,
                 });
             }
         }
-        await processQueue(dQueue, false, 'jvm');
-        if (getOperatingSystem() === "linux") {
-            await shelljs.chmod("+x", path.join(CAULDRON_PATH, "jvm", name, "bin", "java"));
+
+        // Download queue
+        const dQueue = [];
+
+        for (const sIdx in files) {
+            const selectedFile = files[sIdx];
+            if (selectedFile.type === "file") {
+                const downloadPath = path.join(CAULDRON_PATH, "jvm", name, sIdx);
+                const downUrl = selectedFile.downloads.raw.url;
+
+                dQueue.push({
+                    origin: downUrl,
+                    destination: path.dirname(downloadPath),
+                    sha1: selectedFile.downloads.raw.sha1,
+                    fileName: path.basename(sIdx),
+                });
+            }
         }
-        let currentJVMFile = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, "config/jvm_installed.json")).toString());
+
+        await processQueue(dQueue, false, "jvm");
+
+        // Make Java executable on Linux
+        if (getOperatingSystem() === "linux") {
+            const javaPath = path.join(CAULDRON_PATH, "jvm", name, "bin", "java");
+            try {
+                fs.chmodSync(javaPath, 0o755); // rwxr-xr-x
+            } catch (err) {
+                console.warn(`chmod failed: ${err.message}`);
+            }
+        }
+
+        const jvmFilePath = path.join(CAULDRON_PATH, "config/jvm_installed.json");
+        const currentJVMFile = fs.existsSync(jvmFilePath)
+            ? JSON.parse(fs.readFileSync(jvmFilePath).toString())
+            : {};
+
         currentJVMFile[name] = {
-            installed: true, lastChecked: new Date().getTime(),
+            installed: true,
+            lastChecked: Date.now(),
         };
-        fs.writeFileSync(path.join(CAULDRON_PATH, "config/jvm_installed.json"), JSON.stringify(currentJVMFile));
+
+        fs.writeFileSync(jvmFilePath, JSON.stringify(currentJVMFile));
         resolve(true);
     });
 }
 
-export {checkCompat, checkJVM};
+module.exports =  { checkCompat, checkJVM };

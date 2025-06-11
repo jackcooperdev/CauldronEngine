@@ -1,8 +1,8 @@
-import Downloader from "nodejs-file-downloader";
-import fs from "fs";
-import path from "path";
-import checksum from "checksum";
-import {checkInternet} from "./checkConnection.js";
+const Downloader = require("nodejs-file-downloader");
+const fs = require("fs");
+const path = require("path");
+const checksum = require("checksum");
+const { checkInternet } = require("./checkConnection.js");
 
 async function download(url, location, fileName) {
     return new Promise(async (resolve) => {
@@ -47,4 +47,4 @@ async function validate(file) {
     });
 }
 
-export {download, validate};
+module.exports =  {download, validate};

@@ -1,22 +1,22 @@
 // noinspection JSUnusedGlobalSymbols
-
-import path from "path";
-
-import {exec} from "child_process";
-import {grabPath, getOperatingSystem} from "../tools/compatibility.js";
-import {getAssets} from "./assets.js";
-import {checkJVM} from "./jvm.js";
-import {getLibraries} from "./libraries.js";
-import {getManifests} from "./manifest.js";
-import {cauldronLogger, attachLoggerSession} from "../tools/logger.js";
-import {
-    buildJVMRules, buildGameRules, buildFile, logInjector,
-} from "../tools/launchBuilder.js";
-import ora from 'ora';
-import Promise from "bluebird";
-import {postProcessing} from "../tools/postProcessors/forge.js";
-import fs from "fs";
-
+const path = require("path");
+const { exec } = require("child_process");
+const { grabPath, getOperatingSystem } = require("../tools/compatibility.js");
+const { getAssets } = require("./assets.js");
+const { checkJVM } = require("./jvm.js");
+const { getLibraries } = require("./libraries.js");
+const { getManifests } = require("./manifest.js");
+const { cauldronLogger, attachLoggerSession } = require("../tools/logger.js");
+const {
+    buildJVMRules,
+    buildGameRules,
+    buildFile,
+    logInjector,
+} = require("../tools/launchBuilder.js");
+const ora = require('ora-classic');
+const Promise = require("bluebird"); // Note: If using global Promise, you might not need this line
+const { postProcessing } = require("../tools/postProcessors/forge.js");
+const fs = require("fs");
 
 function createUUID() {
     return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (+c / 4)))).toString(16),);
@@ -118,4 +118,4 @@ async function launchGame(version, installOnly, loader, lVersion, authData, over
     });
 }
 
-export {launchGame};
+module.exports =  {launchGame};
