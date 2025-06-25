@@ -1,12 +1,12 @@
 // noinspection JSUnusedGlobalSymbols
 const path = require("path");
-const { exec } = require("child_process");
-const { grabPath, getOperatingSystem } = require("../tools/compatibility.js");
-const { getAssets } = require("./assets.js");
-const { checkJVM } = require("./jvm.js");
-const { getLibraries } = require("./libraries.js");
-const { getManifests } = require("./manifest.js");
-const { cauldronLogger, attachLoggerSession } = require("../tools/logger.js");
+const {exec} = require("child_process");
+const {grabPath, getOperatingSystem} = require("../tools/compatibility.js");
+const {getAssets} = require("./assets.js");
+const {checkJVM} = require("./jvm.js");
+const {getLibraries} = require("./libraries.js");
+const {getManifests} = require("./manifest.js");
+const {cauldronLogger, attachLoggerSession} = require("../tools/logger.js");
 const {
     buildJVMRules,
     buildGameRules,
@@ -15,7 +15,7 @@ const {
 } = require("../tools/launchBuilder.js");
 const ora = require('ora-classic');
 const Promise = require("bluebird"); // Note: If using global Promise, you might not need this line
-const { postProcessing } = require("../tools/postProcessors/forge.js");
+const {postProcessing} = require("../tools/postProcessors/forge.js");
 
 function createUUID() {
     return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (+c / 4)))).toString(16),);
@@ -82,7 +82,6 @@ async function launchGame(version, installOnly, loader, lVersion, authData, over
             cauldronLogger.debug("Session ID: " + sessionID);
             //Create Bulk Manifests
             const manifests = await getManifests(version, loader, lVersion);
-
             let libGet = await handleGrabDeps(manifests);
 
             if (loader !== "vanilla") {
@@ -117,4 +116,4 @@ async function launchGame(version, installOnly, loader, lVersion, authData, over
     });
 }
 
-module.exports =  {launchGame};
+module.exports = {launchGame};

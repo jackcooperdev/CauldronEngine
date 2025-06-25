@@ -2,10 +2,19 @@ const fs = require("fs");
 const path = require("path");
 const { processQueue } = require("./queue.js");
 const { grabPath, getOperatingSystem } = require("../tools/compatibility.js");
+const {cauldronLogger} = require("../tools/logger");
 
 async function checkCompat(jVersion, jvmData) {
     const actualPlatform = getOperatingSystem(true);
-    return jvmData[actualPlatform]?.[jVersion] ?? false;
+    let isCompatible = jvmData[actualPlatform]?.[jVersion] ?? false;
+
+    if (isCompatible.length === 0 && actualPlatform === "mac-os-arm64") {
+        // Lock with yes (investgate rosseta)
+        cauldronLogger.debug("Compatibility Forced (Using Rosetta)");
+        isCompatible = jvmData['mac-os']?.[jVersion]
+    }
+
+    return isCompatible
 }
 
 async function checkJVM(name, jvmMani) {
@@ -53,6 +62,15 @@ async function checkJVM(name, jvmMani) {
         // Make Java executable on Linux
         if (getOperatingSystem() === "linux") {
             const javaPath = path.join(CAULDRON_PATH, "jvm", name, "bin", "java");
+            try {
+                fs.chmodSync(javaPath, 0o755); // rwxr-xr-x
+            } catch (err) {
+                console.warn(`chmod failed: ${err.message}`);
+            }
+        }
+
+        if (getOperatingSystem() === "osx") {
+            const javaPath = path.join(CAULDRON_PATH, "jvm", name, "jre.bundle","Contents/Home/bin", "java");
             try {
                 fs.chmodSync(javaPath, 0o755); // rwxr-xr-x
             } catch (err) {
