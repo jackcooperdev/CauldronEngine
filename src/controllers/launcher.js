@@ -83,7 +83,6 @@ async function launchGame(version, installOnly, loader, lVersion, authData, over
             //Create Bulk Manifests
             const manifests = await getManifests(version, loader, lVersion);
             let libGet = await handleGrabDeps(manifests);
-
             if (loader !== "vanilla") {
                 if (manifests.needsPost) {
                     libGet = await postProcessing(manifests, libGet);

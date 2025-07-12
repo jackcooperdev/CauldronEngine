@@ -34,7 +34,7 @@ async function postProcessing(manifests, libs) {
              */
             if (profileFile.processors) {
                 if (profileFile.processors.length === 0) {
-                    resolve(true);
+                    resolve(libs);
                 } else {
                     //const versionFile = manifests.spec;
 

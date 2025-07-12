@@ -28,14 +28,29 @@ async function getLibraries(libList, versionData, maniID, customName) {
 
                 if (libList[idx].rules) {
                     for (let rIdx in libList[idx].rules) {
-                        if (libList[idx].rules[rIdx].action === "allow") {
-                            if (libList[idx].rules[rIdx].os?.name !== actualOS) libAllowed = false;
-                        } else {
-                            if (libList[idx].rules[rIdx].os?.name === actualOS) libAllowed = false;
+                        const rule = libList[idx].rules[rIdx];
+                        if (!rule.os || !rule.os.name) {
+                            if (rule.action === "allow") {
+                                libAllowed = true;
+                                break;
+                            } else {
+                                libAllowed = false;
+                                break;
+                            }
+                        } else { // The rule has an OS specified
+                            if (rule.action === "allow") {
+                                if (rule.os.name === actualOS) {
+                                    libAllowed = true;
+                                }
+                            } else { // action is "disallow"
+                                if (rule.os.name === actualOS) {
+                                    libAllowed = false;
+                                    break;
+                                }
+                            }
                         }
                     }
                 }
-
                 if (libList[idx].downloads.artifact?.url === "") {
                     libAllowed = false;
                 }
