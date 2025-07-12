@@ -15,6 +15,7 @@ const {
 const { cauldronLogger } = require("../tools/logger.js");
 const { checkInternet } = require("../tools/checkConnection.js");
 const { checkCompat } = require("./jvm.js");
+const {getOperatingSystem} = require("../tools/compatibility");
 
 const osCurrent = os.platform();
 const RESOURCES_PATH = "https://resources.cauldronmc.com";
@@ -231,7 +232,7 @@ async function getManifests(v, l, lv) {
                 libsDownloaded: !!libDict[createdManifest.id],
                 loaderVersion: lv,
                 needsPost: createdManifest.requiresPost,
-                postData
+                postData,
             };
 
             resolve(allManifests);

@@ -34,7 +34,7 @@ async function postProcessing(manifests, libs) {
              */
             if (profileFile.processors) {
                 if (profileFile.processors.length === 0) {
-                    resolve(true);
+                    resolve(libs);
                 } else {
                     //const versionFile = manifests.spec;
 
@@ -186,7 +186,12 @@ async function postProcessing(manifests, libs) {
                                 }
                                 // Inject params
                                 command = injector.create(command, params);
-                                await spawn(path.join(CAULDRON_PATH, "jvm", manifests.jvmComp, "bin", "java",), command.split(" "));
+                                let javaPath = path.join(CAULDRON_PATH, "jvm", manifests.jvmComp, "bin", "java",)
+
+                                if (getOperatingSystem() === "osx") {
+                                    javaPath = path.join(CAULDRON_PATH, "jvm", manifests.jvmComp, "jre.bundle","Contents/Home/bin", "java");
+                                }
+                                await spawn(javaPath, command.split(" "));
 
                                 let knownClientPatchers = ["net.minecraftforge.binarypatcher.ConsoleTool"]
                                 if (knownClientPatchers.includes(mainClass)) {

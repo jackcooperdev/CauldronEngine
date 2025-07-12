@@ -219,8 +219,18 @@ async function buildFile(manifest, jreVersion, validRules, gameRules) {
     if (osCurrent === "linux" || osCurrent === "darwin") {
         const scriptPath = path.join(scriptDir, "launch.sh");
         fs.writeFileSync(scriptPath, launchCommand);
-        exec(`chmod +x "${scriptPath}"`);
-        exec(`chmod +x "${javaPath}"`);
+        await new Promise((res, rej) => {
+            exec(`chmod +x "${scriptPath}"`, (err) => {
+                if (err) return rej(err);
+                res();
+            });
+        });
+        await new Promise((res, rej) => {
+            exec(`chmod +x "${javaPath}"`, (err) => {
+                if (err) return rej(err);
+                res();
+            });
+        });
         return scriptPath;
     } else if (osCurrent === "win32") {
         const scriptPath = path.join(scriptDir, "launch.bat");
