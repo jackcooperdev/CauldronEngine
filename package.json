@@ -1,6 +1,7 @@
 {
   "name": "@jackcooperdev/cauldronengine",
-  "version": "0.6.4",
+  "version": "0.6.5",
+  "readme": "README.md",
   "type": "commonjs",
   "repository": {
     "type": "git",
