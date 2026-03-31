@@ -1,6 +1,6 @@
 # Cauldron Engine
 
-> This Documentation is correct for version [0.6.3](https://github.com/jackcooperdev/CauldronEngine/releases/tag/0.6.3)
+> This Documentation is correct for version [0.6.4](https://github.com/jackcooperdev/CauldronEngine/releases/tag/0.6.4)
 > of CauldronEngine
 
 ## What does this do?
