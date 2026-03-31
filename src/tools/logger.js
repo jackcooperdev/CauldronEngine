@@ -14,7 +14,7 @@ log4js.configure({
 
 
 const mcLogger = log4js.getLogger("Minecraft");
-const cauldronLogger = createConsola({level: 3});
+const cauldronLogger = createConsola({level: 3,fancy:false});
 let loggerSession = "";
 
 async function startMCListening() {

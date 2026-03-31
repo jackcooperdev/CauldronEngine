@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.4] - 31-03-2026
+
+### Changed
+- Consola fancy output feature
+
+
 
 ## [0.6.3] - 12-07-2025
 
@@ -17,11 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Bug concerning 1.12 version and lwjgl
+- Bug concerning 1.12 version and LWJGL
 
 ## [0.6.2] - 12-06-2025
 ### Changed
-- Updated Documentaion
+- Updated Documentation
 
 ## [0.6.1] - 11-06-2025
 ### Fixed
@@ -64,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Started CHANGELOG.md for future changes
 
 [unreleased]: https://github.com/jackcooperdev/CauldronEngine/compare/master...development
+[0.6.4]: https://github.com/jackcooperdev/CauldronEngine/compare/0.6.3...0.6.4
 [0.6.3]: https://github.com/jackcooperdev/CauldronEngine/compare/0.6.2...0.6.3
 [0.6.2]: https://github.com/jackcooperdev/CauldronEngine/compare/0.6.1...0.6.2
 [0.6.1]: https://github.com/jackcooperdev/CauldronEngine/compare/0.6.0...0.6.1
