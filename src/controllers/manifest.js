@@ -18,7 +18,7 @@ const { checkCompat } = require("./jvm.js");
 const {getOperatingSystem} = require("../tools/compatibility");
 
 const osCurrent = os.platform();
-const RESOURCES_PATH = "https://resources.cauldronmc.com";
+const RESOURCES_PATH = "http://localhost:3300";
 
 async function checkManifest(fileName, url, type) {
     return new Promise(async (resolve, reject) => {
