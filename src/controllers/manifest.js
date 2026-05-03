@@ -19,7 +19,7 @@ const {getOperatingSystem} = require("../tools/compatibility");
 
 const osCurrent = os.platform();
 const RESOURCES_PATH = "http://localhost:3300";
-
+//const RESOURCES_PATH="https://resources.cauldronmc.com"
 async function checkManifest(fileName, url, type) {
     return new Promise(async (resolve, reject) => {
         let isOnline = await checkInternet();
@@ -27,7 +27,7 @@ async function checkManifest(fileName, url, type) {
         try {
             let expected = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, fileName)).toString());
             if (isOnline && type === "main") {
-                await downloadManifest(url, path.join(CAULDRON_PATH, fileName));
+                expected = await downloadManifest(url, path.join(CAULDRON_PATH, fileName));
             }
             resolve(expected);
         } catch (err) {
@@ -184,7 +184,6 @@ async function getManifests(v, l, lv) {
             if (!foundVersionData) {
                 return reject({ message: `Version not ${l === "vanilla" ? "found" : `supported for loader: ${l}`}` });
             }
-
             lv = foundVersionData.loaderVersion || manifest.version;
 
             let specLocation = l !== "vanilla" ? `${l}-${v}-${lv}` : v;
@@ -217,7 +216,6 @@ async function getManifests(v, l, lv) {
             if (createdManifest.requiresPost) {
                 postData = await checkManifest(path.join("versions", specLocation, "post.json"), `${RESOURCES_PATH}/loaders/${l}/${v}-${lv}/post.json`, "spec");
             }
-
             const allManifests = {
                 spec: createdManifest,
                 jvmMani,

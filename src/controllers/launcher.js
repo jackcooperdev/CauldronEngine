@@ -85,7 +85,7 @@ async function launchGame(version, installOnly, loader, lVersion, authData, over
             let libGet = await handleGrabDeps(manifests);
             if (loader !== "vanilla") {
                 if (manifests.needsPost) {
-                    libGet = await postProcessing(manifests, libGet);
+                    libGet = await postProcessing(manifests, libGet, version);
                 }
             }
             if (!installOnly) {
