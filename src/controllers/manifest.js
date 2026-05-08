@@ -26,7 +26,7 @@ async function checkManifest(fileName, url, type) {
         let CAULDRON_PATH = grabPath();
         try {
             let expected = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, fileName)).toString());
-            if (isOnline && type === "main") {
+            if (isOnline && type === "main" || isOnline && fileName.includes("release")) {
                 expected = await downloadManifest(url, path.join(CAULDRON_PATH, fileName));
             }
             resolve(expected);
@@ -37,7 +37,7 @@ async function checkManifest(fileName, url, type) {
                     const downloadedFile = await downloadManifest(url, path.join(CAULDRON_PATH, fileName), type);
                     resolve(downloadedFile);
                 } catch (err) {
-                    console.log(err);
+                    reject(`This Profile either does not exist or is not supported`);
                 }
             } else {
                 reject(`This Profile Cannot be launched offline. Please Launch it Online first`);
@@ -149,7 +149,7 @@ async function getPackwizJVM() {
     });
 }
 
-async function getManifests(v, l, lv) {
+async function getManifests(v, l, lv = 'release') {
     return new Promise(async (resolve, reject) => {
         let CAULDRON_PATH = grabPath();
         try {
@@ -169,26 +169,16 @@ async function getManifests(v, l, lv) {
             const jvmDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, "config/jvm_installed.json")).toString());
             const libDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, "config/libs_installed.json")).toString());
 
-            let manifest, vanillaManifest;
 
-            if (l !== "vanilla") {
-                manifest = await checkManifest(`cauldron_${l}_version_manifest.json`, `${RESOURCES_PATH}/loaders/${l}/version_manifest.json`, "main");
-                vanillaManifest = await checkManifest("cauldron_version_manifest.json", `${RESOURCES_PATH}/version_manifest.json`, "main");
-            } else {
-                manifest = vanillaManifest = await checkManifest("cauldron_version_manifest.json", `${RESOURCES_PATH}/version_manifest.json`, "main");
-            }
-
-            v = await whatIsThis(v, vanillaManifest);
-
-            const foundVersionData = manifest.versions.find((version) => version.id === v);
-            if (!foundVersionData) {
+            let specPath = `/loaders/${l}/${v}/${lv}`
+            let specLocation = l !== "vanilla" ? `${l}-${v}-${lv}` : v;
+            const foundManifest = await checkManifest(path.join("versions", specLocation, `${specLocation}.json`),`${RESOURCES_PATH}${specPath}`,'spec')
+            if (!foundManifest) {
                 return reject({ message: `Version not ${l === "vanilla" ? "found" : `supported for loader: ${l}`}` });
             }
-            lv = foundVersionData.loaderVersion || manifest.version;
-
-            let specLocation = l !== "vanilla" ? `${l}-${v}-${lv}` : v;
-            const getSpec = await checkManifest(path.join("versions", specLocation, `${specLocation}.json`), foundVersionData.url, "spec");
-            const createdManifest = await addOSSpecArguments(getSpec);
+            lv = foundManifest.loaderVersion || foundManifest.version;
+            //const getSpec = await checkManifest(path.join("versions", specLocation, `${specLocation}.json`), foundManifest.url, "spec");
+            const createdManifest = await addOSSpecArguments(foundManifest);
 
             if (createdManifest.logging) {
                 const logFile = createdManifest.logging.client.file;
