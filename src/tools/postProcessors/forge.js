@@ -187,6 +187,7 @@ async function postProcessing(manifests, libs, version) {
                                     command = command.replace(forgeData.MAPPINGS.client.replace(":mappings@txt", "@zip"), "{MAPPING_PATH}",);
                                     command = command.replace(forgeData.MAPPINGS.client.replace(":mappings@tsrg", "@zip"), "{MAPPING_PATH}",);
                                 }
+
                                 // Inject params
                                 command = injector.create(command, params);
                                 let javaPath = path.join(CAULDRON_PATH, "jvm", manifests.jvmComp, "bin", "java",)
@@ -195,11 +196,14 @@ async function postProcessing(manifests, libs, version) {
                                     javaPath = path.join(CAULDRON_PATH, "jvm", manifests.jvmComp, "jre.bundle","Contents/Home/bin", "java");
                                 }
                                 try {
+                                    console.log(`${javaPath} ${command}`)
                                     await spawn(javaPath, command.split(" "));
+                                    console.log('completed')
                                 } catch (e) {
                                     if (version === '1.14.3') {
                                         cauldronLogger.debug('Skipping Post Processer (Known Error)');
                                     } else {
+                                        console.log('fail')
                                         reject(e);
                                     }
 

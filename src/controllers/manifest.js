@@ -16,6 +16,7 @@ const { cauldronLogger } = require("../tools/logger.js");
 const { checkInternet } = require("../tools/checkConnection.js");
 const { checkCompat } = require("./jvm.js");
 const {getOperatingSystem} = require("../tools/compatibility");
+const {version} = require("bluebird");
 
 const osCurrent = os.platform();
 const RESOURCES_PATH = "http://localhost:3300";
@@ -176,6 +177,11 @@ async function getManifests(v, l, lv = 'release') {
             if (!foundManifest) {
                 return reject({ message: `Version not ${l === "vanilla" ? "found" : `supported for loader: ${l}`}` });
             }
+            if (foundManifest.id.includes("forge") || foundManifest.id.includes("fabric")) {
+                v = foundManifest.id.split("-")[1]
+            } else {
+                v = foundManifest.id;
+            }
             lv = foundManifest.loaderVersion || foundManifest.version;
             //const getSpec = await checkManifest(path.join("versions", specLocation, `${specLocation}.json`), foundManifest.url, "spec");
             const createdManifest = await addOSSpecArguments(foundManifest);
@@ -204,7 +210,7 @@ async function getManifests(v, l, lv = 'release') {
 
             let postData = null;
             if (createdManifest.requiresPost) {
-                postData = await checkManifest(path.join("versions", specLocation, "post.json"), `${RESOURCES_PATH}/loaders/${l}/${v}-${lv}/post.json`, "spec");
+                postData = await checkManifest(path.join("versions", specLocation, "post.json"), `${RESOURCES_PATH}/loaders/forge/${createdManifest.id.split("-")[1]}-${lv}/post.json`, "spec");
             }
             const allManifests = {
                 spec: createdManifest,
