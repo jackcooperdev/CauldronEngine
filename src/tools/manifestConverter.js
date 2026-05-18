@@ -16,6 +16,23 @@ async function addOSSpecArguments(original) {
     return original;
 }
 
+
+async function convertReleaseVersions(loader,fileData) {
+    let loaderVersion,version;
+    switch (loader) {
+        case 'vanilla':
+            version = fileData.id;
+            break;
+        case 'forge':
+
+        default:
+            break;
+    }
+
+    return {version,loaderVersion};
+
+}
+
 async function convertAssets(original) {
     return new Promise(async (resolve) => {
         let CAULDRON_PATH = grabPath();
@@ -75,5 +92,5 @@ async function convertPre16Assets(original) {
 }
 
 module.exports =  {
-    addOSSpecArguments, convertAssets, convertLegacyAssets, convertPre16Assets,
+    addOSSpecArguments, convertAssets, convertLegacyAssets, convertPre16Assets,convertReleaseVersions
 };

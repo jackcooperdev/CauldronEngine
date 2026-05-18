@@ -196,14 +196,11 @@ async function postProcessing(manifests, libs, version) {
                                     javaPath = path.join(CAULDRON_PATH, "jvm", manifests.jvmComp, "jre.bundle","Contents/Home/bin", "java");
                                 }
                                 try {
-                                    console.log(`${javaPath} ${command}`)
                                     await spawn(javaPath, command.split(" "));
-                                    console.log('completed')
                                 } catch (e) {
                                     if (version === '1.14.3') {
                                         cauldronLogger.debug('Skipping Post Processer (Known Error)');
                                     } else {
-                                        console.log('fail')
                                         reject(e);
                                     }
 

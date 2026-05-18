@@ -1,6 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 const path = require("path");
-const {exec} = require("child_process");
+const {spawn} = require("child_process");
 const {grabPath, getOperatingSystem} = require("../tools/compatibility.js");
 const {getAssets} = require("./assets.js");
 const {checkJVM} = require("./jvm.js");
@@ -83,6 +83,7 @@ async function launchGame(version, installOnly, loader, lVersion, authData, over
             //Create Bulk Manifests
             const manifests = await getManifests(version, loader, lVersion);
             let libGet = await handleGrabDeps(manifests);
+
             if (loader !== "vanilla") {
                 if (manifests.needsPost) {
                     libGet = await postProcessing(manifests, libGet, version);
@@ -103,7 +104,19 @@ async function launchGame(version, installOnly, loader, lVersion, authData, over
                         launchDirectory = `${overrides["game"]["game_directory"]}`;
                     }
                 }
-                exec(`cd ${launchDirectory} && ${launchPath}`);
+                const isWindows = getOperatingSystem() === 'windows';
+                const child = isWindows
+                    ? spawn('cmd', ['/c', `cd /d ${launchDirectory} && ${launchPath}`], {
+                        detached: true,
+                        stdio: 'ignore',
+                        windowsHide: true
+                    })
+                    : spawn('sh', ['-c', `cd ${launchDirectory} && ${launchPath}`], {
+                        detached: true,
+                        stdio: 'ignore'
+                    });
+
+                child.unref();
                 resolve(sessionID);
             } else {
                 resolve(true);
