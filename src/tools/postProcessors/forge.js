@@ -18,7 +18,7 @@ function convertNameToPath(name) {
     return {chunkOne: chunkOne, chunkTwo: chunkTwo, chunkThree: chunkThree};
 }
 
-async function postProcessing(manifests, libs) {
+async function postProcessing(manifests, libs, version) {
     return new Promise(async (resolve, reject) => {
         let CAULDRON_PATH = grabPath();
         let mainClass;
@@ -36,16 +36,19 @@ async function postProcessing(manifests, libs) {
                 if (profileFile.processors.length === 0) {
                     resolve(libs);
                 } else {
-                    //const versionFile = manifests.spec;
 
-                    // let relLib = versionFile.libraries[0];
-                    // // Some actions require the websocket forge file to be accessible via a URL. This patches the url to a localhost path.
-                    // // This defaults to CauldronAgents port number (8778) and is on the path /libraries.
-                    // // TESTING ALTERNATIVE SOLUTIONS
-                    // //  REQUIRES an INVESTIGATION INTO WHAT VERSIONS NEED IT
-                    // //relLib.downloads.artifact.url = path.join(CAULDRON_PATH, 'libraries', relLib.downloads.artifact.path);
-                    // relLib.downloads.artifact.url = `http://localhost:8778/libraries/${relLib.downloads.artifact.path}`;
-                    // versionFile.libraries[0] = relLib;
+                /*    if (version === "1.14.3") {
+                        const versionFile = manifests.spec;
+                         let relLib = versionFile.libraries[0];
+                        // // Some actions require the websocket forge file to be accessible via a URL. This patches the url to a localhost path.
+                        // // This defaults to CauldronAgents port number (8778) and is on the path /libraries.
+                        // // TESTING ALTERNATIVE SOLUTIONS
+                        // //  REQUIRES an INVESTIGATION INTO WHAT VERSIONS NEED IT
+                        relLib.downloads.artifact.url = path.join(CAULDRON_PATH, 'libraries', relLib.downloads.artifact.path);
+                        // relLib.downloads.artifact.url = `http://localhost:8778/libraries/${relLib.downloads.artifact.path}`;
+                        versionFile.libraries[0] = relLib;
+                    }*/
+
 
                     // Some Actions require the forge JSON file to be accessible.
                     //fs.writeFileSync(path.join(CAULDRON_PATH, "versions", `forge-${version}-${loaderVersion}`, `forge-${version}-${loaderVersion}.json`,), JSON.stringify(versionFile),);
@@ -184,6 +187,7 @@ async function postProcessing(manifests, libs) {
                                     command = command.replace(forgeData.MAPPINGS.client.replace(":mappings@txt", "@zip"), "{MAPPING_PATH}",);
                                     command = command.replace(forgeData.MAPPINGS.client.replace(":mappings@tsrg", "@zip"), "{MAPPING_PATH}",);
                                 }
+
                                 // Inject params
                                 command = injector.create(command, params);
                                 let javaPath = path.join(CAULDRON_PATH, "jvm", manifests.jvmComp, "bin", "java",)
@@ -191,7 +195,17 @@ async function postProcessing(manifests, libs) {
                                 if (getOperatingSystem() === "osx") {
                                     javaPath = path.join(CAULDRON_PATH, "jvm", manifests.jvmComp, "jre.bundle","Contents/Home/bin", "java");
                                 }
-                                await spawn(javaPath, command.split(" "));
+                                try {
+                                    await spawn(javaPath, command.split(" "));
+                                } catch (e) {
+                                    if (version === '1.14.3') {
+                                        cauldronLogger.debug('Skipping Post Processer (Known Error)');
+                                    } else {
+                                        reject(e);
+                                    }
+
+                                }
+
 
                                 let knownClientPatchers = ["net.minecraftforge.binarypatcher.ConsoleTool"]
                                 if (knownClientPatchers.includes(mainClass)) {
@@ -226,7 +240,7 @@ async function postProcessing(manifests, libs) {
                 resolve(libs);
             }
         } catch (err) {
-            console.log(err);
+            console.log('post fail');
             reject(err);
         }
     });

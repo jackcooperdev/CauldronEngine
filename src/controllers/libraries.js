@@ -22,7 +22,6 @@ async function getLibraries(libList, versionData, maniID, customName) {
             if (fs.existsSync(path.join(CAULDRON_PATH, "versions", maniID, "natives"))) {
                 nativeLock = true;
             }
-
             for (let idx in libList) {
                 let libAllowed = true;
 
@@ -51,7 +50,7 @@ async function getLibraries(libList, versionData, maniID, customName) {
                         }
                     }
                 }
-                if (libList[idx].downloads.artifact?.url === "") {
+                if (libList[idx].downloads.artifact?.url === "" && !libList[idx].downloads.artifact?.path.includes("client.jar")) {
                     libAllowed = false;
                 }
 

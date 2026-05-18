@@ -4,7 +4,8 @@ const { cauldronLogger } = require("../tools/logger.js");
 const fs = require("fs");
 const path = require("path");
 const { getOperatingSystem } = require("../tools/compatibility.js");
-
+const {pipeline} = require('stream/promises')
+const unzipper = require('unzipper')
 function removeItem(array, item) {
     let i = array.length;
 
@@ -21,13 +22,24 @@ async function checkDownloadAndCheck(item) {
             let validateItem = await validate(item);
             while (typeof validateItem == "object") {
                 await download(validateItem.origin, validateItem.destination, validateItem.fileName);
-                validateItem = await validate(item);
-                let CURRENT_OPERATING_SYSTEM = getOperatingSystem()
-                // Make jars executable
-                if (CURRENT_OPERATING_SYSTEM === 'linux' && item.fileName.includes('.jar')) {
-                    await fs.chmodSync(path.join(item.destination,item.fileName), 0o755);
+
+                // Extract zip and replace with extracted contents
+                if (validateItem.fileName.endsWith(".zip")) {
+                    const zipPath = path.join(validateItem.destination, validateItem.fileName);
+                    await pipeline(
+                        fs.createReadStream(zipPath),
+                        unzipper.Extract({ path: validateItem.destination })
+                    );
+                    fs.unlinkSync(zipPath); // remove zip after extraction
                 }
 
+                validateItem = await validate(item);
+                const CURRENT_OPERATING_SYSTEM = getOperatingSystem();
+
+                // Make jars (and extracted binaries) executable on linux
+                if (CURRENT_OPERATING_SYSTEM === 'linux' && item.fileName.includes('.jar')) {
+                    fs.chmodSync(path.join(item.destination, item.fileName), 0o755);
+                }
             }
             resolve("pass");
         } catch (e) {

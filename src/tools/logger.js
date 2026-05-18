@@ -1,20 +1,10 @@
-const log4js = require("log4js");
 const net = require("net");
 const { createConsola } = require("consola");
 
 const port = 9500;
 const host = "127.0.0.1";
-log4js.configure({
-    appenders: {
-        out: {type: "console"},
-    }, categories: {
-        default: {appenders: ["out"], level: "debug"},
-    },
-});
-
-
-const mcLogger = log4js.getLogger("Minecraft");
-const cauldronLogger = createConsola({level: 3,fancy:false});
+const mcLogger = createConsola({ level: 4, fancy: false });
+const cauldronLogger = createConsola({ level: 3, fancy: false });
 let loggerSession = "";
 
 async function startMCListening() {
@@ -23,14 +13,13 @@ async function startMCListening() {
         try {
             server = net.createServer();
             server.listen(port, host, () => {
-                cauldronLogger.info("Listening For Minecraft Instances on port " + port + ".",);
+                cauldronLogger.info("Listening For Minecraft Instances on port " + port + ".");
             });
         } catch (e) {
-            cauldronLogger.error(e)
+            cauldronLogger.error(e);
         }
 
         let sockets = [];
-
 
         server.on("connection", function (sock) {
             cauldronLogger.info("Minecraft Connected");
@@ -74,20 +63,19 @@ async function startMCListening() {
                 if (index !== -1) sockets.splice(index, 1);
                 server.close();
                 loggerSession = "";
-                resolve(true)
+                resolve(true);
             });
         });
 
-        server.on("error", function (sock) {
-            cauldronLogger.error(sock);
+        server.on("error", function (err) {
+            cauldronLogger.error(err);
             reject(false);
         });
-    })
-
+    });
 }
 
 function attachLoggerSession(id) {
     loggerSession = id;
 }
 
-module.exports =  {cauldronLogger, attachLoggerSession, startMCListening};
+module.exports = { cauldronLogger, attachLoggerSession, startMCListening };

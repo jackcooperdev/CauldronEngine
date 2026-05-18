@@ -16,9 +16,12 @@ const { cauldronLogger } = require("../tools/logger.js");
 const { checkInternet } = require("../tools/checkConnection.js");
 const { checkCompat } = require("./jvm.js");
 const {getOperatingSystem} = require("../tools/compatibility");
+const {version} = require("bluebird");
 
 const osCurrent = os.platform();
-const RESOURCES_PATH = "https://resources.cauldronmc.com";
+//const RESOURCES_PATH = "http://localhost:3300";
+const RESOURCES_PATH="https://resources.cauldronmc.com"
+
 
 async function checkManifest(fileName, url, type) {
     return new Promise(async (resolve, reject) => {
@@ -26,8 +29,8 @@ async function checkManifest(fileName, url, type) {
         let CAULDRON_PATH = grabPath();
         try {
             let expected = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, fileName)).toString());
-            if (isOnline && type === "main") {
-                await downloadManifest(url, path.join(CAULDRON_PATH, fileName));
+            if (isOnline && type === "main" || isOnline && fileName.includes("release")) {
+                expected = await downloadManifest(url, path.join(CAULDRON_PATH, fileName));
             }
             resolve(expected);
         } catch (err) {
@@ -37,7 +40,8 @@ async function checkManifest(fileName, url, type) {
                     const downloadedFile = await downloadManifest(url, path.join(CAULDRON_PATH, fileName), type);
                     resolve(downloadedFile);
                 } catch (err) {
-                    console.log(err);
+                    console.log(err)
+                    reject(`This Profile either does not exist or is not supported`);
                 }
             } else {
                 reject(`This Profile Cannot be launched offline. Please Launch it Online first`);
@@ -115,11 +119,26 @@ async function downloadManifest(url, dir, type) {
         };
         try {
             const file = await axios(config);
-            fs.mkdirSync(path.dirname(dir), { recursive: true });
             let fileData = file.data;
             if (convertManifests[type]) {
                 fileData = await convertManifests[type](fileData);
             }
+            //console.log(fileData)
+            if (dir.includes("release")) {
+                let CAULDRON_PATH = grabPath();
+                let version = fileData.id
+                let newPath;
+                if (!url.includes("post.json")) {
+                    newPath = path.join(CAULDRON_PATH,'versions',version,`${version}.json`)
+                } else {
+                    let splitVersion = fileData.version.split("-");
+                    version = `forge-${splitVersion[0]}-${splitVersion[2]}`
+                    newPath = path.join(CAULDRON_PATH,'versions',version,`post.json`)
+                    console.log(newPath)
+                }
+                dir = newPath;
+            }
+            fs.mkdirSync(path.dirname(dir), { recursive: true });
             fs.writeFileSync(dir, JSON.stringify(fileData, null, 2));
             resolve(fileData);
         } catch (err) {
@@ -149,7 +168,7 @@ async function getPackwizJVM() {
     });
 }
 
-async function getManifests(v, l, lv) {
+async function getManifests(v, l, lv = 'release') {
     return new Promise(async (resolve, reject) => {
         let CAULDRON_PATH = grabPath();
         try {
@@ -169,27 +188,21 @@ async function getManifests(v, l, lv) {
             const jvmDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, "config/jvm_installed.json")).toString());
             const libDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, "config/libs_installed.json")).toString());
 
-            let manifest, vanillaManifest;
+            let specPath = l !== 'vanilla' ? `/loaders/${l}/${v}/${lv}` : `/spec/${v}`
+            let specLocation = l !== "vanilla" ? `${l}-${v}-${lv}` : v;
 
-            if (l !== "vanilla") {
-                manifest = await checkManifest(`cauldron_${l}_version_manifest.json`, `${RESOURCES_PATH}/loaders/${l}/version_manifest.json`, "main");
-                vanillaManifest = await checkManifest("cauldron_version_manifest.json", `${RESOURCES_PATH}/version_manifest.json`, "main");
-            } else {
-                manifest = vanillaManifest = await checkManifest("cauldron_version_manifest.json", `${RESOURCES_PATH}/version_manifest.json`, "main");
-            }
-
-            v = await whatIsThis(v, vanillaManifest);
-
-            const foundVersionData = manifest.versions.find((version) => version.id === v);
-            if (!foundVersionData) {
+            const foundManifest = await checkManifest(path.join("versions", specLocation, `${specLocation}.json`),`${RESOURCES_PATH}${specPath}`,'spec')
+            if (!foundManifest) {
                 return reject({ message: `Version not ${l === "vanilla" ? "found" : `supported for loader: ${l}`}` });
             }
-
-            lv = foundVersionData.loaderVersion || manifest.version;
-
-            let specLocation = l !== "vanilla" ? `${l}-${v}-${lv}` : v;
-            const getSpec = await checkManifest(path.join("versions", specLocation, `${specLocation}.json`), foundVersionData.url, "spec");
-            const createdManifest = await addOSSpecArguments(getSpec);
+            if (foundManifest.id.includes("forge") || foundManifest.id.includes("fabric")) {
+                v = foundManifest.id.split("-")[1]
+            } else {
+                v = foundManifest.id;
+            }
+            lv = foundManifest.loaderVersion || foundManifest.version;
+            //const getSpec = await checkManifest(path.join("versions", specLocation, `${specLocation}.json`), foundManifest.url, "spec");
+            const createdManifest = await addOSSpecArguments(foundManifest);
 
             if (createdManifest.logging) {
                 const logFile = createdManifest.logging.client.file;
@@ -215,9 +228,8 @@ async function getManifests(v, l, lv) {
 
             let postData = null;
             if (createdManifest.requiresPost) {
-                postData = await checkManifest(path.join("versions", specLocation, "post.json"), `${RESOURCES_PATH}/loaders/${l}/${v}-${lv}/post.json`, "spec");
+                postData = await checkManifest(path.join("versions", specLocation, "post.json"), `${RESOURCES_PATH}/loaders/forge/${createdManifest.id.split("-")[1]}-${lv}/post.json`, "spec");
             }
-
             const allManifests = {
                 spec: createdManifest,
                 jvmMani,

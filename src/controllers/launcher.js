@@ -1,6 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 const path = require("path");
-const {exec} = require("child_process");
+const {spawn} = require("child_process");
 const {grabPath, getOperatingSystem} = require("../tools/compatibility.js");
 const {getAssets} = require("./assets.js");
 const {checkJVM} = require("./jvm.js");
@@ -16,6 +16,7 @@ const {
 const ora = require('ora-classic');
 const Promise = require("bluebird"); // Note: If using global Promise, you might not need this line
 const {postProcessing} = require("../tools/postProcessors/forge.js");
+const fs = require("node:fs");
 
 function createUUID() {
     return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (+c / 4)))).toString(16),);
@@ -35,7 +36,6 @@ async function handleGrabDeps(manifests, multibar) {
         cauldronLogger.debug(`Index URL: ${manifests.spec.assetIndex.url}`);
         dependencyPromises.push(getAssets(manifests.spec.assets, manifests.assetsInfo, multibar));
     }
-
     const librariesPromise = getLibraries(manifests.spec.libraries, manifests.versionData, manifests.spec.id, undefined);
     dependencyPromises.push(librariesPromise);
 
@@ -83,9 +83,10 @@ async function launchGame(version, installOnly, loader, lVersion, authData, over
             //Create Bulk Manifests
             const manifests = await getManifests(version, loader, lVersion);
             let libGet = await handleGrabDeps(manifests);
+
             if (loader !== "vanilla") {
                 if (manifests.needsPost) {
-                    libGet = await postProcessing(manifests, libGet);
+                    libGet = await postProcessing(manifests, libGet, version);
                 }
             }
             if (!installOnly) {
@@ -103,7 +104,19 @@ async function launchGame(version, installOnly, loader, lVersion, authData, over
                         launchDirectory = `${overrides["game"]["game_directory"]}`;
                     }
                 }
-                exec(`cd ${launchDirectory} && ${launchPath}`);
+                const isWindows = getOperatingSystem() === 'windows';
+                const child = isWindows
+                    ? spawn('cmd', ['/c', `cd /d ${launchDirectory} && ${launchPath}`], {
+                        detached: true,
+                        stdio: 'ignore',
+                        windowsHide: true
+                    })
+                    : spawn('sh', ['-c', `cd ${launchDirectory} && ${launchPath}`], {
+                        detached: true,
+                        stdio: 'ignore'
+                    });
+
+                child.unref();
                 resolve(sessionID);
             } else {
                 resolve(true);
