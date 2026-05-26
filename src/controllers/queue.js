@@ -6,6 +6,7 @@ const path = require("path");
 const { getOperatingSystem } = require("../tools/compatibility.js");
 const {pipeline} = require('stream/promises')
 const unzipper = require('unzipper')
+const {reject} = require("bluebird");
 function removeItem(array, item) {
     let i = array.length;
 
@@ -17,14 +18,17 @@ function removeItem(array, item) {
 }
 
 async function checkDownloadAndCheck(item) {
-    return new Promise(async (resolve) => {
+    return new Promise(async (resolve,reject) => {
         try {
             let validateItem = await validate(item);
             while (typeof validateItem == "object") {
-                await download(validateItem.origin, validateItem.destination, validateItem.fileName);
+                let out = await download(validateItem.origin, validateItem.destination, validateItem.fileName);
+                if (!out) {
+                    reject(`File Not Found: ${validateItem.origin}`);
+                }
+                // Extract zip and replace with extracted contents (packwiz only)
 
-                // Extract zip and replace with extracted contents
-                if (validateItem.fileName.endsWith(".zip")) {
+                if (validateItem.fileName.endsWith(".zip") && validateItem.forceUnzip) {
                     const zipPath = path.join(validateItem.destination, validateItem.fileName);
                     await pipeline(
                         fs.createReadStream(zipPath),
@@ -49,31 +53,41 @@ async function checkDownloadAndCheck(item) {
 }
 
 async function verifyInstallation(queue, isAssetDownload) {
-    return new Promise(async (resolve) => {
-        let concurrency = queue.length;
-        if (isAssetDownload) {
-            concurrency = queue.length / 2;
+    return new Promise(async (resolve,reject) => {
+        try {
+            let concurrency = queue.length;
+            if (isAssetDownload) {
+                concurrency = queue.length / 2;
+            }
+            const procQueue = await Promise.map(queue, checkDownloadAndCheck, {
+                concurrency: concurrency,
+            });
+            removeItem(procQueue, "pass");
+            resolve(procQueue);
+        } catch (error) {
+            reject(error);
         }
-        const procQueue = await Promise.map(queue, checkDownloadAndCheck, {
-            concurrency: concurrency,
-        });
-        removeItem(procQueue, "pass");
-        resolve(procQueue);
+
     });
 }
 
 
 async function processQueue(queue, isAssetDownload) {
-    return new Promise(async (resolve) => {
-        let concurrency = queue.length;
-        if (isAssetDownload) {
-            concurrency = queue.length / 2;
+    return new Promise(async (resolve,reject) => {
+        try {
+            let concurrency = queue.length;
+            if (isAssetDownload) {
+                concurrency = queue.length / 2;
+            }
+
+            const procQueue = await Promise.map(queue, (item) => checkDownloadAndCheck(item), // Wrap your function
+                {concurrency: concurrency});
+            removeItem(procQueue, "pass");
+            resolve(procQueue);
+        } catch (e) {
+            reject(e);
         }
 
-        const procQueue = await Promise.map(queue, (item) => checkDownloadAndCheck(item), // Wrap your function
-            {concurrency: concurrency});
-        removeItem(procQueue, "pass");
-        resolve(procQueue);
     });
 }
 

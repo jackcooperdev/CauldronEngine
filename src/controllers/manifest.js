@@ -19,8 +19,8 @@ const {getOperatingSystem} = require("../tools/compatibility");
 const {version} = require("bluebird");
 
 const osCurrent = os.platform();
-//const RESOURCES_PATH = "http://localhost:3300";
-const RESOURCES_PATH="https://resources.cauldronmc.com"
+
+const RESOURCES_PATH= process.env.RESOURCE_SERVER || "https://resources.cauldronmc.com"
 
 
 async function checkManifest(fileName, url, type) {

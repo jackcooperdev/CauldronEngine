@@ -3,6 +3,7 @@ const path = require("path");
 const os = require("os");
 const { exec } = require("child_process");
 const { grabPath, getOperatingSystem } = require("./compatibility.js");
+const {jwtDecode} = require("jwt-decode");
 
 
 // const __filename = fileURLToPath(import.meta.url);
@@ -149,8 +150,9 @@ async function buildGameRules(manifest, loggedUser, overrides, addit) {
             gameRules.push("${version_type}");
         }
 
+        let decodedToken = jwtDecode(loggedUser)
         let gameVars = {
-            auth_player_name: loggedUser.profile.username,
+            auth_player_name: decodedToken.pfd[0].name,
             version_type: manifest.type,
             game_directory: CAULDRON_PATH,
             server_ip: "",
@@ -165,15 +167,15 @@ async function buildGameRules(manifest, loggedUser, overrides, addit) {
             game_directory: gameVars.game_directory,
             assets_root: path.join(CAULDRON_PATH, "assets"),
             assets_index_name: manifest.assets,
-            auth_uuid: loggedUser.profile.uuid,
-            auth_access_token: loggedUser.access_token,
-            CLIENT_ID: loggedUser.user_id,
+            auth_uuid: decodedToken.pfd[0].id,
+            auth_access_token: loggedUser,
+            CLIENT_ID: decodedToken.sub,
             game_assets: path.join(CAULDRON_PATH, "resources"),
-            auth_xuid: loggedUser.xui,
+            auth_xuid: decodedToken.xuid,
             user_type: "msa",
             version_type: gameVars.version_type,
             user_properties: "{}",
-            auth_session: `token:${loggedUser.access_token}`,
+            auth_session: `token:${loggedUser}`,
             server_ip: gameVars.server_ip,
         };
         if (manifest.assets === "legacy") {
