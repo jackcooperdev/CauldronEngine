@@ -209,7 +209,7 @@ async function buildFile(manifest, jreVersion, validRules, gameRules) {
     let mainClass = manifest.mainClass;
     let javaPath;
     if (osCurrent === "darwin") {
-        javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "jre.bundle", "Contents", "Home", "bin", "javaw",);
+        javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "jre.bundle", "Contents", "Home", "bin", "java",);
     } else {
         javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "bin", "javaw");
     }
