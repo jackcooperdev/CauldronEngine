@@ -1,6 +1,6 @@
 {
   "name": "@jackcooperdev/cauldronengine",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "readme": "README.md",
   "type": "commonjs",
   "repository": {
@@ -30,7 +30,7 @@
   "license": "GPL-3.0-only",
   "dependencies": {
     "await-spawn": "^4.0.2",
-    "axios": "^1.14.0",
+    "axios": "^1.18.1",
     "bluebird": "^3.7.2",
     "checksum": "^1.0.0",
     "consola": "^3.4.2",
@@ -38,11 +38,9 @@
     "node-stream-zip": "^1.15.0",
     "nodejs-file-downloader": "^4.13.0",
     "ora-classic": "^5.4.2",
-    "unzipper": "^0.12.3"
+    "unzipper": "^0.12.5"
   },
   "devDependencies": {
-    "@types/bluebird": "~3.5.42",
-    "@types/checksum": "~0.1.35",
-    "@types/unzipper": "~0.10.11"
+  
   }
 }

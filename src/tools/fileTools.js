@@ -10,7 +10,7 @@ async function download(url, location, fileName) {
             const downloader = new Downloader({
                 url: url, //If the file name already exists, a new file with the name 200MB1.zip is created.
                 directory: location, //This folder will be created if it doesn't exist.
-                cloneFiles: false, fileName: fileName, maxAttempts: 10,
+                cloneFiles: false, fileName: fileName, maxAttempts: 50,
             });
             try {
                 await downloader.download(); //Downloader.download() resolves with some useful properties.

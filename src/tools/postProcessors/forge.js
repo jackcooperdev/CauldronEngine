@@ -194,18 +194,39 @@ async function postProcessing(manifests, libs, version) {
                             if (getOperatingSystem() === "osx") {
                                 javaPath = path.join(CAULDRON_PATH, "jvm", manifests.jvmComp, "jre.bundle", "Contents/Home/bin", "java");
                             }
-                            if (checkFiles.length !== 0 || override) {
-       try {
-                                await spawn(javaPath, command.split(" "));
-                            } catch (e) {
-                                if (version === '1.14.3') {
-                                    cauldronLogger.debug('Skipping Post Processer (Known Error)');
-                                } else {
-                                    reject(e);
-                                }
 
-                            }
-                             } else {
+                            
+                            if (checkFiles.length !== 0 || override) {
+                                try {
+                                    let knownClientPatchers = ["net.minecraftforge.binarypatcher.ConsoleTool"]
+                                    if (knownClientPatchers.includes(mainClass)) {
+                                        let clientPath = path.join(CAULDRON_PATH, 'libraries', 'net/minecraftforge/forge', `${manifests.version}-${manifests.loaderVersion}`, `forge-${manifests.version}-${manifests.loaderVersion}-client.jar`);
+                                        let currentVersionFile = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, "versions", `forge-${manifests.version}-${manifests.loaderVersion}`, `forge-${manifests.version}-${manifests.loaderVersion}.json`)).toString());
+                                        let newLib = {
+                                            "name": `net.minecraftforge:forge:${manifests.version}-${manifests.loaderVersion}:client`,
+                                            "downloads": {
+                                                "artifact": {
+                                                    "path": `net/minecraftforge/forge/${manifests.version}-${manifests.loaderVersion}/forge-${manifests.version}-${manifests.loaderVersion}-client.jar`,
+                                                    "url": "",
+                                                    "sha1": "NONE",
+                                                    "size": 0
+                                                }
+                                            }
+                                        };
+                                        currentVersionFile.libraries.push(newLib);
+                                        fs.writeFileSync(path.join(CAULDRON_PATH, "versions", `forge-${manifests.version}-${manifests.loaderVersion}`, `forge-${manifests.version}-${manifests.loaderVersion}.json`), JSON.stringify(currentVersionFile, null, 2));
+                                        libs.push(clientPath)
+                                    }
+                                    await spawn(javaPath, command.split(" "));
+                                } catch (e) {
+                                    if (version === '1.14.3') {
+                                        cauldronLogger.debug('Skipping Post Processer (Known Error)');
+                                    } else {
+                                        reject(e);
+                                    }
+
+                                }
+                            } else {
                                 let knownClientPatchers = ["net.minecraftforge.binarypatcher.ConsoleTool"]
                                 if (knownClientPatchers.includes(mainClass)) {
                                     let clientPath = path.join(CAULDRON_PATH, 'libraries', 'net/minecraftforge/forge', `${manifests.version}-${manifests.loaderVersion}`, `forge-${manifests.version}-${manifests.loaderVersion}-client.jar`);
@@ -229,11 +250,6 @@ async function postProcessing(manifests, libs, version) {
                                 cauldronLogger.info("Skipping Forge Post Processing Jobs (ABC)");
                                 resolve(libs);
                             }
-                     
-
-
-                        
-
                         }
                     }
                     cauldronLogger.info("Finished Forge Post Processing Jobs");

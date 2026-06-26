@@ -134,7 +134,6 @@ async function downloadManifest(url, dir, type) {
                     let splitVersion = fileData.version.split("-");
                     version = `forge-${splitVersion[0]}-${splitVersion[2]}`
                     newPath = path.join(CAULDRON_PATH,'versions',version,`post.json`)
-                    console.log(newPath)
                 }
                 dir = newPath;
             }
