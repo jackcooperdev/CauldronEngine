@@ -5,34 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 27/05/2026
+
+### Added
+
+- NeoForge Support
+
+
 ## [0.8.0] - 18/05/2026
 
 ### Fixed
+
 - Client File Not being injected to libs on some forge versions after processing
 
 ### Updated
+
 - Max File Download Retries
 - Dependencies
-
 
 ## [0.6.6] - 18/05/2026
 
 ### Added
+
 - Support For new resource server format
 - ZIP file handling in queue downloader
 
 ### Removed
+
 - log4js for logging
 
 ### Updated
+
 - Dependencies
 
 ## [0.6.4] - 31-03-2026
 
 ### Changed
+
 - Consola fancy output feature
-
-
 
 ## [0.6.3] - 12-07-2025
 
@@ -45,23 +55,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bug concerning 1.12 version and LWJGL
 
 ## [0.6.2] - 12-06-2025
+
 ### Changed
+
 - Updated Documentation
 
 ## [0.6.1] - 11-06-2025
+
 ### Fixed
+
 - Issue With ReadMe File
 
-
 ## [0.6.0] - 11-06-2025
+
 ### Added
+
 - Universal Loader Support (Post files not included)
 
 ### Changed
 
 - Moved Main CauldronLogger to Consola from Log4JS
 - General Code Review
-- Rework Of Plugin / Loader Support System 
+- Rework Of Plugin / Loader Support System
 - Moved Post Processors for plugins to separate folders
 - Moved Back from ESM to EJS
 
@@ -89,6 +104,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Started CHANGELOG.md for future changes
 
 [unreleased]: https://github.com/jackcooperdev/CauldronEngine/compare/master...development
+[0.9.0]: https://github.com/jackcooperdev/CauldronEngine/compare/0.8.0...0.9.0
 [0.8.0]: https://github.com/jackcooperdev/CauldronEngine/compare/0.6.4...0.8.0
 [0.6.6]: https://github.com/jackcooperdev/CauldronEngine/compare/0.6.4...0.6.6
 [0.6.4]: https://github.com/jackcooperdev/CauldronEngine/compare/0.6.3...0.6.4
@@ -97,5 +113,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.6.1]: https://github.com/jackcooperdev/CauldronEngine/compare/0.6.0...0.6.1
 [0.6.0]: https://github.com/jackcooperdev/CauldronEngine/compare/0.5.4...0.6.0
 [0.5.4]: https://github.com/jackcooperdev/CauldronEngine/compare/0.5.3...0.5.4
-
 [0.5.5]: https://github.com/jackcooperdev/CauldronEngine/compare/0.5.4...0.5.5
