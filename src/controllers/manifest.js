@@ -227,7 +227,7 @@ async function getManifests(v, l, lv = 'release') {
 
             let postData = null;
             if (createdManifest.requiresPost) {
-                postData = await checkManifest(path.join("versions", specLocation, "post.json"), `${RESOURCES_PATH}/loaders/forge/${createdManifest.id.split("-")[1]}-${lv}/post.json`, "spec");
+                postData = await checkManifest(path.join("versions", specLocation, "post.json"), `${RESOURCES_PATH}/loaders/${l}/${createdManifest.id.split("-")[1]}-${lv}/post.json`, "spec");
             }
             const allManifests = {
                 spec: createdManifest,

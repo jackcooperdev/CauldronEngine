@@ -1,12 +1,12 @@
 // noinspection JSUnusedGlobalSymbols
 const path = require("path");
-const {spawn} = require("child_process");
-const {grabPath, getOperatingSystem} = require("../tools/compatibility.js");
-const {getAssets} = require("./assets.js");
-const {checkJVM} = require("./jvm.js");
-const {getLibraries} = require("./libraries.js");
-const {getManifests} = require("./manifest.js");
-const {cauldronLogger, attachLoggerSession} = require("../tools/logger.js");
+const { spawn } = require("child_process");
+const { grabPath, getOperatingSystem } = require("../tools/compatibility.js");
+const { getAssets } = require("./assets.js");
+const { checkJVM } = require("./jvm.js");
+const { getLibraries } = require("./libraries.js");
+const { getManifests } = require("./manifest.js");
+const { cauldronLogger, attachLoggerSession } = require("../tools/logger.js");
 const {
     buildJVMRules,
     buildGameRules,
@@ -15,7 +15,8 @@ const {
 } = require("../tools/launchBuilder.js");
 const ora = require('ora-classic');
 const Promise = require("bluebird"); // Note: If using global Promise, you might not need this line
-const {postProcessing} = require("../tools/postProcessors/forge.js");
+const forge = require("../tools/postProcessors/forge.js");
+const neoforge = require("../tools/postProcessors/neoforge.js");
 const fs = require("node:fs");
 
 function createUUID() {
@@ -62,7 +63,7 @@ async function launchGame(version, installOnly, loader, lVersion, authData, over
         installOnly = false;
     }
     if (!overrides) {
-        overrides = {jvm: {}, game: {}, additG: {}};
+        overrides = { jvm: {}, game: {}, additG: {} };
     }
     if (!loader) {
         loader = "vanilla";
@@ -71,7 +72,7 @@ async function launchGame(version, installOnly, loader, lVersion, authData, over
         let CAULDRON_PATH = grabPath();
         const spinner = ora('Starting Boot')
         try {
-            let verifiedLoaders = ["vanilla", "forge", "fabric"]
+            let verifiedLoaders = ["vanilla", "forge", "fabric", "neoforge"]
             const loaderAccepted = verifiedLoaders.includes(loader);
             if (!loaderAccepted) {
                 reject('Loader Not Supported! Code: LSUPNF')
@@ -86,7 +87,12 @@ async function launchGame(version, installOnly, loader, lVersion, authData, over
 
             if (loader !== "vanilla") {
                 if (manifests.needsPost) {
-                    libGet = await postProcessing(manifests, libGet, version);
+                    if (loader === 'forge') {
+                        libGet = await forge.postProcessing(manifests, libGet, version);
+                    } else if (loader === 'neoforge') {
+                        libGet = await neoforge.postProcessing(manifests, libGet, version);
+                    }
+
                 }
             }
             if (!installOnly) {
@@ -128,4 +134,4 @@ async function launchGame(version, installOnly, loader, lVersion, authData, over
     });
 }
 
-module.exports = {launchGame};
+module.exports = { launchGame };
