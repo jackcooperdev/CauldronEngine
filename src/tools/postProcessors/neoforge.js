@@ -3,6 +3,7 @@
 const StreamZip = require("node-stream-zip");
 const fs = require("fs");
 const path = require("path");
+const os = require("os");
 const { execSync } = require("child_process");
 const { getOperatingSystem, grabPath } = require("../compatibility.js");
 const { getLibraries } = require("../../controllers/libraries.js");
