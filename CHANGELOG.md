@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.9.1] - 29/05/2026
+## [0.9.2] - 29/05/2026
 
 ### Fixed
 
@@ -110,7 +110,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Started CHANGELOG.md for future changes
 
 [unreleased]: https://github.com/jackcooperdev/CauldronEngine/compare/master...development
-[0.9.1]: https://github.com/jackcooperdev/CauldronEngine/compare/0.9.0...0.9.1
+[0.9.1]: https://github.com/jackcooperdev/CauldronEngine/compare/0.9.0...0.9.2
 [0.9.0]: https://github.com/jackcooperdev/CauldronEngine/compare/0.8.0...0.9.0
 [0.8.0]: https://github.com/jackcooperdev/CauldronEngine/compare/0.6.4...0.8.0
 [0.6.6]: https://github.com/jackcooperdev/CauldronEngine/compare/0.6.4...0.6.6
