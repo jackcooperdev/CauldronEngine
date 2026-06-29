@@ -10,7 +10,7 @@ const { validate } = require("../fileTools.js");
 const { cauldronLogger } = require("../logger.js");
 
 const spawn = require("await-spawn");
-
+const osCurrent = os.platform();
 function convertNameToPath(name) {
     let split = name.split(":");
     let chunkOne = split[0].split(".").join("/");
@@ -21,10 +21,12 @@ function convertNameToPath(name) {
 function addManifestToJar(jarPath, javaDir) {
     const jarTool = path.join(javaDir, "jar");
     const manifestContent = "Manifest-Version: 1.0\nAutomatic-Module-Name: minecraft\n\n";
-    const manifestPath = "/tmp/cauldron_manifest.mf";
+    const manifestPath = path.join(grabPath(), 'config', 'packwiz', 'cauldron_manifest.mf')
     fs.writeFileSync(manifestPath, manifestContent);
     try {
-        execSync(`chmod +x "${jarTool}"`);
+        if (osCurrent === "linux" || osCurrent === "darwin") {
+            execSync(`chmod +x "${jarTool}"`);
+        }
         const result = execSync(`"${jarTool}" --update --file="${jarPath}" --manifest="${manifestPath}"`, { stdio: 'pipe' });
     } catch (e) {
         console.error('addManifestToJar ERROR:', e.message);
@@ -181,7 +183,7 @@ async function postProcessing(manifests, libs, version) {
                         if (selectedProc.split(":")[3]) {
                             fileName += "-" + selectedProc.split(":")[3];
                         }
-    
+
 
                         // Extract MainClass From Manifest File
                         let lPath = path.join(CAULDRON_PATH, "libraries", splitName.chunkOne, splitName.chunkTwo, splitName.chunkThree, `${fileName}.jar`,);
