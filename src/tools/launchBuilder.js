@@ -207,16 +207,20 @@ async function buildGameRules(manifest, loggedUser, overrides, addit) {
 async function buildLaunchScript(manifest, jreVersion, sessionName) {
     let CAULDRON_PATH = grabPath();
     let javaPath;
+    let arguments;
+    let serverArgs = manifest.arguments.server;
     if (osCurrent === "darwin") {
+        arguments = atob(serverArgs['unix'])
         javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "jre.bundle", "Contents", "Home", "bin", "java",);
     } else {
+         arguments = atob(serverArgs['win'])
         javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "bin", "javaw");
     }
     let jarFile = path.join(CAULDRON_PATH, 'servers', `${sessionName}/${manifest.id}-server.jar`)
-
+    console.log(arguments)
     console.log(javaPath)
     console.log(jarFile)
-    let launchCommand = `${javaPath} -Xmx4G -Xms4G -jar ${jarFile} nogui`;
+    let launchCommand = `${javaPath} -Xmx4G -Xms4G ${arguments} nogui`;
 
     const scriptDir = path.join(CAULDRON_PATH, "scripts");
     fs.mkdirSync(scriptDir, { recursive: true });

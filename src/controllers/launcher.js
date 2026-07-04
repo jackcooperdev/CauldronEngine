@@ -97,13 +97,13 @@ async function startServer(sessionName, version, loader, lVersion, overrides) {
             //Create Bulk Manifests
             const manifests = await getServerManifest(version, loader, lVersion, sessionName);
             //console.log(manifests)
-
+            //process.exit();
             let libGet = await handleGrabDeps(manifests, null, path.join(serverPath, 'libraries'));
             console.log(libGet)
             if (loader !== "vanilla") {
                 if (manifests.needsPost) {
                     if (loader === 'forge') {
-                        libGet = await forge.postProcessing(manifests, libGet, version);
+                        libGet = await forge.postProcessing(manifests, libGet, version, path.join(serverPath, 'libraries'));
                     } else if (loader === 'neoforge') {
                         libGet = await neoforge.postProcessing(manifests, libGet, version);
                     }

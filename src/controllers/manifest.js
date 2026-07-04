@@ -208,22 +208,30 @@ async function getServerManifest(v, l, lv = 'release', n) {
                 console.log(postData)
                 let foundEntryFile = postData.libraries.find(lib => lib.name == entryFile)
 
-                console.log(foundEntryFile)
-
-                createdManifest.downloads['runner_file'] = foundEntryFile.downloads.artifact;
-
-                console.log(createdManifest.downloads)
-                //process.exit(0)
+                if (foundEntryFile) {
+                    createdManifest.downloads['runner_file'] = foundEntryFile.downloads.artifact;
+                    console.log(createdManifest.downloads)
+                }
             }
 
+            //console.log(createdManifest.downloads)
 
             if (createdManifest.downloads.runner_file) {
-                await checkJAR(path.join("servers", `${n}`, `${createdManifest.id}-server.jar`), createdManifest.downloads.runner_file.url);
+
+                let runnerFileName = `${createdManifest.id}-server.jar`;
+
+                if (createdManifest.downloads.runner_file.path) {
+                    let extractedName = createdManifest.downloads.runner_file.path.split("/").pop();
+                    runnerFileName = extractedName;
+                }
+
+                await checkJAR(path.join("servers", `${n}`, runnerFileName), createdManifest.downloads.runner_file.url);
                 await checkJAR(path.join("servers", `${n}`, `minecraft_server.${v}.jar`), createdManifest.downloads.server.url);
             } else {
-                await checkJAR(path.join("servers", `${n}`, `${createdManifest.id}-server.jar`), createdManifest.downloads.server.url);
+                await checkJAR(path.join("servers", `${n}`, `minecraft_server.${v}.jar`), createdManifest.downloads.server.url);
 
             }
+
             // JVM Only
             const jvmMeta = await checkManifest(path.join("jvm", "jvm-core.json"), "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json", "java");
             const jvmCompat = await checkCompat(createdManifest.javaVersion.component, jvmMeta);

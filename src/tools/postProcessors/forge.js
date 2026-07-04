@@ -18,9 +18,13 @@ function convertNameToPath(name) {
     return { chunkOne: chunkOne, chunkTwo: chunkTwo, chunkThree: chunkThree };
 }
 
-async function postProcessing(manifests, libs, version) {
+async function postProcessing(manifests, libs, version, cPath) {
     return new Promise(async (resolve, reject) => {
         let CAULDRON_PATH = grabPath();
+        let libPath = path.join(CAULDRON_PATH, "libraries");
+        if (cPath) {
+            libPath = cPath
+        }
         let mainClass;
         try {
             let { version, loaderVersion } = manifests.versionData;
@@ -55,7 +59,7 @@ async function postProcessing(manifests, libs, version) {
 
                     //Acquire Libraries (These Libraries are required but do not need to be included in the launch file)
                     let nonDeclaredLibs = profileFile.libraries;
-                    await getLibraries(nonDeclaredLibs, manifests.versionData, manifests.spec.id, `${manifests.spec.id}-post`,);
+                    await getLibraries(nonDeclaredLibs, manifests.versionData, manifests.spec.id, `${manifests.spec.id}-post`,cPath);
 
                     // Acquire Forge Data
                     /**
@@ -94,7 +98,7 @@ async function postProcessing(manifests, libs, version) {
                                 .replace(/[\[\]]/g, "")
                                 .split(":");
                             if (fIdx === "MAPPINGS" || fIdx === "MOJMAPS" || fIdx === "MERGED_MAPPINGS") {
-                                params[fIdx] = path.join(CAULDRON_PATH, "libraries", splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2], `${splitDir[1]}-${splitDir[2]}-${splitDir[3]}`.replace("@", ".",),);
+                                params[fIdx] = path.join(libPath, splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2], `${splitDir[1]}-${splitDir[2]}-${splitDir[3]}`.replace("@", ".",),);
                             } else {
                                 params[fIdx] = path.join(CAULDRON_PATH, "servers", `abc123`, "libraries", splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2], `${splitDir[1]}-${splitDir[2]}-${splitDir[3]}.jar`,);
 
@@ -106,7 +110,7 @@ async function postProcessing(manifests, libs, version) {
                     }
 
                     // Additional Params
-                    params["MAPPING_PATH"] = path.join(CAULDRON_PATH, "libraries", "de/oceanlabs/mcp/mcp_config", `${version}-${MCP_VERSION}`, `mcp_config-${version}-${MCP_VERSION}.zip`,);
+                    params["MAPPING_PATH"] = path.join(libPath, "de/oceanlabs/mcp/mcp_config", `${version}-${MCP_VERSION}`, `mcp_config-${version}-${MCP_VERSION}.zip`,);
                     //params["MINECRAFT_JAR"] = path.join(CAULDRON_PATH, "versions", `forge-${version}-${loaderVersion}`, `forge-${version}-${loaderVersion}.jar`,);
                     params["MINECRAFT_JAR"] = path.join(CAULDRON_PATH, "servers", `abc123`, `minecraft_server.${version}.jar`,);
 
@@ -161,7 +165,7 @@ async function postProcessing(manifests, libs, version) {
                         }
 
                         // Extract MainClass From Manifest File
-                        let lPath = path.join(CAULDRON_PATH, "libraries", splitName.chunkOne, splitName.chunkTwo, splitName.chunkThree, `${fileName}.jar`,);
+                        let lPath = path.join(libPath, splitName.chunkOne, splitName.chunkTwo, splitName.chunkThree, `${fileName}.jar`,);
                         const lFile = new StreamZip.async({ file: lPath });
                         const dataBuffer = await lFile.entryData("META-INF/MANIFEST.MF");
                         const data = dataBuffer.toString();
@@ -182,7 +186,7 @@ async function postProcessing(manifests, libs, version) {
                                 .join("/");
                             let secondChunk = processors[pIdx].classpath[cpIdx].split(":")[1];
                             let thirdChunk = processors[pIdx].classpath[cpIdx].split(":")[2];
-                            let lPathTemp = path.join(CAULDRON_PATH, "libraries", firstChunk, secondChunk, thirdChunk, `${secondChunk}-${thirdChunk}.jar`,);
+                            let lPathTemp = path.join(libPath, firstChunk, secondChunk, thirdChunk, `${secondChunk}-${thirdChunk}.jar`,);
                             classPaths.push(lPathTemp);
                         }
                         classPaths.push(lPath);
