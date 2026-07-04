@@ -205,15 +205,29 @@ async function getServerManifest(v, l, lv = 'release', n) {
             if (createdManifest.requiresPost) {
                 postData = await checkManifest(path.join("versions", specLocation, "post.json"), `${RESOURCES_PATH}/loaders/${l}/${createdManifest.id.split("-")[1]}-${lv}/post.json`, "spec");
                 let entryFile = postData.path;
-                console.log(postData)
+
                 let foundEntryFile = postData.libraries.find(lib => lib.name == entryFile)
 
                 if (foundEntryFile) {
                     createdManifest.downloads['runner_file'] = foundEntryFile.downloads.artifact;
-                    console.log(createdManifest.downloads)
+                } else {
+                    console.log('retry')
+                    let original = entryFile;
+                    // Attempt Universal Appending
+                    entryFile = `${entryFile}`;
+                    foundEntryFile = createdManifest.libraries.find(lib => lib.name == entryFile);
+                    if (foundEntryFile) {
+                        if (!foundEntryFile.downloads.artifact.url) {
+                            console.log(foundEntryFile)
+                            foundEntryFile.downloads.artifact.url = `${RESOURCES_PATH}/loaders/forge/${v}-${lv}/forge-${v}-${lv}.jar`
+                            //foundEntryFile.downloads.artifact.sha1 = 'NONE';
+                        }
+                        createdManifest.downloads['runner_file'] = foundEntryFile.downloads.artifact;
+                    }
+
                 }
             }
-
+            console.log(createdManifest.downloads)
             //console.log(createdManifest.downloads)
 
             if (createdManifest.downloads.runner_file) {
@@ -232,6 +246,7 @@ async function getServerManifest(v, l, lv = 'release', n) {
 
             }
 
+            //process.exit(0)
             // JVM Only
             const jvmMeta = await checkManifest(path.join("jvm", "jvm-core.json"), "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json", "java");
             const jvmCompat = await checkCompat(createdManifest.javaVersion.component, jvmMeta);

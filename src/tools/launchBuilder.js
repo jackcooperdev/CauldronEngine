@@ -104,6 +104,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
         // Convert Library List into Joined List
         let classPathSep;
         let classPath;
+        libraryList = libraryList.filter(path => !path.endsWith('.lzma'));
         if (osCurrent === "win32") {
             classPath = libraryList.join(";");
             classPathSep = ";";
@@ -213,14 +214,20 @@ async function buildLaunchScript(manifest, jreVersion, sessionName) {
         arguments = atob(serverArgs['unix'])
         javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "jre.bundle", "Contents", "Home", "bin", "java",);
     } else {
-         arguments = atob(serverArgs['win'])
+        arguments = atob(serverArgs['win'])
         javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "bin", "javaw");
     }
-    let jarFile = path.join(CAULDRON_PATH, 'servers', `${sessionName}/${manifest.id}-server.jar`)
+    let jarFile = path.join(CAULDRON_PATH, 'servers', `${sessionName}/${manifest.id}.jar`)
     console.log(arguments)
     console.log(javaPath)
     console.log(jarFile)
-    let launchCommand = `${javaPath} -Xmx4G -Xms4G ${arguments} nogui`;
+    let launchCommand;
+    if (arguments) {
+        launchCommand = `${javaPath} -Xmx4G -Xms4G ${arguments} nogui`;
+    } else {
+        launchCommand = `${javaPath} -Xmx4G -Xms4G -jar ${jarFile} nogui`;
+    }
+
 
     const scriptDir = path.join(CAULDRON_PATH, "scripts");
     fs.mkdirSync(scriptDir, { recursive: true });

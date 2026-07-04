@@ -18,29 +18,42 @@ function convertNameToPath(name) {
     return { chunkOne: chunkOne, chunkTwo: chunkTwo, chunkThree: chunkThree };
 }
 
-async function postProcessing(manifests, libs, version, cPath) {
+function hasExtractFilesTask(entry) {
+    if (!Array.isArray(entry.args)) return false;
+    const taskIndex = entry.args.indexOf('--task');
+    if (taskIndex === -1) return false;
+    return entry.args[taskIndex + 1] === 'EXTRACT_FILES';
+}
+
+async function postProcessing(manifests, libs, version, side = 'client', cPath) {
     return new Promise(async (resolve, reject) => {
         let CAULDRON_PATH = grabPath();
-        let libPath = path.join(CAULDRON_PATH, "libraries");
-        if (cPath) {
-            libPath = cPath
-        }
         let mainClass;
         try {
             let { version, loaderVersion } = manifests.versionData;
-
+            let libPath = path.join(CAULDRON_PATH, "libraries");
+            let jarLoc = path.join(CAULDRON_PATH, 'versions', `forge-${version}-${loaderVersion}`, `forge-${version}-${loaderVersion}.jar`)
+            if (cPath) {
+                libPath = cPath;
+                jarLoc = path.join(libPath, '../', `minecraft_server.${version}.jar`)
+            }
             // const profileFileInit = await installer.entryData("install_profile.json");
-            const profileFile = manifests.postData;
+            let profileFile = manifests.postData;
 
             // Check if Processors Exists
             /**
              * @param profileFile.processors
              */
-            profileFile.processors.shift();
+
+            //profileFile.processors.shift();
             if (profileFile.processors) {
                 if (profileFile.processors.length === 0) {
                     resolve(libs);
                 } else {
+                    // Filter For BEP's
+                    const filtered = profileFile.processors.filter(entry => !hasExtractFilesTask(entry));
+                    profileFile.processors = filtered;
+
                     /*    if (version === "1.14.3") {
                             const versionFile = manifests.spec;
                              let relLib = versionFile.libraries[0];
@@ -59,7 +72,7 @@ async function postProcessing(manifests, libs, version, cPath) {
 
                     //Acquire Libraries (These Libraries are required but do not need to be included in the launch file)
                     let nonDeclaredLibs = profileFile.libraries;
-                    await getLibraries(nonDeclaredLibs, manifests.versionData, manifests.spec.id, `${manifests.spec.id}-post`,cPath);
+                    await getLibraries(nonDeclaredLibs, manifests.versionData, manifests.spec.id, `${manifests.spec.id}-post`, cPath);
 
                     // Acquire Forge Data
                     /**
@@ -78,12 +91,6 @@ async function postProcessing(manifests, libs, version, cPath) {
                         MCP_VERSION = forgeData.MCP_VERSION.client.replace(/'/g, "");
                     }
 
-                    // const clientLzmaBuffer =
-                    //     await installer.entryData("data/client.lzma");
-                    // fs.writeFileSync(path.join(CAULDRON_PATH, "versions", `forge-${version}-${loaderVersion}`, "client.lzma",),
-                    //     clientLzmaBuffer,
-                    // );
-
                     // Generate Params
                     let params = {};
                     let shaParams = {};
@@ -91,34 +98,37 @@ async function postProcessing(manifests, libs, version, cPath) {
                         if (fIdx === "MCP_VERSION") {
                             params[fIdx] = MCP_VERSION;
                         } else if (fIdx === "BINPATCH") {
-                            params[fIdx] = path.join(CAULDRON_PATH, "servers", `abc123/libraries/net/clients/forge-${manifests.version}-${manifests.loaderVersion}`, "server.lzma");
+                            params[fIdx] = path.join(libPath, `/net/clients/forge-${manifests.version}-${manifests.loaderVersion}`, `${side}.lzma`);
                             //params[fIdx] = path.join(CAULDRON_PATH, "versions", `forge-${manifests.version}-${manifests.loaderVersion}`, "client.lzma");
                         } else if (!fIdx.includes("SHA")) {
-                            let splitDir = forgeData[fIdx].server
+                            console.log('proc sha a')
+                            let splitDir = forgeData[fIdx][side]
                                 .replace(/[\[\]]/g, "")
                                 .split(":");
                             if (fIdx === "MAPPINGS" || fIdx === "MOJMAPS" || fIdx === "MERGED_MAPPINGS") {
                                 params[fIdx] = path.join(libPath, splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2], `${splitDir[1]}-${splitDir[2]}-${splitDir[3]}`.replace("@", ".",),);
                             } else {
-                                params[fIdx] = path.join(CAULDRON_PATH, "servers", `abc123`, "libraries", splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2], `${splitDir[1]}-${splitDir[2]}-${splitDir[3]}.jar`,);
-
+                                console.log(fIdx)
+                                console.log(splitDir)
+                                params[fIdx] = path.join(libPath, splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2], `${splitDir[1]}-${splitDir[2]}-${splitDir[3]}.jar`,);
                                 //params[fIdx] = path.join(CAULDRON_PATH, "libraries", splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2], `${splitDir[1]}-${splitDir[2]}-${splitDir[3]}.jar`,);
                             }
                         } else {
-
+                            shaParams[fIdx] = forgeData[fIdx][side].replace(/'/g, "");
                         }
                     }
 
                     // Additional Params
                     params["MAPPING_PATH"] = path.join(libPath, "de/oceanlabs/mcp/mcp_config", `${version}-${MCP_VERSION}`, `mcp_config-${version}-${MCP_VERSION}.zip`,);
                     //params["MINECRAFT_JAR"] = path.join(CAULDRON_PATH, "versions", `forge-${version}-${loaderVersion}`, `forge-${version}-${loaderVersion}.jar`,);
-                    params["MINECRAFT_JAR"] = path.join(CAULDRON_PATH, "servers", `abc123`, `minecraft_server.${version}.jar`,);
+                    //params["MINECRAFT_JAR"] = path.join(CAULDRON_PATH, "servers", `abc123`, `minecraft_server.${version}.jar`,);
+                    params['MINECRAFT_JAR'] = jarLoc;
 
-                    params["SIDE"] = "server";
-                    params['ROOT'] = "/Users/sdn/projects/cauldron/cauldron_runner/servers/abc123"
+                    params["SIDE"] = side;
+                    params['ROOT'] = path.join(libPath, '../')
 
                     console.log(params)
-                    //process.exit(0);
+                    //process.exit(0)
                     // Check Checksums to see if skipping is possible
                     let checkObjs = [];
                     for (let sIdx in shaParams) {
@@ -133,8 +143,10 @@ async function postProcessing(manifests, libs, version, cPath) {
                         }
                     }
                     console.log(checkObjs)
+                    console.log(shaParams)
+                    let checkFiles;
                     if (checkObjs.length > 0) {
-                        let checkFiles = await validate(checkObjs[0]);
+                        checkFiles = await validate(checkObjs[0]);
                         if (checkFiles === true) {
                             checkFiles = [];
                         } else {
@@ -143,10 +155,10 @@ async function postProcessing(manifests, libs, version, cPath) {
                     } else {
                         checkFiles = [];
                     }
-
-
                     // We only care about the PATCHED File due to the fact it's the only one where the checksums will match
-                    let override = true;
+
+                    // WARNING: Toggling this will force post proc on EVERY Boot. Use only for testing.
+                    let override = false;
 
                     let processors = profileFile.processors;
                     cauldronLogger.info("Starting Forge Post Processing Jobs");
@@ -191,7 +203,7 @@ async function postProcessing(manifests, libs, version, cPath) {
                         }
                         classPaths.push(lPath);
                         let actualArgs = processors[pIdx].args.join(" ");
-                        if (!processors[pIdx].sides || processors[pIdx].sides.includes("server")) {
+                        if (!processors[pIdx].sides || processors[pIdx].sides.includes(side)) {
                             let classPathSep;
                             let osCurrent = getOperatingSystem();
                             if (osCurrent === "windows") {

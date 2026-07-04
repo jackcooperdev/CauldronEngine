@@ -103,7 +103,7 @@ async function startServer(sessionName, version, loader, lVersion, overrides) {
             if (loader !== "vanilla") {
                 if (manifests.needsPost) {
                     if (loader === 'forge') {
-                        libGet = await forge.postProcessing(manifests, libGet, version, path.join(serverPath, 'libraries'));
+                        libGet = await forge.postProcessing(manifests, libGet, version, 'server', path.join(serverPath, 'libraries'));
                     } else if (loader === 'neoforge') {
                         libGet = await neoforge.postProcessing(manifests, libGet, version);
                     }
