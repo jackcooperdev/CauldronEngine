@@ -32,6 +32,7 @@ async function postProcessing(manifests, libs, version) {
             /**
              * @param profileFile.processors
              */
+            profileFile.processors.shift();
             if (profileFile.processors) {
                 if (profileFile.processors.length === 0) {
                     resolve(libs);
@@ -86,26 +87,34 @@ async function postProcessing(manifests, libs, version) {
                         if (fIdx === "MCP_VERSION") {
                             params[fIdx] = MCP_VERSION;
                         } else if (fIdx === "BINPATCH") {
-                            params[fIdx] = path.join(CAULDRON_PATH, "versions", `forge-${manifests.version}-${manifests.loaderVersion}`, "client.lzma");
+                            params[fIdx] = path.join(CAULDRON_PATH, "versions", `forge-${manifests.version}-${manifests.loaderVersion}-server`, "server.lzma");
+                            //params[fIdx] = path.join(CAULDRON_PATH, "versions", `forge-${manifests.version}-${manifests.loaderVersion}`, "client.lzma");
                         } else if (!fIdx.includes("SHA")) {
-                            let splitDir = forgeData[fIdx].client
+                            let splitDir = forgeData[fIdx].server
                                 .replace(/[\[\]]/g, "")
                                 .split(":");
                             if (fIdx === "MAPPINGS" || fIdx === "MOJMAPS" || fIdx === "MERGED_MAPPINGS") {
                                 params[fIdx] = path.join(CAULDRON_PATH, "libraries", splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2], `${splitDir[1]}-${splitDir[2]}-${splitDir[3]}`.replace("@", ".",),);
                             } else {
-                                params[fIdx] = path.join(CAULDRON_PATH, "libraries", splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2], `${splitDir[1]}-${splitDir[2]}-${splitDir[3]}.jar`,);
+                                params[fIdx] = path.join(CAULDRON_PATH, "versions", `forge-${version}-${loaderVersion}-server`, "libraries", splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2], `${splitDir[1]}-${splitDir[2]}-${splitDir[3]}.jar`,);
+
+                                //params[fIdx] = path.join(CAULDRON_PATH, "libraries", splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2], `${splitDir[1]}-${splitDir[2]}-${splitDir[3]}.jar`,);
                             }
                         } else {
-                            shaParams[fIdx] = forgeData[fIdx].client.replace(/'/g, "");
+
                         }
                     }
 
                     // Additional Params
                     params["MAPPING_PATH"] = path.join(CAULDRON_PATH, "libraries", "de/oceanlabs/mcp/mcp_config", `${version}-${MCP_VERSION}`, `mcp_config-${version}-${MCP_VERSION}.zip`,);
-                    params["MINECRAFT_JAR"] = path.join(CAULDRON_PATH, "versions", `forge-${version}-${loaderVersion}`, `forge-${version}-${loaderVersion}.jar`,);
-                    params["SIDE"] = "client";
+                    //params["MINECRAFT_JAR"] = path.join(CAULDRON_PATH, "versions", `forge-${version}-${loaderVersion}`, `forge-${version}-${loaderVersion}.jar`,);
+                    params["MINECRAFT_JAR"] = path.join(CAULDRON_PATH, "versions", `forge-${version}-${loaderVersion}-server`, `forge-${version}-${loaderVersion}-server.jar`,);
 
+                    params["SIDE"] = "server";
+                    params['ROOT'] = "/Users/sdn/projects/cauldron/cauldron_runner/versions/forge-26.2-65.0.3-server"
+
+                    console.log(params)
+                    process.exit(0);
                     // Check Checksums to see if skipping is possible
                     let checkObjs = [];
                     for (let sIdx in shaParams) {
@@ -119,15 +128,21 @@ async function postProcessing(manifests, libs, version) {
                             checkObjs.push(obj);
                         }
                     }
-                    let checkFiles = await validate(checkObjs[0]);
-                    if (checkFiles === true) {
-                        checkFiles = [];
+                    console.log(checkObjs)
+                    if (checkObjs.length > 0) {
+                        let checkFiles = await validate(checkObjs[0]);
+                        if (checkFiles === true) {
+                            checkFiles = [];
+                        } else {
+                            checkFiles = [checkFiles];
+                        }
                     } else {
-                        checkFiles = [checkFiles];
+                        checkFiles = [];
                     }
 
+
                     // We only care about the PATCHED File due to the fact it's the only one where the checksums will match
-                    let override = false;
+                    let override = true;
 
                     let processors = profileFile.processors;
                     cauldronLogger.info("Starting Forge Post Processing Jobs");
@@ -172,7 +187,7 @@ async function postProcessing(manifests, libs, version) {
                         }
                         classPaths.push(lPath);
                         let actualArgs = processors[pIdx].args.join(" ");
-                        if (!processors[pIdx].sides || processors[pIdx].sides.includes("client")) {
+                        if (!processors[pIdx].sides || processors[pIdx].sides.includes("server")) {
                             let classPathSep;
                             let osCurrent = getOperatingSystem();
                             if (osCurrent === "windows") {
@@ -183,8 +198,8 @@ async function postProcessing(manifests, libs, version) {
                             let command = `-cp ${classPaths.join(classPathSep)} ${mainClass} ${actualArgs}`;
                             //Mappings path replacement
                             if (forgeData.MAPPINGS) {
-                                command = command.replace(forgeData.MAPPINGS.client.replace(":mappings@txt", "@zip"), "{MAPPING_PATH}",);
-                                command = command.replace(forgeData.MAPPINGS.client.replace(":mappings@tsrg", "@zip"), "{MAPPING_PATH}",);
+                                command = command.replace(forgeData.MAPPINGS.server.replace(":mappings@txt", "@zip"), "{MAPPING_PATH}",);
+                                command = command.replace(forgeData.MAPPINGS.server.replace(":mappings@tsrg", "@zip"), "{MAPPING_PATH}",);
                             }
 
                             // Inject params
@@ -195,7 +210,7 @@ async function postProcessing(manifests, libs, version) {
                                 javaPath = path.join(CAULDRON_PATH, "jvm", manifests.jvmComp, "jre.bundle", "Contents/Home/bin", "java");
                             }
 
-                            
+
                             if (checkFiles.length !== 0 || override) {
                                 try {
                                     let knownClientPatchers = ["net.minecraftforge.binarypatcher.ConsoleTool"]
@@ -217,6 +232,7 @@ async function postProcessing(manifests, libs, version) {
                                         fs.writeFileSync(path.join(CAULDRON_PATH, "versions", `forge-${manifests.version}-${manifests.loaderVersion}`, `forge-${manifests.version}-${manifests.loaderVersion}.json`), JSON.stringify(currentVersionFile, null, 2));
                                         libs.push(clientPath)
                                     }
+                                    console.log(`${javaPath} ${command}`)
                                     await spawn(javaPath, command.split(" "));
                                 } catch (e) {
                                     if (version === '1.14.3') {

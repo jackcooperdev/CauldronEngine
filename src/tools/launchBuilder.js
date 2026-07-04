@@ -3,7 +3,7 @@ const path = require("path");
 const os = require("os");
 const { exec } = require("child_process");
 const { grabPath, getOperatingSystem } = require("./compatibility.js");
-const {jwtDecode} = require("jwt-decode");
+const { jwtDecode } = require("jwt-decode");
 
 
 // const __filename = fileURLToPath(import.meta.url);
@@ -204,6 +204,46 @@ async function buildGameRules(manifest, loggedUser, overrides, addit) {
     });
 }
 
+async function buildLaunchScript(manifest, jreVersion) {
+    let CAULDRON_PATH = grabPath();
+    let javaPath;
+    if (osCurrent === "darwin") {
+        javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "jre.bundle", "Contents", "Home", "bin", "java",);
+    } else {
+        javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "bin", "javaw");
+    }
+    let jarFile = path.join(CAULDRON_PATH, 'versions', `${manifest.id}-server/${manifest.id}-server.jar`)
+
+    console.log(javaPath)
+    console.log(jarFile)
+    let launchCommand = `${javaPath} -Xmx4G -Xms4G -jar ${jarFile} nogui`;
+
+    const scriptDir = path.join(CAULDRON_PATH, "scripts");
+    fs.mkdirSync(scriptDir, { recursive: true });
+
+    if (osCurrent === "linux" || osCurrent === "darwin") {
+        const scriptPath = path.join(scriptDir, "launch-server.sh");
+        fs.writeFileSync(scriptPath, launchCommand);
+        await new Promise((res, rej) => {
+            exec(`chmod +x "${scriptPath}"`, (err) => {
+                if (err) return rej(err);
+                res();
+            });
+        });
+        await new Promise((res, rej) => {
+            exec(`chmod +x "${javaPath}"`, (err) => {
+                if (err) return rej(err);
+                res();
+            });
+        });
+        return scriptPath;
+    } else if (osCurrent === "win32") {
+        const scriptPath = path.join(scriptDir, "launch-server.bat");
+        fs.writeFileSync(scriptPath, launchCommand);
+        return scriptPath;
+    }
+}
+
 async function buildFile(manifest, jreVersion, validRules, gameRules) {
     let CAULDRON_PATH = grabPath();
     let mainClass = manifest.mainClass;
@@ -241,4 +281,4 @@ async function buildFile(manifest, jreVersion, validRules, gameRules) {
     }
 }
 
-module.exports =  {buildJVMRules, buildGameRules, buildFile, logInjector};
+module.exports = { buildJVMRules, buildGameRules, buildFile, logInjector, buildLaunchScript };
