@@ -168,7 +168,7 @@ async function getPackwizJVM() {
     });
 }
 
-async function getServerManifest(v, l, lv = 'release') {
+async function getServerManifest(v, l, lv = 'release', n) {
     return new Promise(async (resolve, reject) => {
         let CAULDRON_PATH = grabPath();
 
@@ -205,7 +205,7 @@ async function getServerManifest(v, l, lv = 'release') {
             if (createdManifest.requiresPost) {
                 postData = await checkManifest(path.join("versions", specLocation, "post.json"), `${RESOURCES_PATH}/loaders/${l}/${createdManifest.id.split("-")[1]}-${lv}/post.json`, "spec");
                 let entryFile = postData.path;
-
+                console.log(postData)
                 let foundEntryFile = postData.libraries.find(lib => lib.name == entryFile)
 
                 console.log(foundEntryFile)
@@ -218,10 +218,10 @@ async function getServerManifest(v, l, lv = 'release') {
 
 
             if (createdManifest.downloads.runner_file) {
-                await checkJAR(path.join("versions", `${createdManifest.id}-server`, `${createdManifest.id}-server.jar`), createdManifest.downloads.runner_file.url);
-                await checkJAR(path.join("versions", `${createdManifest.id}-server`, `minecraft_server.${v}.jar`), createdManifest.downloads.server.url);
+                await checkJAR(path.join("servers", `${n}`, `${createdManifest.id}-server.jar`), createdManifest.downloads.runner_file.url);
+                await checkJAR(path.join("servers", `${n}`, `minecraft_server.${v}.jar`), createdManifest.downloads.server.url);
             } else {
-                await checkJAR(path.join("versions", `${createdManifest.id}-server`, `${createdManifest.id}-server.jar`), createdManifest.downloads.server.url);
+                await checkJAR(path.join("servers", `${n}`, `${createdManifest.id}-server.jar`), createdManifest.downloads.server.url);
 
             }
             // JVM Only

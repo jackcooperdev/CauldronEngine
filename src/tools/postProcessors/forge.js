@@ -87,7 +87,7 @@ async function postProcessing(manifests, libs, version) {
                         if (fIdx === "MCP_VERSION") {
                             params[fIdx] = MCP_VERSION;
                         } else if (fIdx === "BINPATCH") {
-                            params[fIdx] = path.join(CAULDRON_PATH, "versions", `forge-${manifests.version}-${manifests.loaderVersion}-server`, "server.lzma");
+                            params[fIdx] = path.join(CAULDRON_PATH, "servers", `abc123/libraries/net/clients/forge-${manifests.version}-${manifests.loaderVersion}`, "server.lzma");
                             //params[fIdx] = path.join(CAULDRON_PATH, "versions", `forge-${manifests.version}-${manifests.loaderVersion}`, "client.lzma");
                         } else if (!fIdx.includes("SHA")) {
                             let splitDir = forgeData[fIdx].server
@@ -96,7 +96,7 @@ async function postProcessing(manifests, libs, version) {
                             if (fIdx === "MAPPINGS" || fIdx === "MOJMAPS" || fIdx === "MERGED_MAPPINGS") {
                                 params[fIdx] = path.join(CAULDRON_PATH, "libraries", splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2], `${splitDir[1]}-${splitDir[2]}-${splitDir[3]}`.replace("@", ".",),);
                             } else {
-                                params[fIdx] = path.join(CAULDRON_PATH, "versions", `forge-${version}-${loaderVersion}-server`, "libraries", splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2], `${splitDir[1]}-${splitDir[2]}-${splitDir[3]}.jar`,);
+                                params[fIdx] = path.join(CAULDRON_PATH, "servers", `abc123`, "libraries", splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2], `${splitDir[1]}-${splitDir[2]}-${splitDir[3]}.jar`,);
 
                                 //params[fIdx] = path.join(CAULDRON_PATH, "libraries", splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2], `${splitDir[1]}-${splitDir[2]}-${splitDir[3]}.jar`,);
                             }
@@ -108,13 +108,13 @@ async function postProcessing(manifests, libs, version) {
                     // Additional Params
                     params["MAPPING_PATH"] = path.join(CAULDRON_PATH, "libraries", "de/oceanlabs/mcp/mcp_config", `${version}-${MCP_VERSION}`, `mcp_config-${version}-${MCP_VERSION}.zip`,);
                     //params["MINECRAFT_JAR"] = path.join(CAULDRON_PATH, "versions", `forge-${version}-${loaderVersion}`, `forge-${version}-${loaderVersion}.jar`,);
-                    params["MINECRAFT_JAR"] = path.join(CAULDRON_PATH, "versions", `forge-${version}-${loaderVersion}-server`, `forge-${version}-${loaderVersion}-server.jar`,);
+                    params["MINECRAFT_JAR"] = path.join(CAULDRON_PATH, "servers", `abc123`, `minecraft_server.${version}.jar`,);
 
                     params["SIDE"] = "server";
-                    params['ROOT'] = "/Users/sdn/projects/cauldron/cauldron_runner/versions/forge-26.2-65.0.3-server"
+                    params['ROOT'] = "/Users/sdn/projects/cauldron/cauldron_runner/servers/abc123"
 
                     console.log(params)
-                    process.exit(0);
+                    //process.exit(0);
                     // Check Checksums to see if skipping is possible
                     let checkObjs = [];
                     for (let sIdx in shaParams) {

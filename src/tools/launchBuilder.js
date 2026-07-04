@@ -204,7 +204,7 @@ async function buildGameRules(manifest, loggedUser, overrides, addit) {
     });
 }
 
-async function buildLaunchScript(manifest, jreVersion) {
+async function buildLaunchScript(manifest, jreVersion, sessionName) {
     let CAULDRON_PATH = grabPath();
     let javaPath;
     if (osCurrent === "darwin") {
@@ -212,7 +212,7 @@ async function buildLaunchScript(manifest, jreVersion) {
     } else {
         javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "bin", "javaw");
     }
-    let jarFile = path.join(CAULDRON_PATH, 'versions', `${manifest.id}-server/${manifest.id}-server.jar`)
+    let jarFile = path.join(CAULDRON_PATH, 'servers', `${sessionName}/${manifest.id}-server.jar`)
 
     console.log(javaPath)
     console.log(jarFile)
