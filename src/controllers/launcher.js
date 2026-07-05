@@ -113,8 +113,9 @@ async function startServer(sessionName, version, loader, lVersion, overrides) {
             }
             let launchPath = await buildLaunchScript(manifests.spec, manifests.jvmComp, sessionName);
             console.log(launchPath)
+            resolve({launchPath,serverPath});
             //process.exit(0)
-            const isWindows = getOperatingSystem() === 'windows';
+           /*  const isWindows = getOperatingSystem() === 'windows';
             const child = isWindows
                 ? spawn('cmd', ['/c', `cd /d ${serverPath} && ${launchPath}`], {
                     stdio: 'inherit',
@@ -127,7 +128,7 @@ async function startServer(sessionName, version, loader, lVersion, overrides) {
             child.on('exit', (code) => {
                 process.exit(code);
             });
-            resolve(sessionID);
+            resolve(sessionID); */
 
         } catch (err) {
             spinner.fail(err.message)

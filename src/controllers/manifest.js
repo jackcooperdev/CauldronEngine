@@ -21,8 +21,8 @@ const { buildJVMRules } = require("../tools/launchBuilder.js");
 
 const osCurrent = os.platform();
 
-const RESOURCES_PATH = process.env.RESOURCE_SERVER || "https://resources.cauldronmc.com"
-
+//const RESOURCES_PATH = process.env.RESOURCE_SERVER || "https://resources.cauldronmc.com"
+const RESOURCES_PATH = 'http://localhost:3300'
 async function checkManifest(fileName, url, type) {
     return new Promise(async (resolve, reject) => {
         let isOnline = await checkInternet();
@@ -183,9 +183,13 @@ async function getServerManifest(v, l, lv = 'release', n) {
             };
 
 
+            ensureFile(path.join(CAULDRON_PATH, "config/assets_installed.json"));
             ensureFile(path.join(CAULDRON_PATH, "config/jvm_installed.json"));
+            ensureFile(path.join(CAULDRON_PATH, "config/libs_installed.json"));
 
+            const assetDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, "config/assets_installed.json")).toString());
             const jvmDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, "config/jvm_installed.json")).toString());
+            const libDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, "config/libs_installed.json")).toString());
 
             let specPath = l !== 'vanilla' ? `/loaders/${l}/${v}/${lv}` : `/spec/${v}`
             let specLocation = l !== "vanilla" ? `${l}-${v}-${lv}` : v;
