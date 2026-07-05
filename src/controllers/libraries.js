@@ -123,10 +123,10 @@ async function getLibraries(libList, versionData, maniID, customName, cPath) {
                     lastChecked: new Date().getTime(),
                 };
                 cauldronLogger.debug(`Libraries Downloaded: ${checkName}`);
-               /*  fs.writeFileSync(
+                fs.writeFileSync(
                     path.join(CAULDRON_PATH, "config/libs_installed.json"),
                     JSON.stringify(currentLibraryFile)
-                ); */
+                );
                 resolve(libArray);
             } else {
                 cauldronLogger.debug(`Libraries Restored: ${checkName}`);
@@ -138,4 +138,4 @@ async function getLibraries(libList, versionData, maniID, customName, cPath) {
     });
 }
 
-module.exports =  { getLibraries };
+module.exports = { getLibraries };
