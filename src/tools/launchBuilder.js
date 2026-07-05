@@ -210,6 +210,9 @@ async function buildLaunchScript(manifest, jreVersion, sessionName) {
     let javaPath;
     let arguments;
     let serverArgs = manifest.arguments.server;
+    if (!serverArgs) {
+        serverArgs = {unix:'',win:''}
+    }
     if (osCurrent === "darwin") {
         arguments = atob(serverArgs['unix'])
         javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "jre.bundle", "Contents", "Home", "bin", "java",);
@@ -217,7 +220,13 @@ async function buildLaunchScript(manifest, jreVersion, sessionName) {
         arguments = atob(serverArgs['win'])
         javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "bin", "javaw");
     }
-    let jarFile = path.join(CAULDRON_PATH, 'servers', `${sessionName}/${manifest.id}.jar`)
+    let jarFile;
+
+    if (manifest.loader !== 'vanilla') {
+        jarFile = path.join(CAULDRON_PATH, 'servers', `${sessionName}/${manifest.id}.jar`)
+    } else {
+        jarFile = path.join(CAULDRON_PATH, 'servers', `${sessionName}/minecraft_server.${manifest.id}.jar`)
+    }
     console.log(arguments)
     console.log(javaPath)
     console.log(jarFile)

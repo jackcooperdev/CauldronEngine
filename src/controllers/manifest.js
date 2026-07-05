@@ -17,6 +17,7 @@ const { checkInternet } = require("../tools/checkConnection.js");
 const { checkCompat } = require("./jvm.js");
 const { getOperatingSystem } = require("../tools/compatibility");
 const { version } = require("bluebird");
+const { buildJVMRules } = require("../tools/launchBuilder.js");
 
 const osCurrent = os.platform();
 
@@ -194,14 +195,18 @@ async function getServerManifest(v, l, lv = 'release', n) {
             if (!foundManifest) {
                 return reject({ message: `Version not ${l === "vanilla" ? "found" : `supported for loader: ${l}`}` });
             };
+            console.log(foundManifest)
             if (foundManifest.id.includes("forge") || foundManifest.id.includes("fabric")) {
-                v = foundManifest.id.split("-")[1]
+                if (!foundManifest.id.includes("minecraftforge")) {
+                    v = foundManifest.id.split("-")[1]
+                }
+
             } else {
                 v = foundManifest.id;
             }
             lv = foundManifest.loaderVersion || foundManifest.version;
             const createdManifest = await addOSSpecArguments(foundManifest);
-
+            let postData = null;
             if (createdManifest.requiresPost) {
                 postData = await checkManifest(path.join("versions", specLocation, "post.json"), `${RESOURCES_PATH}/loaders/${l}/${createdManifest.id.split("-")[1]}-${lv}/post.json`, "spec");
                 let entryFile = postData.path;
@@ -209,7 +214,13 @@ async function getServerManifest(v, l, lv = 'release', n) {
                 let foundEntryFile = postData.libraries.find(lib => lib.name == entryFile)
 
                 if (foundEntryFile) {
+                    console.log('passed on first entry');
+                    console.log(foundEntryFile)
                     createdManifest.downloads['runner_file'] = foundEntryFile.downloads.artifact;
+
+                    if (!createdManifest.downloads['runner_file'].url) {
+                        createdManifest.downloads['runner_file'].url = `${RESOURCES_PATH}/loaders/forge/${v}-${lv}/forge-${v}-${lv}.jar`
+                    }
                 } else {
                     console.log('retry')
                     let original = entryFile;
@@ -221,6 +232,8 @@ async function getServerManifest(v, l, lv = 'release', n) {
                             console.log(foundEntryFile)
                             foundEntryFile.downloads.artifact.url = `${RESOURCES_PATH}/loaders/forge/${v}-${lv}/forge-${v}-${lv}.jar`
                             //foundEntryFile.downloads.artifact.sha1 = 'NONE';
+                        } else {
+                            console.log('failed second entry')
                         }
                         createdManifest.downloads['runner_file'] = foundEntryFile.downloads.artifact;
                     }
@@ -232,13 +245,13 @@ async function getServerManifest(v, l, lv = 'release', n) {
 
             if (createdManifest.downloads.runner_file) {
 
-                let runnerFileName = `${createdManifest.id}-server.jar`;
+                let runnerFileName = `${createdManifest.id}.jar`;
 
                 if (createdManifest.downloads.runner_file.path) {
                     let extractedName = createdManifest.downloads.runner_file.path.split("/").pop();
                     runnerFileName = extractedName;
                 }
-
+                console.log(v)
                 await checkJAR(path.join("servers", `${n}`, runnerFileName), createdManifest.downloads.runner_file.url);
                 await checkJAR(path.join("servers", `${n}`, `minecraft_server.${v}.jar`), createdManifest.downloads.server.url);
             } else {

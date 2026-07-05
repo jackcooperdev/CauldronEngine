@@ -95,6 +95,7 @@ async function startServer(sessionName, version, loader, lVersion, overrides) {
             let sessionID = createUUID()
             cauldronLogger.debug("Session ID: " + sessionID);
             //Create Bulk Manifests
+            console.log(version)
             const manifests = await getServerManifest(version, loader, lVersion, sessionName);
             //console.log(manifests)
             //process.exit();
