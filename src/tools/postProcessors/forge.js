@@ -72,7 +72,7 @@ async function postProcessing(manifests, libs, version, side = 'client', cPath) 
 
                     //Acquire Libraries (These Libraries are required but do not need to be included in the launch file)
                     let nonDeclaredLibs = profileFile.libraries;
-                    await getLibraries(nonDeclaredLibs, manifests.versionData, manifests.spec.id, `${manifests.spec.id}-post`, cPath);
+                    await getLibraries(nonDeclaredLibs, manifests.versionData, manifests.spec.id, `${manifests.spec.id}-post-${side}`, libPath);
 
                     // Acquire Forge Data
                     /**
