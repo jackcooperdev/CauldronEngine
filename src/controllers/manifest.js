@@ -21,8 +21,8 @@ const { buildJVMRules } = require("../tools/launchBuilder.js");
 
 const osCurrent = os.platform();
 
-//const RESOURCES_PATH = process.env.RESOURCE_SERVER || "https://resources.cauldronmc.com"
-const RESOURCES_PATH = 'http://localhost:3300'
+const RESOURCES_PATH = process.env.RESOURCE_SERVER || "https://resources.cauldronmc.com"
+//const RESOURCES_PATH = 'http://localhost:3300'
 async function checkManifest(fileName, url, type) {
     return new Promise(async (resolve, reject) => {
         let isOnline = await checkInternet();
