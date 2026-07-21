@@ -227,9 +227,6 @@ async function buildLaunchScript(manifest, jreVersion, sessionName) {
     } else {
         jarFile = path.join(CAULDRON_PATH, 'servers', `${sessionName}/minecraft_server.${manifest.id}.jar`)
     }
-    console.log(arguments)
-    console.log(javaPath)
-    console.log(jarFile)
     let launchCommand;
     if (arguments) {
         launchCommand = `${javaPath} -Xmx4G -Xms4G ${arguments} nogui`;

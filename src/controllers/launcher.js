@@ -80,7 +80,6 @@ async function startServer(sessionName, version, loader, lVersion, overrides) {
 
         if (!fs.existsSync(serverPath)) {
             fs.mkdirSync(serverPath, { recursive: true });
-            fs.writeFileSync(path.join(serverPath, 'eula.txt'), 'eula=true');
         }
 
         const spinner = ora('Starting Boot')
@@ -95,12 +94,10 @@ async function startServer(sessionName, version, loader, lVersion, overrides) {
             let sessionID = createUUID()
             cauldronLogger.debug("Session ID: " + sessionID);
             //Create Bulk Manifests
-            console.log(version)
             const manifests = await getServerManifest(version, loader, lVersion, sessionName);
             //console.log(manifests)
             //process.exit();
             let libGet = await handleGrabDeps(manifests, null, path.join(serverPath, 'libraries'));
-            console.log(libGet)
             if (loader !== "vanilla") {
                 if (manifests.needsPost) {
                     if (loader === 'forge') {
@@ -112,23 +109,7 @@ async function startServer(sessionName, version, loader, lVersion, overrides) {
                 }
             }
             let launchPath = await buildLaunchScript(manifests.spec, manifests.jvmComp, sessionName);
-            console.log(launchPath)
-            resolve({launchPath,serverPath});
-            //process.exit(0)
-           /*  const isWindows = getOperatingSystem() === 'windows';
-            const child = isWindows
-                ? spawn('cmd', ['/c', `cd /d ${serverPath} && ${launchPath}`], {
-                    stdio: 'inherit',
-                    windowsHide: true
-                })
-                : spawn('sh', ['-c', `cd ${serverPath} && ${launchPath}`], {
-                    stdio: 'inherit'
-                });
-
-            child.on('exit', (code) => {
-                process.exit(code);
-            });
-            resolve(sessionID); */
+            resolve({ launchPath, serverPath });
 
         } catch (err) {
             spinner.fail(err.message)

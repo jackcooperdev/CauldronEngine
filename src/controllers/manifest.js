@@ -193,13 +193,11 @@ async function getServerManifest(v, l, lv = 'release', n) {
 
             let specPath = l !== 'vanilla' ? `/loaders/${l}/${v}/${lv}` : `/spec/${v}`
             let specLocation = l !== "vanilla" ? `${l}-${v}-${lv}` : v;
-            console.log(RESOURCES_PATH)
 
             const foundManifest = await checkManifest(path.join("versions", specLocation, `${specLocation}.json`), `${RESOURCES_PATH}${specPath}`, 'spec')
             if (!foundManifest) {
                 return reject({ message: `Version not ${l === "vanilla" ? "found" : `supported for loader: ${l}`}` });
             };
-            console.log(foundManifest)
             if (foundManifest.id.includes("forge") || foundManifest.id.includes("fabric")) {
                 if (!foundManifest.id.includes("minecraftforge")) {
                     v = foundManifest.id.split("-")[1]
@@ -244,8 +242,6 @@ async function getServerManifest(v, l, lv = 'release', n) {
 
                 }
             }
-            console.log(createdManifest.downloads)
-            //console.log(createdManifest.downloads)
 
             if (createdManifest.downloads.runner_file) {
 
