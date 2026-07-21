@@ -216,6 +216,9 @@ async function buildLaunchScript(manifest, jreVersion, sessionName) {
     if (osCurrent === "darwin") {
         arguments = atob(serverArgs['unix'])
         javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "jre.bundle", "Contents", "Home", "bin", "java",);
+    } else if (osCurrent === 'linux') {
+        arguments = atob(serverArgs['unix']);
+         javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "bin", "java");
     } else {
         arguments = atob(serverArgs['win'])
         javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "bin", "javaw");
