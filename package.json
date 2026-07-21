@@ -1,6 +1,6 @@
 {
   "name": "@jackcooperdev/cauldronengine",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "readme": "README.md",
   "type": "commonjs",
   "repository": {
@@ -34,12 +34,10 @@
     "bluebird": "^3.7.2",
     "checksum": "^1.0.0",
     "consola": "^3.4.2",
+    "jwt-decode": "^4.0.0",
     "node-stream-zip": "^1.15.0",
     "nodejs-file-downloader": "^4.13.0",
     "ora-classic": "^5.4.2",
     "unzipper": "^0.12.5"
-  },
-  "devDependencies": {
-  
   }
 }
