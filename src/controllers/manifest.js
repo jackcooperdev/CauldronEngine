@@ -15,14 +15,14 @@ const {
 const { cauldronLogger } = require("../tools/logger.js");
 const { checkInternet } = require("../tools/checkConnection.js");
 const { checkCompat } = require("./jvm.js");
-const {getOperatingSystem} = require("../tools/compatibility");
-const {version} = require("bluebird");
+const { getOperatingSystem } = require("../tools/compatibility");
+const { version } = require("bluebird");
+const { buildJVMRules } = require("../tools/launchBuilder.js");
 
 const osCurrent = os.platform();
 
-const RESOURCES_PATH= process.env.RESOURCE_SERVER || "https://resources.cauldronmc.com"
-
-
+//const RESOURCES_PATH = process.env.RESOURCE_SERVER || "https://resources.cauldronmc.com"
+const RESOURCES_PATH = 'http://localhost:3300'
 async function checkManifest(fileName, url, type) {
     return new Promise(async (resolve, reject) => {
         let isOnline = await checkInternet();
@@ -41,7 +41,9 @@ async function checkManifest(fileName, url, type) {
                     resolve(downloadedFile);
                 } catch (err) {
                     console.log(err)
-                    reject(`This Profile either does not exist or is not supported`);
+                    console.log(url)
+                    console.log(process.env.RESOURCE_SERVER)
+                    reject(`This Profile either do2es not exist or is not supported`);
                 }
             } else {
                 reject(`This Profile Cannot be launched offline. Please Launch it Online first`);
@@ -129,11 +131,11 @@ async function downloadManifest(url, dir, type) {
                 let version = fileData.id
                 let newPath;
                 if (!url.includes("post.json")) {
-                    newPath = path.join(CAULDRON_PATH,'versions',version,`${version}.json`)
+                    newPath = path.join(CAULDRON_PATH, 'versions', version, `${version}.json`)
                 } else {
                     let splitVersion = fileData.version.split("-");
                     version = `forge-${splitVersion[0]}-${splitVersion[2]}`
-                    newPath = path.join(CAULDRON_PATH,'versions',version,`post.json`)
+                    newPath = path.join(CAULDRON_PATH, 'versions', version, `post.json`)
                 }
                 dir = newPath;
             }
@@ -167,6 +169,132 @@ async function getPackwizJVM() {
     });
 }
 
+async function getServerManifest(v, l, lv = 'release', n) {
+    return new Promise(async (resolve, reject) => {
+        let CAULDRON_PATH = grabPath();
+
+        try {
+            fs.mkdirSync(path.join(CAULDRON_PATH, "config"), { recursive: true });
+
+            const ensureFile = (filePath) => {
+                if (!fs.existsSync(filePath)) {
+                    fs.writeFileSync(filePath, "{}");
+                }
+            };
+
+
+            ensureFile(path.join(CAULDRON_PATH, "config/assets_installed.json"));
+            ensureFile(path.join(CAULDRON_PATH, "config/jvm_installed.json"));
+            ensureFile(path.join(CAULDRON_PATH, "config/libs_installed.json"));
+
+            const assetDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, "config/assets_installed.json")).toString());
+            const jvmDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, "config/jvm_installed.json")).toString());
+            const libDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, "config/libs_installed.json")).toString());
+
+            let specPath = l !== 'vanilla' ? `/loaders/${l}/${v}/${lv}` : `/spec/${v}`
+            let specLocation = l !== "vanilla" ? `${l}-${v}-${lv}` : v;
+
+            const foundManifest = await checkManifest(path.join("versions", specLocation, `${specLocation}.json`), `${RESOURCES_PATH}${specPath}`, 'spec')
+            if (!foundManifest) {
+                return reject({ message: `Version not ${l === "vanilla" ? "found" : `supported for loader: ${l}`}` });
+            };
+            if (foundManifest.id.includes("forge") || foundManifest.id.includes("fabric")) {
+                if (!foundManifest.id.includes("minecraftforge")) {
+                    v = foundManifest.id.split("-")[1]
+                }
+
+            } else {
+                v = foundManifest.id;
+            }
+            lv = foundManifest.loaderVersion || foundManifest.version;
+            const createdManifest = await addOSSpecArguments(foundManifest);
+            let postData = null;
+            if (createdManifest.requiresPost) {
+                postData = await checkManifest(path.join("versions", specLocation, "post.json"), `${RESOURCES_PATH}/loaders/${l}/${createdManifest.id.split("-")[1]}-${lv}/post.json`, "spec");
+                let entryFile = postData.path;
+
+                let foundEntryFile = postData.libraries.find(lib => lib.name == entryFile)
+
+                if (foundEntryFile) {
+                    console.log('passed on first entry');
+                    console.log(foundEntryFile)
+                    createdManifest.downloads['runner_file'] = foundEntryFile.downloads.artifact;
+
+                    if (!createdManifest.downloads['runner_file'].url) {
+                        createdManifest.downloads['runner_file'].url = `${RESOURCES_PATH}/loaders/forge/${v}-${lv}/forge-${v}-${lv}.jar`
+                    }
+                } else {
+                    console.log('retry')
+                    let original = entryFile;
+                    // Attempt Universal Appending
+                    entryFile = `${entryFile}`;
+                    foundEntryFile = createdManifest.libraries.find(lib => lib.name == entryFile);
+                    if (foundEntryFile) {
+                        if (!foundEntryFile.downloads.artifact.url) {
+                            console.log(foundEntryFile)
+                            foundEntryFile.downloads.artifact.url = `${RESOURCES_PATH}/loaders/forge/${v}-${lv}/forge-${v}-${lv}.jar`
+                            //foundEntryFile.downloads.artifact.sha1 = 'NONE';
+                        } else {
+                            console.log('failed second entry')
+                        }
+                        createdManifest.downloads['runner_file'] = foundEntryFile.downloads.artifact;
+                    }
+
+                }
+            }
+
+            if (createdManifest.downloads.runner_file) {
+
+                let runnerFileName = `${createdManifest.id}.jar`;
+
+                if (createdManifest.downloads.runner_file.path) {
+                    let extractedName = createdManifest.downloads.runner_file.path.split("/").pop();
+                    runnerFileName = extractedName;
+                }
+                console.log(v)
+                await checkJAR(path.join("servers", `${n}`, runnerFileName), createdManifest.downloads.runner_file.url);
+                await checkJAR(path.join("servers", `${n}`, `minecraft_server.${v}.jar`), createdManifest.downloads.server.url);
+            } else {
+                await checkJAR(path.join("servers", `${n}`, `minecraft_server.${v}.jar`), createdManifest.downloads.server.url);
+
+            }
+
+            //process.exit(0)
+            // JVM Only
+            const jvmMeta = await checkManifest(path.join("jvm", "jvm-core.json"), "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json", "java");
+            const jvmCompat = await checkCompat(createdManifest.javaVersion.component, jvmMeta);
+            if (!jvmCompat) return reject("Version Not Supported on " + osCurrent);
+            const jvmMani = await checkManifest(path.join("jvm", `${createdManifest.javaVersion.component}.json`), jvmCompat[0].manifest.url, "java");
+
+
+
+
+            const allManifests = {
+                spec: createdManifest,
+                jvmMani,
+                jvmComp: createdManifest.javaVersion.component,
+                version: v,
+                versionData: { loader: l, version: v, loaderVersion: lv },
+                loader: l,
+                assetsDownloaded: true,
+                jvmDownloaded: !!jvmDict[createdManifest.javaVersion.component],
+                libsDownloaded: true,
+                isServer: true,
+                loaderVersion: lv,
+                needsPost: createdManifest.requiresPost,
+                postData,
+
+            };
+
+            resolve(allManifests);
+        } catch (err) {
+            console.error(err);
+            process.exit(0);
+            reject(err);
+        }
+    })
+}
+
 async function getManifests(v, l, lv = 'release') {
     return new Promise(async (resolve, reject) => {
         let CAULDRON_PATH = grabPath();
@@ -190,7 +318,7 @@ async function getManifests(v, l, lv = 'release') {
             let specPath = l !== 'vanilla' ? `/loaders/${l}/${v}/${lv}` : `/spec/${v}`
             let specLocation = l !== "vanilla" ? `${l}-${v}-${lv}` : v;
 
-            const foundManifest = await checkManifest(path.join("versions", specLocation, `${specLocation}.json`),`${RESOURCES_PATH}${specPath}`,'spec')
+            const foundManifest = await checkManifest(path.join("versions", specLocation, `${specLocation}.json`), `${RESOURCES_PATH}${specPath}`, 'spec')
             if (!foundManifest) {
                 return reject({ message: `Version not ${l === "vanilla" ? "found" : `supported for loader: ${l}`}` });
             }
@@ -242,6 +370,7 @@ async function getManifests(v, l, lv = 'release') {
                 jvmDownloaded: !!jvmDict[createdManifest.javaVersion.component],
                 libsDownloaded: !!libDict[createdManifest.id],
                 loaderVersion: lv,
+                isServer: false,
                 needsPost: createdManifest.requiresPost,
                 postData,
             };
@@ -265,4 +394,4 @@ async function whatIsThis(version, vanillaManifest) {
     }
 }
 
-module.exports =  { getManifests, getPackwizJVM, checkManifest, whatIsThis };
+module.exports = { getManifests, getPackwizJVM, checkManifest, whatIsThis, getServerManifest };

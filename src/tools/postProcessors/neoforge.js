@@ -19,6 +19,12 @@ function convertNameToPath(name) {
     let chunkThree = split[2];
     return { chunkOne: chunkOne, chunkTwo: chunkTwo, chunkThree: chunkThree };
 }
+function hasExtractFilesTask(entry) {
+    if (!Array.isArray(entry.args)) return false;
+    const taskIndex = entry.args.indexOf('--task');
+    if (taskIndex === -1) return false;
+    return entry.args[taskIndex + 1] === 'EXTRACT_FILES';
+}
 function addManifestToJar(jarPath, javaDir) {
     const jarTool = path.join(javaDir, "jar");
     const manifestContent = "Manifest-Version: 1.0\nAutomatic-Module-Name: minecraft\n\n";
@@ -36,21 +42,29 @@ function addManifestToJar(jarPath, javaDir) {
         if (fs.existsSync(manifestPath)) fs.unlinkSync(manifestPath);
     }
 }
-async function postProcessing(manifests, libs, version) {
+async function postProcessing(manifests, libs, version, side = 'client', cPath) {
     return new Promise(async (resolve, reject) => {
         let CAULDRON_PATH = grabPath();
         let mainClass;
         try {
             let { version, loaderVersion } = manifests.versionData;
+            let libPath = path.join(CAULDRON_PATH, "libraries");
+            let jarLoc = path.join(CAULDRON_PATH, 'versions', `neoforge-${version}-${loaderVersion}`, `neoforge-${version}-${loaderVersion}.jar`)
+            if (cPath) {
+                libPath = cPath;
+                jarLoc = path.join(libPath, '../', `minecraft_server.${version}.jar`)
+            }
 
-            const profileFile = manifests.postData;
+            let profileFile = manifests.postData;
 
             if (profileFile.processors) {
                 if (profileFile.processors.length === 0) {
                     resolve(libs);
                 } else {
+                    const filtered = profileFile.processors.filter(entry => !hasExtractFilesTask(entry));
+                    profileFile.processors = filtered;
                     let nonDeclaredLibs = profileFile.libraries;
-                    await getLibraries(nonDeclaredLibs, manifests.versionData, manifests.spec.id, `${manifests.spec.id}-post`,);
+                    await getLibraries(nonDeclaredLibs, manifests.versionData, manifests.spec.id, `${manifests.spec.id}-post-${side}`, libPath);
 
                     let forgeData = profileFile.data;
 
@@ -71,50 +85,51 @@ async function postProcessing(manifests, libs, version) {
                         if (fIdx === "MCP_VERSION") {
                             params[fIdx] = MCP_VERSION;
                         } else if (fIdx === "BINPATCH") {
-                            params[fIdx] = path.join(CAULDRON_PATH, "versions", `neoforge-${manifests.version}-${manifests.loaderVersion}`, "client.lzma");
+                            params[fIdx] = path.join(libPath, `/net/clients/neoforge-${manifests.version}-${manifests.loaderVersion}`, `${manifests.postData.data.BINPATCH[side].replace('/data/','')}`);
+                            //params[fIdx] = path.join(CAULDRON_PATH, "versions", `neoforge-${manifests.version}-${manifests.loaderVersion}`, "client.lzma");
                         } else if (!fIdx.includes("SHA")) {
-                            let splitDir = forgeData[fIdx].client
+                            let splitDir = forgeData[fIdx][side]
                                 .replace(/[\[\]]/g, "")
                                 .split(":");
                             if (fIdx === "MAPPINGS") {
                                 params[fIdx] = path.join(
-                                    CAULDRON_PATH, "libraries",
+                                    libPath,
                                     splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2],
                                     `${splitDir[1]}-${splitDir[2]}`
                                 );
                             } else if (fIdx === "MOJMAPS") {
                                 params[fIdx] = path.join(
-                                    CAULDRON_PATH, "libraries",
+                                    libPath,
                                     splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2],
                                     `${splitDir[1]}-${splitDir[2]}`
                                 );
                             } else if (fIdx === "MERGED_MAPPINGS") {
                                 params[fIdx] = path.join(
-                                    CAULDRON_PATH, "libraries",
+                                    libPath,
                                     splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2],
                                     `${splitDir[1]}-${splitDir[2]}-merged`
                                 );
                             } else if (fIdx === "MC_SRG") {
                                 params[fIdx] = path.join(
-                                    CAULDRON_PATH, "libraries",
+                                    libPath,
                                     splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2],
                                     `${splitDir[1]}-${splitDir[2]}-srg.jar`
                                 );
                             } else if (fIdx === "MC_SLIM") {
                                 params[fIdx] = path.join(
-                                    CAULDRON_PATH, "libraries",
+                                    libPath,
                                     splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2],
                                     `${splitDir[1]}-${splitDir[2]}-slim.jar`
                                 );
                             } else if (fIdx === "MC_EXTRA") {
                                 params[fIdx] = path.join(
-                                    CAULDRON_PATH, "libraries",
+                                    libPath,
                                     splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2],
                                     `${splitDir[1]}-${splitDir[2]}-extra.jar`
                                 );
                             } else if (fIdx === "MC_UNPACKED") {
                                 params[fIdx] = path.join(
-                                    CAULDRON_PATH, "libraries",
+                                    libPath,
                                     splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2],
                                     `${splitDir[1]}-${splitDir[2]}.jar`
                                 );
@@ -122,13 +137,13 @@ async function postProcessing(manifests, libs, version) {
                                 const classifier = splitDir[3]; // e.g. "client" or undefined
                                 if (classifier) {
                                     params[fIdx] = path.join(
-                                        CAULDRON_PATH, "libraries",
+                                        libPath,
                                         splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2],
                                         `${splitDir[1]}-${splitDir[2]}-${classifier}.jar`
                                     );
                                 } else {
                                     params[fIdx] = path.join(
-                                        CAULDRON_PATH, "libraries",
+                                        libPath,
                                         splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2],
                                         `${splitDir[1]}-${splitDir[2]}.jar`
                                     );
@@ -140,12 +155,15 @@ async function postProcessing(manifests, libs, version) {
                     }
 
                     // Additional Params
-                    params["MAPPING_PATH"] = path.join(CAULDRON_PATH, "libraries", "net/neoforged/neoform", `${MCP_VERSION}`, `neoform-${MCP_VERSION}.zip`,);
-                    params["MINECRAFT_JAR"] = path.join(CAULDRON_PATH, "versions", `neoforge-${version}-${loaderVersion}`, `neoforge-${version}-${loaderVersion}.jar`,);
-                    params["SIDE"] = "client";
+                    params["MAPPING_PATH"] = path.join(libPath, "net/neoforged/neoform", `${MCP_VERSION}`, `neoform-${MCP_VERSION}.zip`,);
+                    params["MINECRAFT_JAR"] = jarLoc
+                    params["SIDE"] = side;
+                    params['ROOT'] = path.join(libPath, '../')
 
                     const patchedClientPath = params["PATCHED"];
-
+                    console.log(params)
+                    console.log(manifests.postData.data.BINPATCH)
+                    //process.exit(0)
                     const javaDir = getOperatingSystem() === "osx"
                         ? path.join(CAULDRON_PATH, "jvm", manifests.jvmComp, "jre.bundle/Contents/Home/bin")
                         : path.join(CAULDRON_PATH, "jvm", manifests.jvmComp, "bin");
@@ -187,7 +205,7 @@ async function postProcessing(manifests, libs, version) {
 
 
                         // Extract MainClass From Manifest File
-                        let lPath = path.join(CAULDRON_PATH, "libraries", splitName.chunkOne, splitName.chunkTwo, splitName.chunkThree, `${fileName}.jar`,);
+                        let lPath = path.join(libPath, splitName.chunkOne, splitName.chunkTwo, splitName.chunkThree, `${fileName}.jar`,);
                         const lFile = new StreamZip.async({ file: lPath });
                         const dataBuffer = await lFile.entryData("META-INF/MANIFEST.MF");
                         const data = dataBuffer.toString();
@@ -208,12 +226,12 @@ async function postProcessing(manifests, libs, version) {
                                 .join("/");
                             let secondChunk = processors[pIdx].classpath[cpIdx].split(":")[1];
                             let thirdChunk = processors[pIdx].classpath[cpIdx].split(":")[2].replace("@jar", "");
-                            let lPathTemp = path.join(CAULDRON_PATH, "libraries", firstChunk, secondChunk, thirdChunk, `${secondChunk}-${thirdChunk}.jar`,);
+                            let lPathTemp = path.join(libPath, firstChunk, secondChunk, thirdChunk, `${secondChunk}-${thirdChunk}.jar`,);
                             classPaths.push(lPathTemp);
                         }
                         classPaths.push(lPath);
                         let actualArgs = processors[pIdx].args.join(" ");
-                        if (!processors[pIdx].sides || processors[pIdx].sides.includes("client")) {
+                        if (!processors[pIdx].sides || processors[pIdx].sides.includes(side)) {
                             let classPathSep;
                             let osCurrent = getOperatingSystem();
                             if (osCurrent === "windows") {
@@ -238,6 +256,7 @@ async function postProcessing(manifests, libs, version) {
 
                             if (checkFiles.length !== 0 || override) {
                                 try {
+                                    console.log(`${javaPath} ${command}`)
                                     cauldronLogger.debug(`${javaPath} ${command}`)
                                     const result = await spawn(javaPath, command.split(" "));
                                     cauldronLogger.debug(result.toString());

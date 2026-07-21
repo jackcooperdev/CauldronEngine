@@ -3,7 +3,7 @@ const path = require("path");
 const os = require("os");
 const { exec } = require("child_process");
 const { grabPath, getOperatingSystem } = require("./compatibility.js");
-const {jwtDecode} = require("jwt-decode");
+const { jwtDecode } = require("jwt-decode");
 
 
 // const __filename = fileURLToPath(import.meta.url);
@@ -104,6 +104,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
         // Convert Library List into Joined List
         let classPathSep;
         let classPath;
+        libraryList = libraryList.filter(path => !path.endsWith('.lzma'));
         if (osCurrent === "win32") {
             classPath = libraryList.join(";");
             classPathSep = ";";
@@ -204,6 +205,62 @@ async function buildGameRules(manifest, loggedUser, overrides, addit) {
     });
 }
 
+async function buildLaunchScript(manifest, jreVersion, sessionName) {
+    let CAULDRON_PATH = grabPath();
+    let javaPath;
+    let arguments;
+    let serverArgs = manifest.arguments.server;
+    if (!serverArgs) {
+        serverArgs = {unix:'',win:''}
+    }
+    if (osCurrent === "darwin") {
+        arguments = atob(serverArgs['unix'])
+        javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "jre.bundle", "Contents", "Home", "bin", "java",);
+    } else {
+        arguments = atob(serverArgs['win'])
+        javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "bin", "javaw");
+    }
+    let jarFile;
+
+    if (manifest.loader !== 'vanilla') {
+        jarFile = path.join(CAULDRON_PATH, 'servers', `${sessionName}/${manifest.id}.jar`)
+    } else {
+        jarFile = path.join(CAULDRON_PATH, 'servers', `${sessionName}/minecraft_server.${manifest.id}.jar`)
+    }
+    let launchCommand;
+    if (arguments) {
+        launchCommand = `${javaPath} -Xmx4G -Xms4G ${arguments} nogui`;
+    } else {
+        launchCommand = `${javaPath} -Xmx4G -Xms4G -jar ${jarFile} nogui`;
+    }
+
+
+    const scriptDir = path.join(CAULDRON_PATH, "scripts");
+    fs.mkdirSync(scriptDir, { recursive: true });
+
+    if (osCurrent === "linux" || osCurrent === "darwin") {
+        const scriptPath = path.join(scriptDir, "launch-server.sh");
+        fs.writeFileSync(scriptPath, launchCommand);
+        await new Promise((res, rej) => {
+            exec(`chmod +x "${scriptPath}"`, (err) => {
+                if (err) return rej(err);
+                res();
+            });
+        });
+        await new Promise((res, rej) => {
+            exec(`chmod +x "${javaPath}"`, (err) => {
+                if (err) return rej(err);
+                res();
+            });
+        });
+        return scriptPath;
+    } else if (osCurrent === "win32") {
+        const scriptPath = path.join(scriptDir, "launch-server.bat");
+        fs.writeFileSync(scriptPath, launchCommand);
+        return scriptPath;
+    }
+}
+
 async function buildFile(manifest, jreVersion, validRules, gameRules) {
     let CAULDRON_PATH = grabPath();
     let mainClass = manifest.mainClass;
@@ -241,4 +298,4 @@ async function buildFile(manifest, jreVersion, validRules, gameRules) {
     }
 }
 
-module.exports =  {buildJVMRules, buildGameRules, buildFile, logInjector};
+module.exports = { buildJVMRules, buildGameRules, buildFile, logInjector, buildLaunchScript };

@@ -6,7 +6,7 @@ const { processQueue, verifyInstallation } = require("./queue.js");
 const { cauldronLogger } = require("../tools/logger.js");
 const { checkInternet } = require("../tools/checkConnection.js");
 
-async function getLibraries(libList, versionData, maniID, customName) {
+async function getLibraries(libList, versionData, maniID, customName, cPath) {
     return new Promise(async (resolve, reject) => {
         let CAULDRON_PATH = grabPath();
         try {
@@ -56,11 +56,15 @@ async function getLibraries(libList, versionData, maniID, customName) {
 
                 if (libAllowed) {
                     if (libList[idx].downloads.artifact) {
-                        const libPath = path.join(
+                        let libPath = path.join(
                             CAULDRON_PATH,
                             "libraries",
                             path.dirname(libList[idx].downloads.artifact.path)
                         );
+                        let pathCache = libPath;
+                        if (cPath) {
+                            libPath = path.join(cPath, path.dirname(libList[idx].downloads.artifact.path))
+                        }
                         fs.mkdirSync(libPath, { recursive: true });
 
                         let obj = {
@@ -70,7 +74,7 @@ async function getLibraries(libList, versionData, maniID, customName) {
                             fileName: path.basename(libList[idx].downloads.artifact.path),
                         };
                         dQueue.push(obj);
-                        if (!obj.destination.includes("versions")) {
+                        if (!pathCache.includes("versions")) {
                             libArray.push(path.join(obj.destination, obj.fileName));
                         }
                     }
@@ -134,4 +138,4 @@ async function getLibraries(libList, versionData, maniID, customName) {
     });
 }
 
-module.exports =  { getLibraries };
+module.exports = { getLibraries };
