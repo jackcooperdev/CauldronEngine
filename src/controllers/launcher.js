@@ -66,7 +66,7 @@ async function handleGrabDeps(manifests, multibar, cPath) {
     }
 }
 
-async function startServer(sessionName, version, loader, lVersion, overrides) {
+async function startServer(sessionName, version, loader, lVersion, serverSoftware = 'default',overrides, rp) {
     if (!overrides) {
         overrides = { jvm: {}, game: {}, additG: {} };
     }
@@ -94,9 +94,7 @@ async function startServer(sessionName, version, loader, lVersion, overrides) {
             let sessionID = createUUID()
             cauldronLogger.debug("Session ID: " + sessionID);
             //Create Bulk Manifests
-            const manifests = await getServerManifest(version, loader, lVersion, sessionName);
-            //console.log(manifests)
-            //process.exit();
+            const manifests = await getServerManifest(version, loader, lVersion, sessionName, serverSoftware,rp);
             let libGet = await handleGrabDeps(manifests, null, path.join(serverPath, 'libraries'));
             if (loader !== "vanilla") {
                 if (manifests.needsPost) {
