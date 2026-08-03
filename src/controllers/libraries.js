@@ -1,10 +1,10 @@
 const fs = require("fs");
 const path = require("path");
 const StreamZip = require("node-stream-zip");
-const { grabPath, getOperatingSystem } = require("../tools/compatibility.js");
-const { processQueue, verifyInstallation } = require("./queue.js");
-const { cauldronLogger } = require("../tools/logger.js");
-const { checkInternet } = require("../tools/checkConnection.js");
+const {grabPath, getOperatingSystem} = require("../tools/compatibility.js");
+const {processQueue, verifyInstallation} = require("./queue.js");
+const {cauldronLogger} = require("../tools/logger.js");
+const {checkInternet} = require("../tools/checkConnection.js");
 
 async function getLibraries(libList, versionData, maniID, customName, cPath) {
     return new Promise(async (resolve, reject) => {
@@ -65,7 +65,7 @@ async function getLibraries(libList, versionData, maniID, customName, cPath) {
                         if (cPath) {
                             libPath = path.join(cPath, path.dirname(libList[idx].downloads.artifact.path))
                         }
-                        fs.mkdirSync(libPath, { recursive: true });
+                        fs.mkdirSync(libPath, {recursive: true});
 
                         let obj = {
                             origin: libList[idx].downloads.artifact.url,
@@ -115,7 +115,10 @@ async function getLibraries(libList, versionData, maniID, customName, cPath) {
                 }
             }
 
-            let checkName = customName || maniID;
+            let checkName = maniID;
+            if (customName) {
+                checkName = `${checkName}-${customName}`
+            }
             if ((await checkInternet()) && !currentLibraryFile[checkName]) {
                 await processQueue(dQueue, false, "libraries");
                 currentLibraryFile[checkName] = {
@@ -138,4 +141,4 @@ async function getLibraries(libList, versionData, maniID, customName, cPath) {
     });
 }
 
-module.exports = { getLibraries };
+module.exports = {getLibraries};
