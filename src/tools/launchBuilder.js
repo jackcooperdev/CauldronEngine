@@ -11,7 +11,7 @@ const { jwtDecode } = require("jwt-decode");
 // const systemPKG = JSON.parse(fs.readFileSync(path.join(__dirname, '../../package.json'), 'utf8'));
 const defaultJVM = {
     "launcher_name": "CauldronEngine",
-    "ram": "2"
+    "ram": "4"
 }
 
 
@@ -208,19 +208,19 @@ async function buildGameRules(manifest, loggedUser, overrides, addit) {
 async function buildLaunchScript(manifest, jreVersion, sessionName) {
     let CAULDRON_PATH = grabPath();
     let javaPath;
-    let arguments;
+    let launchArguments;
     let serverArgs = manifest.arguments.server;
     if (!serverArgs) {
         serverArgs = {unix:'',win:''}
     }
     if (osCurrent === "darwin") {
-        arguments = atob(serverArgs['unix'])
+        launchArguments = atob(serverArgs['unix'])
         javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "jre.bundle", "Contents", "Home", "bin", "java",);
     } else if (osCurrent === 'linux') {
-        arguments = atob(serverArgs['unix']);
+        launchArguments = atob(serverArgs['unix']);
          javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "bin", "java");
     } else {
-        arguments = atob(serverArgs['win'])
+        launchArguments = atob(serverArgs['win'])
         javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "bin", "javaw");
     }
     let jarFile;
@@ -231,10 +231,11 @@ async function buildLaunchScript(manifest, jreVersion, sessionName) {
         jarFile = path.join(CAULDRON_PATH, 'servers', `${sessionName}/minecraft_server.${manifest.id}.jar`)
     }
     let launchCommand;
-    if (arguments) {
-        launchCommand = `${javaPath} -Xmx4G -Xms4G ${arguments} nogui`;
+    let aikarFlags = getAikarFlags(4).join(" ");
+    if (launchArguments) {
+        launchCommand = `${javaPath} -Xmx4G -Xms4G ${aikarFlags} ${launchArguments} nogui`;
     } else {
-        launchCommand = `${javaPath} -Xmx4G -Xms4G -jar ${jarFile} nogui`;
+        launchCommand = `${javaPath} -Xmx4G -Xms4G ${aikarFlags} -jar ${jarFile} nogui`;
     }
 
 
@@ -263,6 +264,45 @@ async function buildLaunchScript(manifest, jreVersion, sessionName) {
         return scriptPath;
     }
 }
+
+function getAikarFlags(memGB) {
+  const common = [
+    '-XX:+UseG1GC',
+    '-XX:+ParallelRefProcEnabled',
+    '-XX:MaxGCPauseMillis=200',
+    '-XX:+UnlockExperimentalVMOptions',
+    '-XX:+DisableExplicitGC',
+    '-XX:+AlwaysPreTouch',
+    '-XX:G1HeapWastePercent=5',
+    '-XX:G1MixedGCCountTarget=4',
+    '-XX:G1MixedGCLiveThresholdPercent=90',
+    '-XX:G1RSetUpdatingPauseTimePercent=5',
+    '-XX:SurvivorRatio=32',
+    '-XX:+PerfDisableSharedMem',
+    '-XX:MaxTenuringThreshold=1',
+    '-Dusing.aikars.flags=https://mcflags.emc.gs',
+    '-Dsun.rmi.dgc.server.gcInterval=2147483646',
+  ];
+ 
+  const tierFlags = memGB < 12
+    ? [
+        '-XX:G1NewSizePercent=30',
+        '-XX:G1MaxNewSizePercent=40',
+        '-XX:G1HeapRegionSize=8M',
+        '-XX:G1ReservePercent=20',
+        '-XX:InitiatingHeapOccupancyPercent=15',
+      ]
+    : [
+        '-XX:G1NewSizePercent=40',
+        '-XX:G1MaxNewSizePercent=50',
+        '-XX:G1HeapRegionSize=16M',
+        '-XX:G1ReservePercent=15',
+        '-XX:InitiatingHeapOccupancyPercent=20',
+      ];
+ 
+  return [...common, ...tierFlags];
+}
+
 
 async function buildFile(manifest, jreVersion, validRules, gameRules) {
     let CAULDRON_PATH = grabPath();
