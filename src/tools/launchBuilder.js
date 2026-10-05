@@ -4,14 +4,15 @@ const os = require("os");
 const { exec } = require("child_process");
 const { grabPath, getOperatingSystem } = require("./compatibility.js");
 const { jwtDecode } = require("jwt-decode");
-
+const pkgJSON = require('../../package.json')
 
 // const __filename = fileURLToPath(import.meta.url);
 // const __dirname = path.dirname(__filename);
 // const systemPKG = JSON.parse(fs.readFileSync(path.join(__dirname, '../../package.json'), 'utf8'));
 const defaultJVM = {
     "launcher_name": "CauldronEngine",
-    "ram": "4"
+    "ram_low": "4",
+    "ram": "8"
 }
 
 
@@ -116,11 +117,12 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
             natives_directory: path.join(CAULDRON_PATH, "versions", manifest.id, "natives",),
             launcher_name: cusJVM.launcher_name,
             version_name: manifest.id,
-            launcher_version: "1.0",
+            launcher_version: pkgJSON.version,
             client_jar: path.join(CAULDRON_PATH, "versions", manifest.id, manifest.id + ".jar",),
             classpath: classPath,
             path: path.join(CAULDRON_PATH, "assets", "log_configs", "log_config.xml"),
             ram: cusJVM.ram,
+            ram_low: cusJVM.ram_low,
             classpath_separator: classPathSep,
             library_directory: path
                 .join(CAULDRON_PATH, "libraries")
@@ -152,27 +154,38 @@ async function buildGameRules(manifest, loggedUser, overrides, addit) {
         }
 
         let decodedToken = jwtDecode(loggedUser)
+        
         let gameVars = {
-            auth_player_name: decodedToken.pfd[0].name,
+            username: 'none',
             version_type: manifest.type,
             game_directory: CAULDRON_PATH,
             server_ip: "",
+            uuid:'none',
+            xuid :'none',
+            clientId:'none'
         };
+        if (decodedToken.pfd) {
+            gameVars.username = decodedToken.pfd[0].name;
+            gameVars.uuid = decodedToken.pfd[0].id;
+            gameVars.xuid = decodedToken.xuid
+            gameVars.clientId = decodedToken.sub
+        }
+
         for (let idx in overrides) {
             gameVars[idx] = overrides[idx];
         }
 
         let gameVariables = {
-            auth_player_name: gameVars.auth_player_name,
+            auth_player_name: gameVars.username,
             version_name: manifest.id,
             game_directory: gameVars.game_directory,
             assets_root: path.join(CAULDRON_PATH, "assets"),
             assets_index_name: manifest.assets,
-            auth_uuid: decodedToken.pfd[0].id,
+            auth_uuid: gameVars.uuid,
             auth_access_token: loggedUser,
-            CLIENT_ID: decodedToken.sub,
+            CLIENT_ID: gameVars.clientId,
             game_assets: path.join(CAULDRON_PATH, "resources"),
-            auth_xuid: decodedToken.xuid,
+            auth_xuid: gameVars.xuid,
             user_type: "msa",
             version_type: gameVars.version_type,
             user_properties: "{}",
@@ -190,11 +203,9 @@ async function buildGameRules(manifest, loggedUser, overrides, addit) {
             gameRules.push(addit[idx]);
         }
         if (gameVars.server_ip !== "") {
-            if (Number(manifest.id.split(".")[1]) >= 20) {
-                gameRules.push("--quickPlayMultiplayer");
-            } else {
-                gameRules.push("--server");
-            }
+            gameRules.push("--quickPlayMultiplayer");
+            gameRules.push("${server_ip}");
+            gameRules.push("--server");
             gameRules.push("${server_ip}");
         }
         for (let gIdx in gameRules) {
@@ -211,14 +222,14 @@ async function buildLaunchScript(manifest, jreVersion, sessionName) {
     let launchArguments;
     let serverArgs = manifest.arguments.server;
     if (!serverArgs) {
-        serverArgs = {unix:'',win:''}
+        serverArgs = { unix: '', win: '' }
     }
     if (osCurrent === "darwin") {
         launchArguments = atob(serverArgs['unix'])
         javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "jre.bundle", "Contents", "Home", "bin", "java",);
     } else if (osCurrent === 'linux') {
         launchArguments = atob(serverArgs['unix']);
-         javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "bin", "java");
+        javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "bin", "java");
     } else {
         launchArguments = atob(serverArgs['win'])
         javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "bin", "javaw");
@@ -266,41 +277,41 @@ async function buildLaunchScript(manifest, jreVersion, sessionName) {
 }
 
 function getAikarFlags(memGB) {
-  const common = [
-    '-XX:+UseG1GC',
-    '-XX:+ParallelRefProcEnabled',
-    '-XX:MaxGCPauseMillis=200',
-    '-XX:+UnlockExperimentalVMOptions',
-    '-XX:+DisableExplicitGC',
-    '-XX:+AlwaysPreTouch',
-    '-XX:G1HeapWastePercent=5',
-    '-XX:G1MixedGCCountTarget=4',
-    '-XX:G1MixedGCLiveThresholdPercent=90',
-    '-XX:G1RSetUpdatingPauseTimePercent=5',
-    '-XX:SurvivorRatio=32',
-    '-XX:+PerfDisableSharedMem',
-    '-XX:MaxTenuringThreshold=1',
-    '-Dusing.aikars.flags=https://mcflags.emc.gs',
-    '-Dsun.rmi.dgc.server.gcInterval=2147483646',
-  ];
- 
-  const tierFlags = memGB < 12
-    ? [
-        '-XX:G1NewSizePercent=30',
-        '-XX:G1MaxNewSizePercent=40',
-        '-XX:G1HeapRegionSize=8M',
-        '-XX:G1ReservePercent=20',
-        '-XX:InitiatingHeapOccupancyPercent=15',
-      ]
-    : [
-        '-XX:G1NewSizePercent=40',
-        '-XX:G1MaxNewSizePercent=50',
-        '-XX:G1HeapRegionSize=16M',
-        '-XX:G1ReservePercent=15',
-        '-XX:InitiatingHeapOccupancyPercent=20',
-      ];
- 
-  return [...common, ...tierFlags];
+    const common = [
+        '-XX:+UseG1GC',
+        '-XX:+ParallelRefProcEnabled',
+        '-XX:MaxGCPauseMillis=200',
+        '-XX:+UnlockExperimentalVMOptions',
+        '-XX:+DisableExplicitGC',
+        '-XX:+AlwaysPreTouch',
+        '-XX:G1HeapWastePercent=5',
+        '-XX:G1MixedGCCountTarget=4',
+        '-XX:G1MixedGCLiveThresholdPercent=90',
+        '-XX:G1RSetUpdatingPauseTimePercent=5',
+        '-XX:SurvivorRatio=32',
+        '-XX:+PerfDisableSharedMem',
+        '-XX:MaxTenuringThreshold=1',
+        '-Dusing.aikars.flags=https://mcflags.emc.gs',
+        '-Dsun.rmi.dgc.server.gcInterval=2147483646',
+    ];
+
+    const tierFlags = memGB < 12
+        ? [
+            '-XX:G1NewSizePercent=30',
+            '-XX:G1MaxNewSizePercent=40',
+            '-XX:G1HeapRegionSize=8M',
+            '-XX:G1ReservePercent=20',
+            '-XX:InitiatingHeapOccupancyPercent=15',
+        ]
+        : [
+            '-XX:G1NewSizePercent=40',
+            '-XX:G1MaxNewSizePercent=50',
+            '-XX:G1HeapRegionSize=16M',
+            '-XX:G1ReservePercent=15',
+            '-XX:InitiatingHeapOccupancyPercent=20',
+        ];
+
+    return [...common, ...tierFlags];
 }
 
 
