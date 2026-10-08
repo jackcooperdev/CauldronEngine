@@ -160,7 +160,7 @@ async function buildGameRules(manifest, loggedUser, overrides, addit) {
             version_type: manifest.type,
             game_directory: CAULDRON_PATH,
             server_ip: "",
-            uuid:'none',
+            uuid:'8667ba71-b85a-4004-af54-457a9734eed7',
             xuid :'none',
             clientId:'none'
         };

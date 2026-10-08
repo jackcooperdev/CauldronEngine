@@ -39,9 +39,6 @@ async function checkManifest(fileName, url, type) {
                     const downloadedFile = await downloadManifest(url, path.join(CAULDRON_PATH, fileName), type);
                     resolve(downloadedFile);
                 } catch (err) {
-                    console.log(err)
-                    console.log(url)
-                    console.log(process.env.RESOURCE_SERVER)
                     reject(`This Profile either do2es not exist or is not supported`);
                 }
             } else {
@@ -214,26 +211,20 @@ async function getServerManifest(v, l, lv = 'release', n, ss = 'default', resour
                 let foundEntryFile = postData.libraries.find(lib => lib.name == entryFile)
 
                 if (foundEntryFile) {
-                    console.log('passed on first entry');
-                    console.log(foundEntryFile)
                     createdManifest.downloads['runner_file'] = foundEntryFile.downloads.artifact;
 
                     if (!createdManifest.downloads['runner_file'].url) {
                         createdManifest.downloads['runner_file'].url = `${resourcePath}/loaders/forge/${v}-${lv}/forge-${v}-${lv}.jar`
                     }
                 } else {
-                    console.log('retry')
                     let original = entryFile;
                     // Attempt Universal Appending
                     entryFile = `${entryFile}`;
                     foundEntryFile = createdManifest.libraries.find(lib => lib.name == entryFile);
                     if (foundEntryFile) {
                         if (!foundEntryFile.downloads.artifact.url) {
-                            console.log(foundEntryFile)
                             foundEntryFile.downloads.artifact.url = `${resourcePath}/loaders/forge/${v}-${lv}/forge-${v}-${lv}.jar`
                             //foundEntryFile.downloads.artifact.sha1 = 'NONE';
-                        } else {
-                            console.log('failed second entry')
                         }
                         createdManifest.downloads['runner_file'] = foundEntryFile.downloads.artifact;
                     }

@@ -101,15 +101,12 @@ async function postProcessing(manifests, libs, version, side = 'client', cPath) 
                             params[fIdx] = path.join(libPath, `/net/clients/forge-${manifests.version}-${manifests.loaderVersion}`, `${side}.lzma`);
                             //params[fIdx] = path.join(CAULDRON_PATH, "versions", `forge-${manifests.version}-${manifests.loaderVersion}`, "client.lzma");
                         } else if (!fIdx.includes("SHA")) {
-                            console.log('proc sha a')
                             let splitDir = forgeData[fIdx][side]
                                 .replace(/[\[\]]/g, "")
                                 .split(":");
                             if (fIdx === "MAPPINGS" || fIdx === "MOJMAPS" || fIdx === "MERGED_MAPPINGS") {
                                 params[fIdx] = path.join(libPath, splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2], `${splitDir[1]}-${splitDir[2]}-${splitDir[3]}`.replace("@", ".",),);
                             } else {
-                                console.log(fIdx)
-                                console.log(splitDir)
                                 params[fIdx] = path.join(libPath, splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2], `${splitDir[1]}-${splitDir[2]}-${splitDir[3]}.jar`,);
                                 //params[fIdx] = path.join(CAULDRON_PATH, "libraries", splitDir[0].replace(/\./g, "/"), splitDir[1], splitDir[2], `${splitDir[1]}-${splitDir[2]}-${splitDir[3]}.jar`,);
                             }
@@ -127,7 +124,6 @@ async function postProcessing(manifests, libs, version, side = 'client', cPath) 
                     params["SIDE"] = side;
                     params['ROOT'] = path.join(libPath, '../')
 
-                    console.log(params)
                     //process.exit(0)
                     // Check Checksums to see if skipping is possible
                     let checkObjs = [];
@@ -142,8 +138,6 @@ async function postProcessing(manifests, libs, version, side = 'client', cPath) 
                             checkObjs.push(obj);
                         }
                     }
-                    console.log(checkObjs)
-                    console.log(shaParams)
                     let checkFiles;
                     if (checkObjs.length > 0) {
                         checkFiles = await validate(checkObjs[0]);
@@ -248,7 +242,6 @@ async function postProcessing(manifests, libs, version, side = 'client', cPath) 
                                         fs.writeFileSync(path.join(CAULDRON_PATH, "versions", `forge-${manifests.version}-${manifests.loaderVersion}`, `forge-${manifests.version}-${manifests.loaderVersion}.json`), JSON.stringify(currentVersionFile, null, 2));
                                         libs.push(clientPath)
                                     }
-                                    console.log(`${javaPath} ${command}`)
                                     await spawn(javaPath, command.split(" "));
                                 } catch (e) {
                                     if (version === '1.14.3') {
@@ -292,7 +285,6 @@ async function postProcessing(manifests, libs, version, side = 'client', cPath) 
                 resolve(libs);
             }
         } catch (err) {
-            console.log('post fail');
             reject(err);
         }
     });

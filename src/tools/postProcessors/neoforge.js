@@ -28,7 +28,7 @@ function hasExtractFilesTask(entry) {
 function addManifestToJar(jarPath, javaDir) {
     const jarTool = path.join(javaDir, "jar");
     const manifestContent = "Manifest-Version: 1.0\nAutomatic-Module-Name: minecraft\n\n";
-    const manifestPath = path.join(grabPath(), 'config', 'packwiz', 'cauldron_manifest.mf')
+    const manifestPath = path.join(grabPath(), 'config', 'cauldron_manifest.mf')
     fs.writeFileSync(manifestPath, manifestContent);
     try {
         if (osCurrent === "linux" || osCurrent === "darwin") {
@@ -161,8 +161,6 @@ async function postProcessing(manifests, libs, version, side = 'client', cPath) 
                     params['ROOT'] = path.join(libPath, '../')
 
                     const patchedClientPath = params["PATCHED"];
-                    console.log(params)
-                    console.log(manifests.postData.data.BINPATCH)
                     //process.exit(0)
                     const javaDir = getOperatingSystem() === "osx"
                         ? path.join(CAULDRON_PATH, "jvm", manifests.jvmComp, "jre.bundle/Contents/Home/bin")
@@ -256,7 +254,6 @@ async function postProcessing(manifests, libs, version, side = 'client', cPath) 
 
                             if (checkFiles.length !== 0 || override) {
                                 try {
-                                    console.log(`${javaPath} ${command}`)
                                     cauldronLogger.debug(`${javaPath} ${command}`)
                                     const result = await spawn(javaPath, command.split(" "));
                                     cauldronLogger.debug(result.toString());
@@ -292,7 +289,6 @@ async function postProcessing(manifests, libs, version, side = 'client', cPath) 
                 resolve(libs);
             }
         } catch (err) {
-            console.log('post fail');
             reject(err);
         }
     });
