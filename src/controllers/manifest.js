@@ -338,22 +338,26 @@ async function getManifests(v, l, lv = 'release', resourcePath = RESOURCES_PATH)
             createdManifest.libraries = createdManifest.libraries.filter(({ name }, index) => !ids.includes(name, index + 1));
 
             const jvmMeta = await checkManifest(path.join("jvm", "jvm-core.json"), "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json", "java");
-            const jvmCompat = await checkCompat(createdManifest.javaVersion.component, jvmMeta);
+            const jvmCompat = await checkCompat(createdManifest.javaVersion.component, jvmMeta,createdManifest.javaVersion.forceCompat);
             if (!jvmCompat) return reject("Version Not Supported on " + osCurrent);
-            const jvmMani = await checkManifest(path.join("jvm", `${createdManifest.javaVersion.component}.json`), jvmCompat[0].manifest.url, "java");
-
+            let extra = '';
+            if (createdManifest.javaVersion.forceCompat && getOperatingSystem() === 'osx') {
+                extra = '-compat';
+            }
+            const jvmMani = await checkManifest(path.join("jvm", `${createdManifest.javaVersion.component}${extra}.json`), jvmCompat[0].manifest.url, "java");
             const assetMani = await checkManifest(path.join("assets", "indexes", `${createdManifest.assets}.json`), createdManifest.assetIndex.url, "assetIndex");
             const assetType = ["legacy", "pre-1.6"].includes(createdManifest.assets) ? createdManifest.assets : "assets";
             const assetsConverted = await checkManifest(path.join("assets", "indexes", `${createdManifest.assets}-cauldron.json`), createdManifest.assetIndex.url, assetType);
-
+     
             let postData = null;
             if (createdManifest.requiresPost) {
                 postData = await checkManifest(path.join("versions", specLocation, "post.json"), `${resourcePath}/loaders/${l}/${createdManifest.id.split("-")[1]}-${lv}/post.json`, "spec");
             }
             const allManifests = {
                 spec: createdManifest,
+                extras: createdManifest.extras,
                 jvmMani,
-                jvmComp: createdManifest.javaVersion.component,
+                jvmComp: `${createdManifest.javaVersion.component}${extra}`,
                 assets: assetMani,
                 assetsInfo: assetsConverted,
                 version: v,

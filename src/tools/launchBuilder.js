@@ -82,7 +82,6 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
         if (manifest.logging) {
             validRules.push(manifest.logging.client.argument);
         }
-
         //Check if a version requires proxy
         let proxyPort = false;
         let vArray = ["1.0", "1.1", "1.3", "1.4", "1.5"];
@@ -93,9 +92,10 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
             proxyPort = 11702;
         } else if (versionData.version.startsWith("a1.") || versionData.version.startsWith("b1.")) {
             proxyPort = 11705;
-        } else if (vArray.includes(versionData.version) || versionData.version.startsWith(vArray) || vArray.includes(splitVersion)) {
+        } else if (vArray.includes(versionData.version) || versionData.version.startsWith(vArray) || vArray.filter(v => versionData.version.includes(v))) {
             proxyPort = 11707;
         }
+        //process.exit(0)
         if (proxyPort) {
             validRules.push("-Dhttp.proxyHost=betacraft.uk");
             validRules.push("-Dhttp.proxyPort=" + proxyPort);
