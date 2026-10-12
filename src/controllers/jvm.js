@@ -4,11 +4,11 @@ const { processQueue } = require("./queue.js");
 const { grabPath, getOperatingSystem } = require("../tools/compatibility.js");
 const {cauldronLogger} = require("../tools/logger");
 
-async function checkCompat(jVersion, jvmData) {
+async function checkCompat(jVersion, jvmData, forceCompat) {
     const actualPlatform = getOperatingSystem(true);
     let isCompatible = jvmData[actualPlatform]?.[jVersion] ?? false;
 
-    if (isCompatible.length === 0 && actualPlatform === "mac-os-arm64") {
+    if (isCompatible.length === 0 && actualPlatform === "mac-os-arm64" || actualPlatform === "mac-os-arm64" && forceCompat) {
         // Lock with yes (investgate rosseta)
         cauldronLogger.debug("Compatibility Forced (Using Rosetta)");
         isCompatible = jvmData['mac-os']?.[jVersion]

@@ -14,11 +14,11 @@ const {
     logInjector,
     buildLaunchScript,
 } = require("../tools/launchBuilder.js");
-const ora = require('ora-classic');
 const Promise = require("bluebird"); // Note: If using global Promise, you might not need this line
 const forge = require("../tools/postProcessors/forge.js");
 const neoforge = require("../tools/postProcessors/neoforge.js");
 const fs = require("node:fs");
+const { verifyInstallation } = require("./queue.js");
 
 function createUUID() {
     return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (+c / 4)))).toString(16),);
@@ -66,7 +66,7 @@ async function handleGrabDeps(manifests, multibar, cPath) {
     }
 }
 
-async function startServer(sessionName, version, loader, lVersion, serverSoftware = 'default',overrides, rp) {
+async function startServer(sessionName, version, loader, lVersion, serverSoftware = 'default', overrides, rp) {
     if (!overrides) {
         overrides = { jvm: {}, game: {}, additG: {} };
     }
@@ -82,7 +82,6 @@ async function startServer(sessionName, version, loader, lVersion, serverSoftwar
             fs.mkdirSync(serverPath, { recursive: true });
         }
 
-        const spinner = ora('Starting Boot')
         try {
             let verifiedLoaders = ["vanilla", "forge", "fabric", "neoforge"]
             const loaderAccepted = verifiedLoaders.includes(loader);
@@ -94,7 +93,7 @@ async function startServer(sessionName, version, loader, lVersion, serverSoftwar
             let sessionID = createUUID()
             cauldronLogger.debug("Session ID: " + sessionID);
             //Create Bulk Manifests
-            const manifests = await getServerManifest(version, loader, lVersion, sessionName, serverSoftware,rp);
+            const manifests = await getServerManifest(version, loader, lVersion, sessionName, serverSoftware, rp);
             let libGet = await handleGrabDeps(manifests, null, path.join(serverPath, 'libraries'));
             if (loader !== "vanilla") {
                 if (manifests.needsPost) {
@@ -110,7 +109,6 @@ async function startServer(sessionName, version, loader, lVersion, serverSoftwar
             resolve({ launchPath, serverPath });
 
         } catch (err) {
-            spinner.fail(err.message)
             reject(err.message);
         }
     });
@@ -128,15 +126,21 @@ async function launchGame(version, installOnly, loader, lVersion, authData, over
     }
     return new Promise(async (resolve, reject) => {
         let CAULDRON_PATH = grabPath();
-        const spinner = ora('Starting Boot')
         try {
-            let verifiedLoaders = ["vanilla", "forge", "fabric", "neoforge"]
+            let verifiedLoaders = ["vanilla", "forge", "fabric", "neoforge"];
+            let ornithePatch = ["b1.7", "b1.7.2", "b1.7.3", "b1.8", "b1.8.1", "1.0", "1.1", "1.2.1", "1.2.2", "1.2.3", "1.2.4", "1.2.5"];
             const loaderAccepted = verifiedLoaders.includes(loader);
             if (!loaderAccepted) {
                 reject('Loader Not Supported! Code: LSUPNF')
                 return;
             }
-            getOperatingSystem();
+            let checkForOverrrides = getOperatingSystem(true);
+            if (checkForOverrrides === 'mac-os-arm64') {
+                if (ornithePatch.includes(version)) {
+                    cauldronLogger.debug('Patching with deAWT');
+                    loader = 'ornithe'
+                }
+            }
             let sessionID = createUUID()
             cauldronLogger.debug("Session ID: " + sessionID);
             //Create Bulk Manifests
@@ -153,9 +157,30 @@ async function launchGame(version, installOnly, loader, lVersion, authData, over
 
                 }
             }
+            if (manifests.extras && manifests.extras.length !== 0) {
+                let queue = [];
+                for (let extra of manifests.extras) {
+                    if (overrides["game"]["game_directory"]) {
+                        launchDirectory = `${overrides["game"]["game_directory"]}`;
+                        let fullPath;
+                        if (extra.loc === 'natives') {
+                            fullPath = path.join(CAULDRON_PATH, 'versions', manifests.version, 'natives')
+                        } else {
+                            fullPath = path.join(overrides["game"]["game_directory"], extra.loc);
+                        }
+
+                        extra.destination = fullPath;
+                        queue.push(extra)
+                    }
+                };
+                await verifyInstallation(queue);
+            }
+
             if (!installOnly) {
                 if (manifests.spec.logging) {
                     await logInjector(path.join(CAULDRON_PATH, "assets", "log_configs", manifests.spec.logging.client.file.id,), sessionID);
+                } else {
+                    sessionID = 'DETACH'
                 }
                 let validRules = await buildJVMRules(manifests.spec, libGet, manifests.versionData, overrides.jvm);
 
@@ -179,14 +204,12 @@ async function launchGame(version, installOnly, loader, lVersion, authData, over
                         detached: true,
                         stdio: 'ignore'
                     });
-
                 child.unref();
                 resolve(sessionID);
             } else {
                 resolve(true);
             }
-        } catch (err) {
-            spinner.fail(err.message)
+        } catch (err) { 
             reject(err.message);
         }
     });
