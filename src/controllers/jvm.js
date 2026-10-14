@@ -22,6 +22,7 @@ async function checkJVM(name, jvmMani) {
         const CAULDRON_PATH = grabPath();
 
         // Create main JVM directory
+        // defunct 
         fs.mkdirSync(path.join(CAULDRON_PATH, "jvm", name), { recursive: true });
         fs.writeFileSync(
             path.join(CAULDRON_PATH, "jvm", `${name}.json`),

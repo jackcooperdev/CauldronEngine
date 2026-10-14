@@ -5,12 +5,15 @@ const path = require("path");
 const axios = require("axios");
 const os = require("os");
 // Import Tools
-const { grabPath } = require("../tools/compatibility.js");
+const { grabPath, grabEnginePath } = require("../tools/compatibility.js");
 const {
     addOSSpecArguments,
     convertAssets,
     convertLegacyAssets,
     convertPre16Assets,
+    convertJVM,
+    convertAssetsAll,
+    convertLibraries,
 } = require("../tools/manifestConverter.js");
 const { cauldronLogger } = require("../tools/logger.js");
 const { checkInternet } = require("../tools/checkConnection.js");
@@ -40,6 +43,33 @@ async function checkManifest(fileName, url, type) {
                     resolve(downloadedFile);
                 } catch (err) {
                     reject(`This Profile either do2es not exist or is not supported`);
+                }
+            } else {
+                reject(`This Profile Cannot be launched offline. Please Launch it Online first`);
+            }
+        }
+    });
+}
+
+async function checkManifest2(fileName, url, type) {
+    return new Promise(async (resolve, reject) => {
+        let isOnline = await checkInternet();
+        let CAULDRON_PATH = grabEnginePath();
+        try {
+            let expected = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, fileName)).toString());
+            if (isOnline && type === "main" || isOnline && fileName.includes("release")) {
+                expected = await downloadManifest(url, path.join(CAULDRON_PATH, fileName),undefined,true);
+            }
+            resolve(expected);
+        } catch (err) {
+            cauldronLogger.debug(`${fileName} not found trying to download`);
+            if (isOnline) {
+                try {
+                    const downloadedFile = await downloadManifest(url, path.join(CAULDRON_PATH, fileName), type,true);
+                    resolve(downloadedFile);
+                } catch (err) {
+                    console.log(url)
+                    reject(`This Profile either do3es not exist or is not supported`);
                 }
             } else {
                 reject(`This Profile Cannot be launched offline. Please Launch it Online first`);
@@ -109,7 +139,7 @@ let convertManifests = {
     "pre-1.6": convertPre16Assets,
 };
 
-async function downloadManifest(url, dir, type) {
+async function downloadManifest(url, dir, type, useAlt) {
     return new Promise(async (resolve, reject) => {
         let config = {
             method: "get",
@@ -124,6 +154,9 @@ async function downloadManifest(url, dir, type) {
             //console.log(fileData)
             if (dir.includes("release")) {
                 let CAULDRON_PATH = grabPath();
+                if (useAlt) {
+                    CAULDRON_PATH = grabEnginePath();
+                }
                 let version = fileData.id
                 let newPath;
                 if (!url.includes("post.json")) {
@@ -338,7 +371,7 @@ async function getManifests(v, l, lv = 'release', resourcePath = RESOURCES_PATH)
             createdManifest.libraries = createdManifest.libraries.filter(({ name }, index) => !ids.includes(name, index + 1));
 
             const jvmMeta = await checkManifest(path.join("jvm", "jvm-core.json"), "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json", "java");
-            const jvmCompat = await checkCompat(createdManifest.javaVersion.component, jvmMeta,createdManifest.javaVersion.forceCompat);
+            const jvmCompat = await checkCompat(createdManifest.javaVersion.component, jvmMeta, createdManifest.javaVersion.forceCompat);
             if (!jvmCompat) return reject("Version Not Supported on " + osCurrent);
             let extra = '';
             if (createdManifest.javaVersion.forceCompat && getOperatingSystem() === 'osx') {
@@ -348,7 +381,7 @@ async function getManifests(v, l, lv = 'release', resourcePath = RESOURCES_PATH)
             const assetMani = await checkManifest(path.join("assets", "indexes", `${createdManifest.assets}.json`), createdManifest.assetIndex.url, "assetIndex");
             const assetType = ["legacy", "pre-1.6"].includes(createdManifest.assets) ? createdManifest.assets : "assets";
             const assetsConverted = await checkManifest(path.join("assets", "indexes", `${createdManifest.assets}-cauldron.json`), createdManifest.assetIndex.url, assetType);
-     
+
             let postData = null;
             if (createdManifest.requiresPost) {
                 postData = await checkManifest(path.join("versions", specLocation, "post.json"), `${resourcePath}/loaders/${l}/${createdManifest.id.split("-")[1]}-${lv}/post.json`, "spec");
@@ -381,6 +414,114 @@ async function getManifests(v, l, lv = 'release', resourcePath = RESOURCES_PATH)
     });
 }
 
+
+async function getCEObject(installObject) {
+    return new Promise(async (resolve, reject) => {
+        try {
+
+            let { version: v, loader: l, lv } = installObject;
+            const CAULDRON_PATH = grabEnginePath();
+            let ceObject = {
+                libList: [],
+                nativeList: [],
+                loggingInfo: {},
+                installQueue: [],
+                jreVersion: '',
+                specPath: ''
+            }
+            let installQueue = [];
+
+            let specPath = l !== 'vanilla' ? `/loaders/${l}/${v}/${lv}` : `/spec/${v}`
+            let specLocation = l !== "vanilla" ? `${l}-${v}-${lv}` : v;
+
+            const foundManifest = await checkManifest2(path.join("versions", specLocation, `${specLocation}.json`), `${RESOURCES_PATH}${specPath}`, 'spec')
+            if (!foundManifest) {
+                return reject({ message: `Version not ${l === "vanilla" ? "found" : `supported for loader: ${l}`}` });
+            }
+
+            if (foundManifest.id.includes("forge") || foundManifest.id.includes("fabric")) {
+                v = foundManifest.id.split("-")[1]
+            } else {
+                v = foundManifest.id;
+            }
+            lv = foundManifest.loaderVersion || foundManifest.version;
+
+            const createdManifest = await addOSSpecArguments(foundManifest);
+
+
+
+            // Append Logging
+            if (createdManifest.logging) {
+                const logFile = createdManifest.logging.client.file;
+                const logPath = path.join("assets", "log_configs");
+                createdManifest.logging.client.file.destination = path.join(CAULDRON_PATH, logPath);
+                createdManifest.logging.client.file.sha1 = 'NONE';
+                createdManifest.logging.client.file.fileName = logFile.id;
+                createdManifest.logging.client.file.origin = createdManifest.logging.client.file.url.replace(RESOURCES_PATH, '${resourcePath}')
+                installQueue.push(createdManifest.logging.client.file);
+                ceObject.loggingInfo = createdManifest.logging.client.file;
+            };
+
+            // Append Entry File
+            let javaEntryObject = {
+                sha1: createdManifest.downloads.client.sha1,
+                destination: path.join(CAULDRON_PATH, "versions", createdManifest.id),
+                fileName: createdManifest.id + ".jar",
+                origin: createdManifest.downloads.client.url
+            }
+            installQueue.push(javaEntryObject)
+
+            // Java
+            const jvmMeta = await checkManifest2(path.join("jvm", "jvm-core.json"), "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json", "java");
+            const jvmCompat = await checkCompat(createdManifest.javaVersion.component, jvmMeta, createdManifest.javaVersion.forceCompat);
+            if (!jvmCompat) return reject("Version Not Supported on " + osCurrent);
+            let extra = '';
+            if (createdManifest.javaVersion.forceCompat && getOperatingSystem() === 'osx') {
+                extra = '-compat';
+            }
+            const jvmMani = await checkManifest2(path.join("jvm", `${createdManifest.javaVersion.component}${extra}.json`), jvmCompat[0].manifest.url, "java");
+            let jvmQueue = await convertJVM(`${createdManifest.javaVersion.component}${extra}`, jvmMani);
+            ceObject.jreVersion = `${createdManifest.javaVersion.component}${extra}`
+            // Assets
+            const assetMani = await checkManifest2(path.join("assets", "indexes", `${createdManifest.assets}.json`), createdManifest.assetIndex.url, "assetIndex");
+            const assetType = ["legacy", "pre-1.6"].includes(createdManifest.assets) ? createdManifest.assets : "assets";
+            //const assetsConverted = await checkManifest(path.join("assets", "indexes", `${createdManifest.assets}-cauldron.json`), createdManifest.assetIndex.url, assetType);
+            const assetsQueue = await convertAssetsAll(assetMani, assetType)
+
+            // Libraries
+            const ids = createdManifest.libraries.map((lib) => lib.name);
+            createdManifest.libraries = createdManifest.libraries.filter(({ name }, index) => !ids.includes(name, index + 1));
+
+            const { libQueue, libList, nativeList } = await convertLibraries(createdManifest.libraries, createdManifest.id)
+
+            // TODO Post Shit;
+
+            const finalQueue = [...installQueue, ...jvmQueue, ...assetsQueue, ...libQueue]
+
+
+
+            console.log(finalQueue.length)
+
+            ceObject.installQueue = finalQueue;
+            ceObject.libList = libList
+            ceObject.nativeList = nativeList;
+            ceObject.specPath = path.join("versions", createdManifest.id, createdManifest.id + '.json')
+
+            //console.log(createdManifest)
+            //console.log(installQueue)
+            //console.log(ceObject)
+            fs.writeFileSync('out.json', JSON.stringify(ceObject, null, 2));
+            fs.mkdirSync(path.join(CAULDRON_PATH, 'versions', createdManifest.id), { recursive: true });
+            fs.writeFileSync(path.join(CAULDRON_PATH, 'versions', createdManifest.id, 'launch.ce'), JSON.stringify(ceObject, null, 2))
+            resolve(ceObject)
+
+        } catch (e) {
+            reject(e)
+        }
+    })
+
+}
+
 async function whatIsThis(version, vanillaManifest) {
     if (version === "release" || version === "latest") {
         return vanillaManifest.latest.release;
@@ -391,4 +532,4 @@ async function whatIsThis(version, vanillaManifest) {
     }
 }
 
-module.exports = { getManifests, getPackwizJVM, checkManifest, whatIsThis, getServerManifest };
+module.exports = { getManifests, getPackwizJVM, checkManifest, whatIsThis, getServerManifest, getCEObject };

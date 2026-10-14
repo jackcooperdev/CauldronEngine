@@ -3,10 +3,26 @@ const fs = require("fs");
 const path = require("path");
 const checksum = require("checksum");
 const { checkInternet } = require("./checkConnection.js");
+const crypto = require('crypto')
+const RESOURCES_PATH = process.env.RESOURCE_SERVER || "https://resources.cauldronmc.com"
+
+let injector = {
+    create: (function () {
+        let regexp = /\${([^{]+)}/g;
+
+        return function (str, o) {
+            return str.replace(regexp, function (ignore, key) {
+                return (key = o[key]) == null ? "" : key;
+            });
+        };
+    })(),
+};
+
 
 async function download(url, location, fileName) {
     return new Promise(async (resolve) => {
         if (await checkInternet()) {
+            url = injector.create(url,{resourcePath:RESOURCES_PATH})
             const downloader = new Downloader({
                 url: url, //If the file name already exists, a new file with the name 200MB1.zip is created.
                 directory: location, //This folder will be created if it doesn't exist.
@@ -25,7 +41,9 @@ async function download(url, location, fileName) {
         }
     });
 }
-
+function createUUID() {
+    return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (+c / 4)))).toString(16),);
+}
 async function validate(file) {
     return new Promise(async (resolve) => {
         if (file.destination === "no path") {
@@ -46,4 +64,4 @@ async function validate(file) {
     });
 }
 
-module.exports =  {download, validate};
+module.exports = { download, validate, createUUID };

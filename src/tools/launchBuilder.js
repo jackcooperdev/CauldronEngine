@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 const { exec } = require("child_process");
-const { grabPath, getOperatingSystem } = require("./compatibility.js");
+const { grabPath, getOperatingSystem, grabEnginePath } = require("./compatibility.js");
 const { jwtDecode } = require("jwt-decode");
 const pkgJSON = require('../../package.json')
 
@@ -46,9 +46,12 @@ async function logInjector(logFile, sessionID) {
     }
 }
 
-async function buildJVMRules(manifest, libraryList, versionData, overrides) {
+async function buildJVMRules(manifest, libraryList, versionData, overrides, useAltPath) {
     return new Promise(async (resolve) => {
         let CAULDRON_PATH = grabPath();
+        if (useAltPath) {
+            CAULDRON_PATH = grabEnginePath();
+        }
         let cusJVM = defaultJVM;
         // Acquire Set Version
         if (overrides) {
@@ -97,8 +100,13 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
         }
         //process.exit(0)
         if (proxyPort) {
-            validRules.push("-Dhttp.proxyHost=betacraft.uk");
-            validRules.push("-Dhttp.proxyPort=" + proxyPort);
+            //validRules.push("-Dhttp.proxyHost=betacraft.uk");
+            //validRules.push("-Dhttp.proxyPort=" + proxyPort);
+        }
+
+        let nativesPath = path.join(CAULDRON_PATH, "versions", manifest.id, "natives");
+        if (useAltPath) {
+            nativesPath = path.join(CAULDRON_PATH,'temp')
         }
 
 
@@ -114,7 +122,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
             classPathSep = ":";
         }
         let relVariables = {
-            natives_directory: path.join(CAULDRON_PATH, "versions", manifest.id, "natives",),
+            natives_directory: nativesPath,
             launcher_name: cusJVM.launcher_name,
             version_name: manifest.id,
             launcher_version: pkgJSON.version,
@@ -138,9 +146,12 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
     });
 }
 
-async function buildGameRules(manifest, loggedUser, overrides, addit) {
+async function buildGameRules(manifest, loggedUser, overrides, useAltPath) {
     return new Promise(async (resolve) => {
         let CAULDRON_PATH = grabPath();
+        if (useAltPath) {
+            CAULDRON_PATH = grabEnginePath();
+        }
         let gameRules = [];
         let allGameRules = manifest.arguments.game;
         for (let gRules in allGameRules) {
@@ -153,24 +164,32 @@ async function buildGameRules(manifest, loggedUser, overrides, addit) {
             gameRules.push("${version_type}");
         }
 
-        let decodedToken = jwtDecode(loggedUser)
-        
+        let demoMode = false;
         let gameVars = {
-            username: 'none',
+            username: 'Demo',
             version_type: manifest.type,
             game_directory: CAULDRON_PATH,
             server_ip: "",
-            uuid:'8667ba71-b85a-4004-af54-457a9734eed7',
-            xuid :'none',
-            clientId:'none'
+            uuid: '8667ba71-b85a-4004-af54-457a9734eed7',
+            xuid: 'none',
+            clientId: 'none',
+            access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30'
         };
-        if (decodedToken.pfd) {
-            gameVars.username = decodedToken.pfd[0].name;
-            gameVars.uuid = decodedToken.pfd[0].id;
-            gameVars.xuid = decodedToken.xuid
-            gameVars.clientId = decodedToken.sub
+        if (typeof loggedUser === "object") {
+            if (loggedUser.demo) {
+                demoMode = true;
+            }
+        } else {
+            let decodedToken = jwtDecode(loggedUser)
+            gameVars.access_token = loggedUser
+            if (decodedToken.pfd) {
+                gameVars.username = decodedToken.pfd[0].name;
+                gameVars.uuid = decodedToken.pfd[0].id;
+                gameVars.xuid = decodedToken.xuid
+                gameVars.clientId = decodedToken.sub
+            }
         }
-
+    
         for (let idx in overrides) {
             gameVars[idx] = overrides[idx];
         }
@@ -182,7 +201,7 @@ async function buildGameRules(manifest, loggedUser, overrides, addit) {
             assets_root: path.join(CAULDRON_PATH, "assets"),
             assets_index_name: manifest.assets,
             auth_uuid: gameVars.uuid,
-            auth_access_token: loggedUser,
+            auth_access_token: gameVars.access_token,
             CLIENT_ID: gameVars.clientId,
             game_assets: path.join(CAULDRON_PATH, "resources"),
             auth_xuid: gameVars.xuid,
@@ -199,8 +218,9 @@ async function buildGameRules(manifest, loggedUser, overrides, addit) {
         } else {
             gameVariables.game_assets = path.join(CAULDRON_PATH, "assets");
         }
-        for (let idx in addit) {
-            gameRules.push(addit[idx]);
+       
+        if (demoMode) {
+            gameRules.push('--demo')
         }
         if (gameVars.server_ip !== "") {
             gameRules.push("--quickPlayMultiplayer");
@@ -315,8 +335,11 @@ function getAikarFlags(memGB) {
 }
 
 
-async function buildFile(manifest, jreVersion, validRules, gameRules) {
+async function buildFile(manifest, jreVersion, validRules, gameRules, useAltPath) {
     let CAULDRON_PATH = grabPath();
+    if (useAltPath) {
+        CAULDRON_PATH = grabEnginePath();
+    }
     let mainClass = manifest.mainClass;
     let javaPath;
     if (osCurrent === "darwin") {

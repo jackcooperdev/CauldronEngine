@@ -1,6 +1,6 @@
 {
   "name": "@jackcooperdev/cauldronengine",
-  "version": "0.11.3",
+  "version": "0.12.0",
   "readme": "README.md",
   "type": "commonjs",
   "repository": {
@@ -17,6 +17,7 @@
     "./assets": "./src/controllers/assets.js",
     "./jvm": "./src/controllers/jvm.js",
     "./launcher": "./src/controllers/launcher.js",
+    "./client": "./src/controllers/client.js",
     "./libraries": "./src/controllers/libraries.js",
     "./manifest": "./src/controllers/manifest.js",
     "./queue": "./src/controllers/queue.js",

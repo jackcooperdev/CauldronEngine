@@ -193,6 +193,8 @@ async function launchGame(version, installOnly, loader, lVersion, authData, over
                         launchDirectory = `${overrides["game"]["game_directory"]}`;
                     }
                 }
+                console.log(gameRules)
+                process.exit(0)
                 const isWindows = getOperatingSystem() === 'windows';
                 const child = isWindows
                     ? spawn('cmd', ['/c', `cd /d ${launchDirectory} && ${launchPath}`], {
@@ -209,7 +211,7 @@ async function launchGame(version, installOnly, loader, lVersion, authData, over
             } else {
                 resolve(true);
             }
-        } catch (err) { 
+        } catch (err) {
             reject(err.message);
         }
     });
