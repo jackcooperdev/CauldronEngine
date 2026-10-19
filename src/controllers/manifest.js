@@ -8,38 +8,41 @@ const os = require("os");
 const { grabPath } = require("../tools/compatibility.js");
 const {
     addOSSpecArguments,
-    convertAssets,
-    convertLegacyAssets,
-    convertPre16Assets,
+    convertJVM,
+    convertAssetsAll,
+    convertLibraries,
 } = require("../tools/manifestConverter.js");
 const { cauldronLogger } = require("../tools/logger.js");
 const { checkInternet } = require("../tools/checkConnection.js");
-const { checkCompat } = require("./jvm.js");
 const { getOperatingSystem } = require("../tools/compatibility");
-const { version } = require("bluebird");
-const { buildJVMRules } = require("../tools/launchBuilder.js");
+const JSZip = require('jszip');
+
+// Current Manifest Identifer (Changing this will invalidate files)
+const MANIFEST_IDENTIFIER = 'apple';
 
 const osCurrent = os.platform();
 
 const RESOURCES_PATH = process.env.RESOURCE_SERVER || "https://resources.cauldronmc.com"
-async function checkManifest(fileName, url, type) {
+
+
+async function checkManifest(fileName, url, type, noSave) {
     return new Promise(async (resolve, reject) => {
         let isOnline = await checkInternet();
         let CAULDRON_PATH = grabPath();
         try {
             let expected = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, fileName)).toString());
             if (isOnline && type === "main" || isOnline && fileName.includes("release")) {
-                expected = await downloadManifest(url, path.join(CAULDRON_PATH, fileName));
+                expected = await downloadManifest(url, path.join(CAULDRON_PATH, fileName), undefined);
             }
             resolve(expected);
         } catch (err) {
             cauldronLogger.debug(`${fileName} not found trying to download`);
             if (isOnline) {
                 try {
-                    const downloadedFile = await downloadManifest(url, path.join(CAULDRON_PATH, fileName), type);
+                    const downloadedFile = await downloadManifest(url, path.join(CAULDRON_PATH, fileName), type, noSave);
                     resolve(downloadedFile);
                 } catch (err) {
-                    reject(`This Profile either do2es not exist or is not supported`);
+                    reject(`This Profile either do3es not exist or is not supported`);
                 }
             } else {
                 reject(`This Profile Cannot be launched offline. Please Launch it Online first`);
@@ -48,68 +51,21 @@ async function checkManifest(fileName, url, type) {
     });
 }
 
-async function checkJAR(fileName, url) {
-    return new Promise(async (resolve, reject) => {
-        let isOnline = await checkInternet();
-        let CAULDRON_PATH = grabPath();
-        try {
-            let expected = fs.readFileSync(path.join(CAULDRON_PATH, fileName));
-            resolve(expected);
-        } catch (err) {
-            if (isOnline) {
-                try {
-                    const downloadedFile = await downloadALL(url, path.join(CAULDRON_PATH, fileName));
-                    resolve(downloadedFile);
-                } catch (err) {
-                    reject(err);
-                }
-            } else {
-                reject(`This Profile Cannot be launched offline. Please Launch it Online first`);
-            }
-        }
-    });
+async function checkCompat(jVersion, jvmData, forceCompat) {
+    const actualPlatform = getOperatingSystem(true);
+    let isCompatible = jvmData[actualPlatform]?.[jVersion] ?? false;
+
+    if (isCompatible.length === 0 && actualPlatform === "mac-os-arm64" || actualPlatform === "mac-os-arm64" && forceCompat) {
+        // Lock with yes (investgate rosseta)
+        cauldronLogger.debug("Compatibility Forced (Using Rosetta)");
+        isCompatible = jvmData['mac-os']?.[jVersion]
+    }
+
+    return isCompatible
 }
 
-async function downloadALL(url, dir) {
-    return new Promise(async (resolve, reject) => {
-        let config = {
-            method: "get",
-            url: url,
-            responseType: "arraybuffer",
-        };
-        try {
-            const file = await axios(config);
-            fs.mkdirSync(path.dirname(dir), { recursive: true });
-            fs.writeFileSync(dir, file.data);
-            resolve(file.data);
-        } catch (err) {
-            reject(err.message);
-        }
-    });
-}
 
-async function checkLog(fileName, url) {
-    return new Promise(async (resolve, reject) => {
-        let isOnline = await checkInternet();
-        let CAULDRON_PATH = grabPath();
-        if (isOnline) {
-            try {
-                const downloadedFile = await downloadALL(url, path.join(CAULDRON_PATH, fileName));
-                resolve(downloadedFile);
-            } catch (err) {
-                reject(err);
-            }
-        }
-    });
-}
-
-let convertManifests = {
-    assets: convertAssets,
-    legacy: convertLegacyAssets,
-    "pre-1.6": convertPre16Assets,
-};
-
-async function downloadManifest(url, dir, type) {
+async function downloadManifest(url, dir, type, noSave) {
     return new Promise(async (resolve, reject) => {
         let config = {
             method: "get",
@@ -118,12 +74,9 @@ async function downloadManifest(url, dir, type) {
         try {
             const file = await axios(config);
             let fileData = file.data;
-            if (convertManifests[type]) {
-                fileData = await convertManifests[type](fileData);
-            }
-            //console.log(fileData)
             if (dir.includes("release")) {
                 let CAULDRON_PATH = grabPath();
+        
                 let version = fileData.id
                 let newPath;
                 if (!url.includes("post.json")) {
@@ -135,8 +88,10 @@ async function downloadManifest(url, dir, type) {
                 }
                 dir = newPath;
             }
-            fs.mkdirSync(path.dirname(dir), { recursive: true });
-            fs.writeFileSync(dir, JSON.stringify(fileData, null, 2));
+            if (!noSave) {
+                fs.mkdirSync(path.dirname(dir), { recursive: true });
+                fs.writeFileSync(dir, JSON.stringify(fileData, null, 2));
+            }
             resolve(fileData);
         } catch (err) {
             reject(err.message);
@@ -144,241 +99,140 @@ async function downloadManifest(url, dir, type) {
     });
 }
 
-async function getPackwizJVM() {
+async function getCEObject(installObject) {
     return new Promise(async (resolve, reject) => {
-        let CAULDRON_PATH = grabPath();
-        if (!fs.existsSync(path.join(CAULDRON_PATH, "config", "jvm_installed.json"))) {
-            fs.mkdirSync(path.join(CAULDRON_PATH, "config"), { recursive: true });
-            fs.writeFileSync(path.join(CAULDRON_PATH, "config", "jvm_installed.json"), "{}");
-        }
         try {
-            const jvmMeta = await checkManifest(path.join("jvm", "jvm-core.json"), "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json");
-            const jvmCompat = await checkCompat("java-runtime-alpha", jvmMeta);
-            if (!jvmCompat) {
-                return reject("Version Not Supported on " + osCurrent);
-            }
-            const jvmMani = await checkManifest(path.join("jvm", "java-runtime-alpha.json"), jvmCompat[0].manifest.url);
-            resolve({ jvmMeta, jvmMani, jvmComp: "java-runtime-alpha" });
-        } catch (err) {
-            reject(err);
-        }
-    });
-}
 
-async function getServerManifest(v, l, lv = 'release', n, ss = 'default', resourcePath = RESOURCES_PATH) {
-    return new Promise(async (resolve, reject) => {
-        let CAULDRON_PATH = grabPath();
-        try {
-            fs.mkdirSync(path.join(CAULDRON_PATH, "config"), { recursive: true });
+            let { version: v, loader: l, lv } = installObject;
+            const CAULDRON_PATH = grabPath();
 
-            const ensureFile = (filePath) => {
-                if (!fs.existsSync(filePath)) {
-                    fs.writeFileSync(filePath, "{}");
-                }
-            };
-
-
-            ensureFile(path.join(CAULDRON_PATH, "config/assets_installed.json"));
-            ensureFile(path.join(CAULDRON_PATH, "config/jvm_installed.json"));
-            ensureFile(path.join(CAULDRON_PATH, "config/libs_installed.json"));
-
-            const assetDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, "config/assets_installed.json")).toString());
-            const jvmDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, "config/jvm_installed.json")).toString());
-            const libDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, "config/libs_installed.json")).toString());
-
-            let specPath = l !== 'vanilla' ? `/loaders/${l}/${v}/${lv}` : `/spec/${v}`
-            let specLocation = l !== "vanilla" ? `${l}-${v}-${lv}` : v;
-
-            const foundManifest = await checkManifest(path.join("versions", specLocation, `${specLocation}.json`), `${resourcePath}${specPath}`, 'spec')
-            if (!foundManifest) {
-                return reject({ message: `Version not ${l === "vanilla" ? "found" : `supported for loader: ${l}`}` });
-            };
-            if (foundManifest.id.includes("forge") || foundManifest.id.includes("fabric")) {
-                if (!foundManifest.id.includes("minecraftforge")) {
-                    v = foundManifest.id.split("-")[1]
-                }
-
-            } else {
-                v = foundManifest.id;
-            }
-            lv = foundManifest.loaderVersion || foundManifest.version;
-            const createdManifest = await addOSSpecArguments(foundManifest);
-            let postData = null;
-            if (createdManifest.requiresPost) {
-                postData = await checkManifest(path.join("versions", specLocation, "post.json"), `${resourcePath}/loaders/${l}/${createdManifest.id.split("-")[1]}-${lv}/post.json`, "spec");
-                let entryFile = postData.path;
-
-                let foundEntryFile = postData.libraries.find(lib => lib.name == entryFile)
-
-                if (foundEntryFile) {
-                    createdManifest.downloads['runner_file'] = foundEntryFile.downloads.artifact;
-
-                    if (!createdManifest.downloads['runner_file'].url) {
-                        createdManifest.downloads['runner_file'].url = `${resourcePath}/loaders/forge/${v}-${lv}/forge-${v}-${lv}.jar`
-                    }
-                } else {
-                    let original = entryFile;
-                    // Attempt Universal Appending
-                    entryFile = `${entryFile}`;
-                    foundEntryFile = createdManifest.libraries.find(lib => lib.name == entryFile);
-                    if (foundEntryFile) {
-                        if (!foundEntryFile.downloads.artifact.url) {
-                            foundEntryFile.downloads.artifact.url = `${resourcePath}/loaders/forge/${v}-${lv}/forge-${v}-${lv}.jar`
-                            //foundEntryFile.downloads.artifact.sha1 = 'NONE';
-                        }
-                        createdManifest.downloads['runner_file'] = foundEntryFile.downloads.artifact;
-                    }
-
-                }
-            }
-
-            if (createdManifest.downloads.runner_file) {
-
-                let runnerFileName = `${createdManifest.id}.jar`;
-
-                if (createdManifest.downloads.runner_file.path) {
-                    let extractedName = createdManifest.downloads.runner_file.path.split("/").pop();
-                    runnerFileName = extractedName;
-                }
-                await checkJAR(path.join("servers", `${n}`, runnerFileName), createdManifest.downloads.runner_file.url);
-                await checkJAR(path.join("servers", `${n}`, `minecraft_server.${v}.jar`), createdManifest.downloads.server.url);
-            } else {
-                if (l === 'vanilla' && ss !== 'default') {
-                    await checkJAR(path.join("servers", `${n}`, `minecraft_server.${v}.jar`), createdManifest.downloads[ss].url);
-                } else {
-                    await checkJAR(path.join("servers", `${n}`, `minecraft_server.${v}.jar`), createdManifest.downloads.server.url);
-                }
-
-
-            }
-
-            //process.exit(0)
-            // JVM Only
-            const jvmMeta = await checkManifest(path.join("jvm", "jvm-core.json"), "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json", "java");
-            const jvmCompat = await checkCompat(createdManifest.javaVersion.component, jvmMeta);
-            if (!jvmCompat) return reject("Version Not Supported on " + osCurrent);
-            const jvmMani = await checkManifest(path.join("jvm", `${createdManifest.javaVersion.component}.json`), jvmCompat[0].manifest.url, "java");
-
-
-
-
-            const allManifests = {
-                spec: createdManifest,
-                jvmMani,
-                jvmComp: createdManifest.javaVersion.component,
-                version: v,
-                versionData: { loader: l, version: v, loaderVersion: lv },
+            let ceObject = {
+                libList: [],
+                nativeList: [],
+                loggingInfo: {},
+                installQueue: [],
+                jreVersion: '',
+                specPath: '',
+                vanillaVersion: v,
                 loader: l,
-                assetsDownloaded: true,
-                jvmDownloaded: !!jvmDict[createdManifest.javaVersion.component],
-                libsDownloaded: true,
-                isServer: true,
-                loaderVersion: lv,
-                needsPost: createdManifest.requiresPost,
-                postData,
-
-            };
-
-            resolve(allManifests);
-        } catch (err) {
-            console.error(err);
-            process.exit(0);
-            reject(err);
-        }
-    })
-}
-
-async function getManifests(v, l, lv = 'release', resourcePath = RESOURCES_PATH) {
-    return new Promise(async (resolve, reject) => {
-        let CAULDRON_PATH = grabPath();
-        try {
-            fs.mkdirSync(path.join(CAULDRON_PATH, "config"), { recursive: true });
-
-            const ensureFile = (filePath) => {
-                if (!fs.existsSync(filePath)) {
-                    fs.writeFileSync(filePath, "{}");
-                }
-            };
-
-            ensureFile(path.join(CAULDRON_PATH, "config/assets_installed.json"));
-            ensureFile(path.join(CAULDRON_PATH, "config/jvm_installed.json"));
-            ensureFile(path.join(CAULDRON_PATH, "config/libs_installed.json"));
-
-            const assetDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, "config/assets_installed.json")).toString());
-            const jvmDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, "config/jvm_installed.json")).toString());
-            const libDict = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, "config/libs_installed.json")).toString());
+                lv: lv,
+                specName: '',
+                post: false,
+            }
+            let installQueue = [];
 
             let specPath = l !== 'vanilla' ? `/loaders/${l}/${v}/${lv}` : `/spec/${v}`
             let specLocation = l !== "vanilla" ? `${l}-${v}-${lv}` : v;
 
-            const foundManifest = await checkManifest(path.join("versions", specLocation, `${specLocation}.json`), `${resourcePath}${specPath}`, 'spec')
+            const foundManifest = await checkManifest(path.join("versions", specLocation, `${specLocation}.json`), `${RESOURCES_PATH}${specPath}`, 'spec')
             if (!foundManifest) {
                 return reject({ message: `Version not ${l === "vanilla" ? "found" : `supported for loader: ${l}`}` });
             }
+
             if (foundManifest.id.includes("forge") || foundManifest.id.includes("fabric")) {
                 v = foundManifest.id.split("-")[1]
             } else {
                 v = foundManifest.id;
             }
             lv = foundManifest.loaderVersion || foundManifest.version;
-            //const getSpec = await checkManifest(path.join("versions", specLocation, `${specLocation}.json`), foundManifest.url, "spec");
-            const createdManifest = await addOSSpecArguments(foundManifest);
 
-            if (createdManifest.logging) {
-                const logFile = createdManifest.logging.client.file;
-                const logPath = path.join(CAULDRON_PATH, "assets", "log_configs", logFile.id);
-                if (!fs.existsSync(logPath)) {
-                    await checkLog(path.join("assets", "log_configs", logFile.id), logFile.url);
+            const createdManifest = await addOSSpecArguments(foundManifest);
+            let potentialCE = path.join(CAULDRON_PATH, 'versions', createdManifest.id, 'version.ce')
+            if (fs.existsSync(potentialCE)) {
+                const data = fs.readFileSync(potentialCE)
+                const zip = await JSZip.loadAsync(data);
+                let contents = Object.keys(zip.files);
+                let expectedFile = createVersionIdentifier(v, l, lv, CAULDRON_PATH);
+                if (contents.includes(expectedFile)) {
+                    const fileBuffer = await zip.files[expectedFile].async('string');
+                    let ceObj = JSON.parse(fileBuffer);
+                    resolve(ceObj);
+                    return;
                 }
             }
+            ceObject.vanillaVersion = v;
+            ceObject.lv = lv;
 
-            await checkJAR(path.join("versions", createdManifest.id, `${createdManifest.id}.jar`), createdManifest.downloads.client.url);
 
-            const ids = createdManifest.libraries.map((lib) => lib.name);
-            createdManifest.libraries = createdManifest.libraries.filter(({ name }, index) => !ids.includes(name, index + 1));
+            // Append Logging
+            if (createdManifest.logging) {
+                const logFile = createdManifest.logging.client.file;
+                const logPath = path.join("assets", "log_configs");
+                createdManifest.logging.client.file.destination = path.join(CAULDRON_PATH, logPath);
+                createdManifest.logging.client.file.sha1 = 'NONE';
+                createdManifest.logging.client.file.fileName = logFile.id;
+                createdManifest.logging.client.file.origin = createdManifest.logging.client.file.url.replace(RESOURCES_PATH, '${resourcePath}')
+                installQueue.push(createdManifest.logging.client.file);
+                ceObject.loggingInfo = createdManifest.logging.client.file;
+            };
 
+            // Append Entry File
+            let javaEntryObject = {
+                sha1: createdManifest.downloads.client.sha1,
+                destination: path.join(CAULDRON_PATH, "versions", createdManifest.id),
+                fileName: createdManifest.id + ".jar",
+                origin: createdManifest.downloads.client.url
+            }
+            installQueue.push(javaEntryObject)
+
+            // Java
             const jvmMeta = await checkManifest(path.join("jvm", "jvm-core.json"), "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json", "java");
-            const jvmCompat = await checkCompat(createdManifest.javaVersion.component, jvmMeta,createdManifest.javaVersion.forceCompat);
+            const jvmCompat = await checkCompat(createdManifest.javaVersion.component, jvmMeta, createdManifest.javaVersion.forceCompat);
             if (!jvmCompat) return reject("Version Not Supported on " + osCurrent);
             let extra = '';
             if (createdManifest.javaVersion.forceCompat && getOperatingSystem() === 'osx') {
                 extra = '-compat';
             }
             const jvmMani = await checkManifest(path.join("jvm", `${createdManifest.javaVersion.component}${extra}.json`), jvmCompat[0].manifest.url, "java");
+            let jvmQueue = await convertJVM(`${createdManifest.javaVersion.component}${extra}`, jvmMani);
+            ceObject.jreVersion = `${createdManifest.javaVersion.component}${extra}`
+            // Assets
             const assetMani = await checkManifest(path.join("assets", "indexes", `${createdManifest.assets}.json`), createdManifest.assetIndex.url, "assetIndex");
             const assetType = ["legacy", "pre-1.6"].includes(createdManifest.assets) ? createdManifest.assets : "assets";
-            const assetsConverted = await checkManifest(path.join("assets", "indexes", `${createdManifest.assets}-cauldron.json`), createdManifest.assetIndex.url, assetType);
-     
-            let postData = null;
-            if (createdManifest.requiresPost) {
-                postData = await checkManifest(path.join("versions", specLocation, "post.json"), `${resourcePath}/loaders/${l}/${createdManifest.id.split("-")[1]}-${lv}/post.json`, "spec");
-            }
-            const allManifests = {
-                spec: createdManifest,
-                extras: createdManifest.extras,
-                jvmMani,
-                jvmComp: `${createdManifest.javaVersion.component}${extra}`,
-                assets: assetMani,
-                assetsInfo: assetsConverted,
-                version: v,
-                versionData: { loader: l, version: v, loaderVersion: lv },
-                loader: l,
-                assetsDownloaded: !!assetDict[createdManifest.assets],
-                jvmDownloaded: !!jvmDict[createdManifest.javaVersion.component],
-                libsDownloaded: !!libDict[createdManifest.id],
-                loaderVersion: lv,
-                isServer: false,
-                needsPost: createdManifest.requiresPost,
-                postData,
-            };
+            const assetsQueue = await convertAssetsAll(assetMani, assetType)
 
-            resolve(allManifests);
-        } catch (err) {
-            console.error(err);
-            process.exit(0);
-            reject(err);
+            // Libraries
+            const ids = createdManifest.libraries.map((lib) => lib.name);
+            createdManifest.libraries = createdManifest.libraries.filter(({ name }, index) => !ids.includes(name, index + 1));
+
+            const { libQueue, libList, nativeList } = await convertLibraries(createdManifest.libraries, createdManifest.id)
+
+            if (createdManifest.requiresPost) {
+                ceObject.post = await checkManifest(path.join("versions", specLocation, "post.json"), `${RESOURCES_PATH}/loaders/${l}/${createdManifest.id.split("-")[1]}-${lv}/post.json`, "spec", true)
+            }
+
+            const finalQueue = [...installQueue, ...jvmQueue, ...assetsQueue, ...libQueue]
+
+            ceObject.installQueue = finalQueue;
+            ceObject.libList = libList
+            ceObject.nativeList = nativeList;
+            ceObject.specPath = path.join("versions", createdManifest.id, createdManifest.id + '.json')
+            ceObject.specName = createdManifest.id;
+
+            fs.mkdirSync(path.join(CAULDRON_PATH, 'versions', createdManifest.id), { recursive: true });
+        
+            const zip = new JSZip();
+
+            zip.file(createVersionIdentifier(ceObject.vanillaVersion, ceObject.loader, ceObject.lv, CAULDRON_PATH), JSON.stringify(ceObject, null, 2));
+
+            const buffer = await zip.generateAsync({
+                type: "nodebuffer",
+                compression: "DEFLATE",
+                compressionOptions: { level: 6 },
+            });
+            fs.writeFileSync(path.join(CAULDRON_PATH, 'versions', createdManifest.id, 'version.ce'), buffer)
+            resolve(ceObject)
+
+        } catch (e) {
+            reject(e)
         }
-    });
+    })
+
+}
+
+function createVersionIdentifier(version, loader, lv, root) {
+    let identifierPhrase = `${version}-${loader}-${MANIFEST_IDENTIFIER}-${lv}-${root}`;
+    return btoa(identifierPhrase)
 }
 
 async function whatIsThis(version, vanillaManifest) {
@@ -391,4 +245,4 @@ async function whatIsThis(version, vanillaManifest) {
     }
 }
 
-module.exports = { getManifests, getPackwizJVM, checkManifest, whatIsThis, getServerManifest };
+module.exports = {  whatIsThis, getCEObject };

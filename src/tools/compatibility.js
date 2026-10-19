@@ -62,4 +62,4 @@ function getOperatingSystem(isJVM) {
     throw new Error("Unsupported OS/architecture combination");
 }
 
-module.exports =  { grabPath, getOperatingSystem };
+module.exports = { grabPath, getOperatingSystem };

@@ -6,9 +6,7 @@ const { grabPath, getOperatingSystem } = require("./compatibility.js");
 const { jwtDecode } = require("jwt-decode");
 const pkgJSON = require('../../package.json')
 
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = path.dirname(__filename);
-// const systemPKG = JSON.parse(fs.readFileSync(path.join(__dirname, '../../package.json'), 'utf8'));
+
 const defaultJVM = {
     "launcher_name": "CauldronEngine",
     "ram_low": "4",
@@ -39,7 +37,9 @@ async function logInjector(logFile, sessionID) {
         logFileCont = injector.create(logFileCont, {
             log_loc: path.join(CAULDRON_PATH, "sessionLogs", sessionID, "mcLogs.log"),
         });
-        fs.writeFileSync(path.join(logFile, "../", "log_config.xml"), logFileCont);
+        let writeToPath = path.join(CAULDRON_PATH, '.temp', 'log_config.xml')
+
+        fs.writeFileSync(writeToPath, logFileCont);
     } catch (e) {
         fs.mkdirSync(path.join(logFile, "../"), { recursive: true });
         fs.writeFileSync(path.join(logFile, "../", "log_config.xml"), "");
@@ -82,6 +82,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
         if (manifest.logging) {
             validRules.push(manifest.logging.client.argument);
         }
+
         //Check if a version requires proxy
         let proxyPort = false;
         let vArray = ["1.0", "1.1", "1.3", "1.4", "1.5"];
@@ -97,9 +98,14 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
         }
         //process.exit(0)
         if (proxyPort) {
-            validRules.push("-Dhttp.proxyHost=betacraft.uk");
-            validRules.push("-Dhttp.proxyPort=" + proxyPort);
+            //validRules.push("-Dhttp.proxyHost=betacraft.uk");
+            //validRules.push("-Dhttp.proxyPort=" + proxyPort);
         }
+
+
+        let nativesPath = path.join(CAULDRON_PATH, '.temp')
+        let logPath = path.join(CAULDRON_PATH, ".temp", "log_config.xml")
+
 
 
         // Convert Library List into Joined List
@@ -114,13 +120,13 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
             classPathSep = ":";
         }
         let relVariables = {
-            natives_directory: path.join(CAULDRON_PATH, "versions", manifest.id, "natives",),
+            natives_directory: nativesPath,
             launcher_name: cusJVM.launcher_name,
             version_name: manifest.id,
             launcher_version: pkgJSON.version,
             client_jar: path.join(CAULDRON_PATH, "versions", manifest.id, manifest.id + ".jar",),
             classpath: classPath,
-            path: path.join(CAULDRON_PATH, "assets", "log_configs", "log_config.xml"),
+            path: logPath,
             ram: cusJVM.ram,
             ram_low: cusJVM.ram_low,
             classpath_separator: classPathSep,
@@ -138,9 +144,10 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
     });
 }
 
-async function buildGameRules(manifest, loggedUser, overrides, addit) {
+async function buildGameRules(manifest, loggedUser, overrides) {
     return new Promise(async (resolve) => {
         let CAULDRON_PATH = grabPath();
+
         let gameRules = [];
         let allGameRules = manifest.arguments.game;
         for (let gRules in allGameRules) {
@@ -153,22 +160,36 @@ async function buildGameRules(manifest, loggedUser, overrides, addit) {
             gameRules.push("${version_type}");
         }
 
-        let decodedToken = jwtDecode(loggedUser)
-        
+        let demoMode = false;
         let gameVars = {
-            username: 'none',
+            username: 'Demo',
             version_type: manifest.type,
             game_directory: CAULDRON_PATH,
             server_ip: "",
-            uuid:'8667ba71-b85a-4004-af54-457a9734eed7',
-            xuid :'none',
-            clientId:'none'
+            uuid: '8667ba71-b85a-4004-af54-457a9734eed7',
+            xuid: 'none',
+            clientId: 'none',
+            access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30'
         };
-        if (decodedToken.pfd) {
-            gameVars.username = decodedToken.pfd[0].name;
-            gameVars.uuid = decodedToken.pfd[0].id;
-            gameVars.xuid = decodedToken.xuid
-            gameVars.clientId = decodedToken.sub
+        if (typeof loggedUser === "object") {
+            if (loggedUser.demo) {
+                demoMode = false; // Change Before Release
+            } else {
+                gameVars.access_token = loggedUser.token;
+                gameVars.username = loggedUser.accountData.pfd[0].name;
+                gameVars.uuid = loggedUser.accountData.pfd[0].id;
+                gameVars.xuid = loggedUser.accountData.xuid
+                gameVars.clientId = loggedUser.accountData.sub
+            }
+        } else {
+            let decodedToken = jwtDecode(loggedUser)
+            gameVars.access_token = loggedUser
+            if (decodedToken.pfd) {
+                gameVars.username = decodedToken.pfd[0].name;
+                gameVars.uuid = decodedToken.pfd[0].id;
+                gameVars.xuid = decodedToken.xuid
+                gameVars.clientId = decodedToken.sub
+            }
         }
 
         for (let idx in overrides) {
@@ -182,7 +203,7 @@ async function buildGameRules(manifest, loggedUser, overrides, addit) {
             assets_root: path.join(CAULDRON_PATH, "assets"),
             assets_index_name: manifest.assets,
             auth_uuid: gameVars.uuid,
-            auth_access_token: loggedUser,
+            auth_access_token: gameVars.access_token,
             CLIENT_ID: gameVars.clientId,
             game_assets: path.join(CAULDRON_PATH, "resources"),
             auth_xuid: gameVars.xuid,
@@ -199,8 +220,9 @@ async function buildGameRules(manifest, loggedUser, overrides, addit) {
         } else {
             gameVariables.game_assets = path.join(CAULDRON_PATH, "assets");
         }
-        for (let idx in addit) {
-            gameRules.push(addit[idx]);
+
+        if (demoMode) {
+            gameRules.push('--demo')
         }
         if (gameVars.server_ip !== "") {
             gameRules.push("--quickPlayMultiplayer");
@@ -326,7 +348,7 @@ async function buildFile(manifest, jreVersion, validRules, gameRules) {
     }
 
     let launchCommand = `${javaPath} ${validRules.join(" ")} ${mainClass} ${gameRules.join(" ")}`;
-    const scriptDir = path.join(CAULDRON_PATH, "scripts");
+    const scriptDir = path.join(CAULDRON_PATH, ".temp");
     fs.mkdirSync(scriptDir, { recursive: true });
 
     if (osCurrent === "linux" || osCurrent === "darwin") {
