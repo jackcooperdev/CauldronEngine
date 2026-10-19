@@ -23,14 +23,7 @@ function grabPath() {
     fs.mkdirSync(pathReturn, { recursive: true });
     return pathReturn;
 }
-function grabEnginePath() {
-    const WORKING_DIR = ".cauldronengine";
-    let pathReturn = "/Users/sdn/projects/cauldron/.cauldronengine"
 
-
-    fs.mkdirSync(pathReturn, { recursive: true });
-    return pathReturn;
-}
 const osConvertStandard = {
     win32: "windows",
     linux: "linux",
@@ -69,4 +62,4 @@ function getOperatingSystem(isJVM) {
     throw new Error("Unsupported OS/architecture combination");
 }
 
-module.exports = { grabPath, getOperatingSystem, grabEnginePath };
+module.exports = { grabPath, getOperatingSystem };

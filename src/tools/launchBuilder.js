@@ -2,13 +2,11 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 const { exec } = require("child_process");
-const { grabPath, getOperatingSystem, grabEnginePath } = require("./compatibility.js");
+const { grabPath, getOperatingSystem } = require("./compatibility.js");
 const { jwtDecode } = require("jwt-decode");
 const pkgJSON = require('../../package.json')
 
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = path.dirname(__filename);
-// const systemPKG = JSON.parse(fs.readFileSync(path.join(__dirname, '../../package.json'), 'utf8'));
+
 const defaultJVM = {
     "launcher_name": "CauldronEngine",
     "ram_low": "4",
@@ -32,20 +30,15 @@ let injector = {
 };
 
 // Injects current Session ID into a log file and creates a new file
-async function logInjector(logFile, sessionID, useAltPath) {
+async function logInjector(logFile, sessionID) {
     let CAULDRON_PATH = grabPath();
-    if (useAltPath) {
-        CAULDRON_PATH = grabEnginePath();
-    }
     try {
         let logFileCont = fs.readFileSync(logFile).toString();
         logFileCont = injector.create(logFileCont, {
             log_loc: path.join(CAULDRON_PATH, "sessionLogs", sessionID, "mcLogs.log"),
         });
-        let writeToPath = path.join(logFile, "../", "log_config.xml")
-        if (useAltPath) {
-            writeToPath = path.join(CAULDRON_PATH,'.temp','log_config.xml')
-        }
+        let writeToPath = path.join(CAULDRON_PATH, '.temp', 'log_config.xml')
+
         fs.writeFileSync(writeToPath, logFileCont);
     } catch (e) {
         fs.mkdirSync(path.join(logFile, "../"), { recursive: true });
@@ -53,12 +46,9 @@ async function logInjector(logFile, sessionID, useAltPath) {
     }
 }
 
-async function buildJVMRules(manifest, libraryList, versionData, overrides, useAltPath) {
+async function buildJVMRules(manifest, libraryList, versionData, overrides) {
     return new Promise(async (resolve) => {
         let CAULDRON_PATH = grabPath();
-        if (useAltPath) {
-            CAULDRON_PATH = grabEnginePath();
-        }
         let cusJVM = defaultJVM;
         // Acquire Set Version
         if (overrides) {
@@ -92,7 +82,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides, useA
         if (manifest.logging) {
             validRules.push(manifest.logging.client.argument);
         }
-   
+
         //Check if a version requires proxy
         let proxyPort = false;
         let vArray = ["1.0", "1.1", "1.3", "1.4", "1.5"];
@@ -112,12 +102,10 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides, useA
             //validRules.push("-Dhttp.proxyPort=" + proxyPort);
         }
 
-        let nativesPath = path.join(CAULDRON_PATH, "versions", manifest.id, "natives");
-        let logPath = path.join(CAULDRON_PATH, "assets", "log_configs", "log_config.xml")
-        if (useAltPath) {
-            nativesPath = path.join(CAULDRON_PATH,'.temp')
-            logPath = path.join(CAULDRON_PATH, ".temp", "log_config.xml")
-        }
+
+        let nativesPath = path.join(CAULDRON_PATH, '.temp')
+        let logPath = path.join(CAULDRON_PATH, ".temp", "log_config.xml")
+
 
 
         // Convert Library List into Joined List
@@ -156,12 +144,10 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides, useA
     });
 }
 
-async function buildGameRules(manifest, loggedUser, overrides, useAltPath) {
+async function buildGameRules(manifest, loggedUser, overrides) {
     return new Promise(async (resolve) => {
         let CAULDRON_PATH = grabPath();
-        if (useAltPath) {
-            CAULDRON_PATH = grabEnginePath();
-        }
+
         let gameRules = [];
         let allGameRules = manifest.arguments.game;
         for (let gRules in allGameRules) {
@@ -205,7 +191,7 @@ async function buildGameRules(manifest, loggedUser, overrides, useAltPath) {
                 gameVars.clientId = decodedToken.sub
             }
         }
-    
+
         for (let idx in overrides) {
             gameVars[idx] = overrides[idx];
         }
@@ -234,7 +220,7 @@ async function buildGameRules(manifest, loggedUser, overrides, useAltPath) {
         } else {
             gameVariables.game_assets = path.join(CAULDRON_PATH, "assets");
         }
-       
+
         if (demoMode) {
             gameRules.push('--demo')
         }
@@ -351,11 +337,8 @@ function getAikarFlags(memGB) {
 }
 
 
-async function buildFile(manifest, jreVersion, validRules, gameRules, useAltPath) {
+async function buildFile(manifest, jreVersion, validRules, gameRules) {
     let CAULDRON_PATH = grabPath();
-    if (useAltPath) {
-        CAULDRON_PATH = grabEnginePath();
-    }
     let mainClass = manifest.mainClass;
     let javaPath;
     if (osCurrent === "darwin") {

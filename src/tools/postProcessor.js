@@ -1,4 +1,4 @@
-const { grabEnginePath, getOperatingSystem } = require("./compatibility")
+const { getOperatingSystem, grabPath } = require("./compatibility")
 const path = require('path');
 const { convertLibraries } = require("./manifestConverter");
 const { verifyInstallation } = require("../controllers/queue");
@@ -14,7 +14,7 @@ async function postProcessing(CE_OBJECT, side = 'client') {
 
     return new Promise(async (resolve, reject) => {
         try {
-            let CAULDRON_PATH = grabEnginePath();
+            let CAULDRON_PATH = grabPath();
             let mainClass;
             let returnObj = [];
             let { specName, post, vanillaVersion, loader, jreVersion, lv } = CE_OBJECT;
@@ -335,7 +335,7 @@ function addManifestToJar(jarPath, javaDir) {
     const jarTool = path.join(javaDir, "jar");
     const osCurrent = os.platform();
     const manifestContent = "Manifest-Version: 1.0\nAutomatic-Module-Name: minecraft\n\n";
-    const manifestPath = path.join(grabEnginePath(), '.temp', 'cauldron_manifest.mf')
+    const manifestPath = path.join(grabPath(), '.temp', 'cauldron_manifest.mf')
     fs.writeFileSync(manifestPath, manifestContent);
     try {
         if (osCurrent === "linux" || osCurrent === "darwin") {

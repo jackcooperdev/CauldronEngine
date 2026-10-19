@@ -1,4 +1,4 @@
-const { grabPath, grabEnginePath, getOperatingSystem } = require("./compatibility.js");
+const { grabPath, getOperatingSystem } = require("./compatibility.js");
 const path = require("path");
 const os = require("os");
 const { cauldronLogger } = require("./logger.js");
@@ -34,68 +34,10 @@ async function convertReleaseVersions(loader, fileData) {
 
 }
 
-async function convertAssets(original) {
-    return new Promise(async (resolve) => {
-        let CAULDRON_PATH = grabPath();
-        let objs = original.objects;
-        let newData = [];
-        for (let idx in objs) {
-            let obj = {
-                origin: `https://resources.download.minecraft.net/${objs[idx].hash.substring(0, 2)}/${objs[idx].hash}`,
-                sha1: objs[idx].hash,
-                destination: path.join(CAULDRON_PATH, "assets", "objects", objs[idx].hash.substring(0, 2),),
-                fileName: objs[idx].hash,
-            };
-            newData.push(obj);
-        }
-        resolve(newData);
-    });
-}
-
-async function convertLegacyAssets(original) {
-    return new Promise(async (resolve) => {
-        let CAULDRON_PATH = grabPath();
-        let objs = original.objects;
-        let newData = [];
-        for (let idx in objs) {
-            let splitPath = idx.split("/");
-            let fileName = splitPath.pop();
-            let obj = {
-                origin: `https://resources.download.minecraft.net/${objs[idx].hash.substring(0, 2)}/${objs[idx].hash}`,
-                sha1: objs[idx].hash,
-                destination: path.join(CAULDRON_PATH, "assets", "virtual", "legacy", splitPath.join("/"),),
-                fileName: fileName,
-            };
-            newData.push(obj);
-        }
-        resolve(newData);
-    });
-}
-
-async function convertPre16Assets(original) {
-    return new Promise(async (resolve) => {
-        let CAULDRON_PATH = grabPath();
-        let objs = original.objects;
-        let newData = [];
-        for (let idx in objs) {
-            let splitPath = idx.split("/");
-            let fileName = splitPath.pop();
-            let obj = {
-                origin: `https://resources.download.minecraft.net/${objs[idx].hash.substring(0, 2)}/${objs[idx].hash}`,
-                sha1: objs[idx].hash,
-                destination: path.join(CAULDRON_PATH, "resources", splitPath.join("/")),
-                fileName: fileName,
-            };
-            newData.push(obj);
-        }
-        resolve(newData);
-    });
-}
 
 async function convertAssetsAll(original, type) {
-    console.log(type)
     return new Promise(async (resolve, reject) => {
-        let CAULDRON_PATH = grabEnginePath();
+        let CAULDRON_PATH = grabPath();
         let objs = original.objects;
         let objsKeys = Object.keys(objs);
         let newData = [];
@@ -137,10 +79,10 @@ async function convertAssetsAll(original, type) {
     });
 }
 
-async function convertLibraries(libList, version) {
+async function convertLibraries(libList) {
     return new Promise(async (resolve, reject) => {
         try {
-            const CAULDRON_PATH = grabEnginePath();
+            const CAULDRON_PATH = grabPath();
             let returnQueue = [];
 
 
@@ -233,7 +175,7 @@ async function convertLibraries(libList, version) {
 async function convertJVM(name, jvmMani) {
     return new Promise(async (resolve, reject) => {
         try {
-            const CAULDRON_PATH = grabEnginePath();
+            const CAULDRON_PATH = grabPath();
             let returnQueue = [];
 
             const files = jvmMani.files;
@@ -266,5 +208,5 @@ async function convertJVM(name, jvmMani) {
 
 
 module.exports = {
-    addOSSpecArguments, convertAssets, convertLegacyAssets, convertLibraries, convertAssetsAll, convertPre16Assets, convertReleaseVersions, convertJVM
+    addOSSpecArguments, convertLibraries, convertAssetsAll, convertReleaseVersions, convertJVM
 };

@@ -1,9 +1,9 @@
 const VERIFIED_LOADERS = require('../files/verifiedLoaders.json');
 const PATCHES = require('../files/patches.json');
 const { cauldronLogger } = require('../tools/logger');
-const { getOperatingSystem, grabEnginePath } = require('../tools/compatibility');
+const { getOperatingSystem, grabPath } = require('../tools/compatibility');
 const { createUUID } = require('../tools/fileTools');
-const { getQueue, getCEObject } = require('./manifest');
+const {  getCEObject } = require('./manifest');
 const { verifyInstallation } = require('./queue');
 const { logInjector, buildJVMRules, buildGameRules, buildFile } = require('../tools/launchBuilder');
 const path = require('path')
@@ -15,7 +15,7 @@ async function startGame(version, loaderInfo, authInfo, overrides) {
     return new Promise(async (resolve, reject) => {
         try {
             const CE_OBJECT = await installGame(version, loaderInfo);
-            let CAULDRON_PATH = grabEnginePath();
+            let CAULDRON_PATH = grabPath();
             let sessionID = createUUID();
             if (!overrides) {
                 overrides = { jvm: {}, game: {}, additG: {} };
@@ -58,14 +58,14 @@ async function startGame(version, loaderInfo, authInfo, overrides) {
             }
 
             // Create JVM Rules
-            const validRules = await buildJVMRules(SPEC_FILE, CE_OBJECT.libList, { version }, overrides.jvm, true);
+            const validRules = await buildJVMRules(SPEC_FILE, CE_OBJECT.libList, { version }, overrides.jvm);
 
             // Build Game Rules
 
-            const gameRules = await buildGameRules(SPEC_FILE, authInfo, overrides.game, true);
+            const gameRules = await buildGameRules(SPEC_FILE, authInfo, overrides.game);
 
             // Build Launch Script
-            const launchPath = await buildFile(SPEC_FILE, CE_OBJECT.jreVersion, validRules, gameRules, true);
+            const launchPath = await buildFile(SPEC_FILE, CE_OBJECT.jreVersion, validRules, gameRules);
 
             let launchDirectory = `${CAULDRON_PATH}`;
             if (overrides["game"]) {
@@ -142,18 +142,18 @@ async function installGame(version, loaderInfo) {
                 installObject = { ...installObject, ...patch.patch }
             };
 
-
-            let CAULDRON_PATH = grabEnginePath();
             let SESSION_ID = createUUID();
 
             cauldronLogger.debug(`Session ID: ${SESSION_ID}`);
+
 
             const CE_OBJECT = await getCEObject(installObject);
 
 
 
-            await verifyInstallation(CE_OBJECT.installQueue);
 
+            await verifyInstallation(CE_OBJECT.installQueue);
+        
             resolve(CE_OBJECT);
 
         } catch (e) {
