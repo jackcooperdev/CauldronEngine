@@ -32,14 +32,21 @@ let injector = {
 };
 
 // Injects current Session ID into a log file and creates a new file
-async function logInjector(logFile, sessionID) {
+async function logInjector(logFile, sessionID, useAltPath) {
     let CAULDRON_PATH = grabPath();
+    if (useAltPath) {
+        CAULDRON_PATH = grabEnginePath();
+    }
     try {
         let logFileCont = fs.readFileSync(logFile).toString();
         logFileCont = injector.create(logFileCont, {
             log_loc: path.join(CAULDRON_PATH, "sessionLogs", sessionID, "mcLogs.log"),
         });
-        fs.writeFileSync(path.join(logFile, "../", "log_config.xml"), logFileCont);
+        let writeToPath = path.join(logFile, "../", "log_config.xml")
+        if (useAltPath) {
+            writeToPath = path.join(CAULDRON_PATH,'.temp','log_config.xml')
+        }
+        fs.writeFileSync(writeToPath, logFileCont);
     } catch (e) {
         fs.mkdirSync(path.join(logFile, "../"), { recursive: true });
         fs.writeFileSync(path.join(logFile, "../", "log_config.xml"), "");
@@ -85,6 +92,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides, useA
         if (manifest.logging) {
             validRules.push(manifest.logging.client.argument);
         }
+   
         //Check if a version requires proxy
         let proxyPort = false;
         let vArray = ["1.0", "1.1", "1.3", "1.4", "1.5"];
@@ -105,8 +113,10 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides, useA
         }
 
         let nativesPath = path.join(CAULDRON_PATH, "versions", manifest.id, "natives");
+        let logPath = path.join(CAULDRON_PATH, "assets", "log_configs", "log_config.xml")
         if (useAltPath) {
-            nativesPath = path.join(CAULDRON_PATH,'temp')
+            nativesPath = path.join(CAULDRON_PATH,'.temp')
+            logPath = path.join(CAULDRON_PATH, ".temp", "log_config.xml")
         }
 
 
@@ -128,7 +138,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides, useA
             launcher_version: pkgJSON.version,
             client_jar: path.join(CAULDRON_PATH, "versions", manifest.id, manifest.id + ".jar",),
             classpath: classPath,
-            path: path.join(CAULDRON_PATH, "assets", "log_configs", "log_config.xml"),
+            path: logPath,
             ram: cusJVM.ram,
             ram_low: cusJVM.ram_low,
             classpath_separator: classPathSep,
@@ -177,7 +187,13 @@ async function buildGameRules(manifest, loggedUser, overrides, useAltPath) {
         };
         if (typeof loggedUser === "object") {
             if (loggedUser.demo) {
-                demoMode = true;
+                demoMode = false; // Change Before Release
+            } else {
+                gameVars.access_token = loggedUser.token;
+                gameVars.username = loggedUser.accountData.pfd[0].name;
+                gameVars.uuid = loggedUser.accountData.pfd[0].id;
+                gameVars.xuid = loggedUser.accountData.xuid
+                gameVars.clientId = loggedUser.accountData.sub
             }
         } else {
             let decodedToken = jwtDecode(loggedUser)
@@ -349,7 +365,7 @@ async function buildFile(manifest, jreVersion, validRules, gameRules, useAltPath
     }
 
     let launchCommand = `${javaPath} ${validRules.join(" ")} ${mainClass} ${gameRules.join(" ")}`;
-    const scriptDir = path.join(CAULDRON_PATH, "scripts");
+    const scriptDir = path.join(CAULDRON_PATH, ".temp");
     fs.mkdirSync(scriptDir, { recursive: true });
 
     if (osCurrent === "linux" || osCurrent === "darwin") {

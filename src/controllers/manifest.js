@@ -51,24 +51,23 @@ async function checkManifest(fileName, url, type) {
     });
 }
 
-async function checkManifest2(fileName, url, type) {
+async function checkManifest2(fileName, url, type, noSave) {
     return new Promise(async (resolve, reject) => {
         let isOnline = await checkInternet();
         let CAULDRON_PATH = grabEnginePath();
         try {
             let expected = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, fileName)).toString());
             if (isOnline && type === "main" || isOnline && fileName.includes("release")) {
-                expected = await downloadManifest(url, path.join(CAULDRON_PATH, fileName),undefined,true);
+                expected = await downloadManifest(url, path.join(CAULDRON_PATH, fileName), undefined, true);
             }
             resolve(expected);
         } catch (err) {
             cauldronLogger.debug(`${fileName} not found trying to download`);
             if (isOnline) {
                 try {
-                    const downloadedFile = await downloadManifest(url, path.join(CAULDRON_PATH, fileName), type,true);
+                    const downloadedFile = await downloadManifest(url, path.join(CAULDRON_PATH, fileName), type, true, noSave);
                     resolve(downloadedFile);
                 } catch (err) {
-                    console.log(url)
                     reject(`This Profile either do3es not exist or is not supported`);
                 }
             } else {
@@ -139,7 +138,7 @@ let convertManifests = {
     "pre-1.6": convertPre16Assets,
 };
 
-async function downloadManifest(url, dir, type, useAlt) {
+async function downloadManifest(url, dir, type, useAlt, noSave) {
     return new Promise(async (resolve, reject) => {
         let config = {
             method: "get",
@@ -151,7 +150,6 @@ async function downloadManifest(url, dir, type, useAlt) {
             if (convertManifests[type]) {
                 fileData = await convertManifests[type](fileData);
             }
-            //console.log(fileData)
             if (dir.includes("release")) {
                 let CAULDRON_PATH = grabPath();
                 if (useAlt) {
@@ -168,8 +166,10 @@ async function downloadManifest(url, dir, type, useAlt) {
                 }
                 dir = newPath;
             }
-            fs.mkdirSync(path.dirname(dir), { recursive: true });
-            fs.writeFileSync(dir, JSON.stringify(fileData, null, 2));
+            if (!noSave) {
+                fs.mkdirSync(path.dirname(dir), { recursive: true });
+                fs.writeFileSync(dir, JSON.stringify(fileData, null, 2));
+            }
             resolve(fileData);
         } catch (err) {
             reject(err.message);
@@ -427,7 +427,12 @@ async function getCEObject(installObject) {
                 loggingInfo: {},
                 installQueue: [],
                 jreVersion: '',
-                specPath: ''
+                specPath: '',
+                vanillaVersion:v,
+                loader:l,
+                lv:lv,
+                specName:'',
+                post: false,
             }
             let installQueue = [];
 
@@ -447,7 +452,8 @@ async function getCEObject(installObject) {
             lv = foundManifest.loaderVersion || foundManifest.version;
 
             const createdManifest = await addOSSpecArguments(foundManifest);
-
+            ceObject.vanillaVersion = v;
+            ceObject.lv = lv;
 
 
             // Append Logging
@@ -494,23 +500,18 @@ async function getCEObject(installObject) {
 
             const { libQueue, libList, nativeList } = await convertLibraries(createdManifest.libraries, createdManifest.id)
 
-            // TODO Post Shit;
+            if (createdManifest.requiresPost) {
+                ceObject.post = await checkManifest2(path.join("versions", specLocation, "post.json"), `${RESOURCES_PATH}/loaders/${l}/${createdManifest.id.split("-")[1]}-${lv}/post.json`, "spec", true)
+            }
 
             const finalQueue = [...installQueue, ...jvmQueue, ...assetsQueue, ...libQueue]
-
-
-
-            console.log(finalQueue.length)
 
             ceObject.installQueue = finalQueue;
             ceObject.libList = libList
             ceObject.nativeList = nativeList;
             ceObject.specPath = path.join("versions", createdManifest.id, createdManifest.id + '.json')
+            ceObject.specName = createdManifest.id;
 
-            //console.log(createdManifest)
-            //console.log(installQueue)
-            //console.log(ceObject)
-            fs.writeFileSync('out.json', JSON.stringify(ceObject, null, 2));
             fs.mkdirSync(path.join(CAULDRON_PATH, 'versions', createdManifest.id), { recursive: true });
             fs.writeFileSync(path.join(CAULDRON_PATH, 'versions', createdManifest.id, 'launch.ce'), JSON.stringify(ceObject, null, 2))
             resolve(ceObject)

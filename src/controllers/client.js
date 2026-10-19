@@ -10,6 +10,7 @@ const path = require('path')
 const JSZip = require('jszip');
 const fs = require('fs')
 const { spawn } = require("child_process");
+const { postProcessing } = require('../tools/postProcessor');
 async function startGame(version, loaderInfo, authInfo, overrides) {
     return new Promise(async (resolve, reject) => {
         try {
@@ -19,10 +20,10 @@ async function startGame(version, loaderInfo, authInfo, overrides) {
             if (!overrides) {
                 overrides = { jvm: {}, game: {}, additG: {} };
             }
-
+            fs.mkdirSync(path.join(CAULDRON_PATH, '.temp'), { recursive: true })
             // Setup Logger
             if (CE_OBJECT.loggingInfo) {
-                await logInjector(path.join(CAULDRON_PATH, 'assets', 'log_configs', CE_OBJECT.loggingInfo.id), sessionID);
+                await logInjector(path.join(CAULDRON_PATH, 'assets', 'log_configs', CE_OBJECT.loggingInfo.id), sessionID, true);
             } else {
                 sessionID = 'DETACH'
             };
@@ -35,9 +36,8 @@ async function startGame(version, loaderInfo, authInfo, overrides) {
 
             let nativeList = CE_OBJECT.nativeList;
 
-            console.log(nativeList);
             const IGNORE_LIST = ["META-INF", ".git", ".sha1"];
-            fs.mkdirSync(path.join(CAULDRON_PATH, 'temp'), { recursive: true })
+
             for (let native of nativeList) {
                 const data = fs.readFileSync(native);
                 const zip = await JSZip.loadAsync(data)
@@ -46,9 +46,15 @@ async function startGame(version, loaderInfo, authInfo, overrides) {
                 );
                 for (let relFile of relFiles) {
                     const fileBuffer = await zip.files[relFile].async('nodebuffer')
-                    fs.writeFileSync(path.join(CAULDRON_PATH, 'temp', relFile), fileBuffer)
-                    console.log('WIRTEACTION')
+                    fs.writeFileSync(path.join(CAULDRON_PATH, '.temp', relFile), fileBuffer)
                 }
+            };
+
+
+            // Perform Post Actions
+            if (CE_OBJECT.post) {
+                let additionalLibs = await postProcessing(CE_OBJECT);
+                CE_OBJECT.libList = [...CE_OBJECT.libList, ...additionalLibs]
             }
 
             // Create JVM Rules
@@ -73,7 +79,7 @@ async function startGame(version, loaderInfo, authInfo, overrides) {
 
             // Launch Game
             const isWindows = getOperatingSystem() === 'windows';
-            const dirToDelete = path.join(CAULDRON_PATH,'temp')
+            const dirToDelete = path.join(CAULDRON_PATH, '.temp')
 
             const child = isWindows
                 ? spawn('cmd', ['/c', `cd /d "${launchDirectory}" && start "" /wait "${launchPath}" & cd /d "%TEMP%" & rmdir /s /q "${dirToDelete}"`], {
@@ -144,20 +150,15 @@ async function installGame(version, loaderInfo) {
 
             const CE_OBJECT = await getCEObject(installObject);
 
+
+
             await verifyInstallation(CE_OBJECT.installQueue);
 
             resolve(CE_OBJECT);
 
         } catch (e) {
             reject(e);
-        }
-
-
-
-
-
-
-
+        };
     })
 }
 
