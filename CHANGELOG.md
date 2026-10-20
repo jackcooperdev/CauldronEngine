@@ -424,7 +424,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release
 
-[unreleased]: https://github.com/jackcooperdev/CauldronEngine/compare/0.13.0...HEAD
+[unreleased]: https://github.com/jackcooperdev/CauldronEngine/compare/0.13.1...HEAD
+[0.13.1]: https://github.com/jackcooperdev/CauldronEngine/compare/0.13.1...0.13.1
 [0.13.0]: https://github.com/jackcooperdev/CauldronEngine/compare/0.11.3...0.13.0
 [0.11.3]: https://github.com/jackcooperdev/CauldronEngine/compare/0.11.2...0.11.3
 [0.11.2]: https://github.com/jackcooperdev/CauldronEngine/compare/0.11.1...0.11.2
