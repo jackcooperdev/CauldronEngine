@@ -186,6 +186,7 @@ async function postProcessing(CE_OBJECT, side = 'client') {
                     let count = 1;
                     for (let job of processors) {
                         cauldronLogger.info(`Starting Job ${count} of ${processors.length}`);
+                        count++;
                         let selectedProc = job.jar;
                         cauldronLogger.debug(`Process Name : ${selectedProc}`);
                         let splitName = convertNameToPath(selectedProc);

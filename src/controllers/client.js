@@ -148,12 +148,7 @@ async function installGame(version, loaderInfo) {
 
 
             const CE_OBJECT = await getCEObject(installObject);
-
-
-
-
             await verifyInstallation(CE_OBJECT.installQueue);
-        
             resolve(CE_OBJECT);
 
         } catch (e) {

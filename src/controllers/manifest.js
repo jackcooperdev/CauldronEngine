@@ -25,7 +25,7 @@ const osCurrent = os.platform();
 const RESOURCES_PATH = process.env.RESOURCE_SERVER || "https://resources.cauldronmc.com"
 
 
-async function checkManifest(fileName, url, type, noSave) {
+async function checkManifest(fileName, url, type, noSave, vanMan, lodMan) {
     return new Promise(async (resolve, reject) => {
         let isOnline = await checkInternet();
         let CAULDRON_PATH = grabPath();
@@ -45,6 +45,30 @@ async function checkManifest(fileName, url, type, noSave) {
                     reject(`This Profile either do3es not exist or is not supported`);
                 }
             } else {
+                if (type === 'spec') {
+                    let vVersion;
+                    let l;
+                    let lVersion = false;
+                    if (url.includes('loaders')) {
+                        let urlSplit = url.split("loaders/")[1].split("/");
+                        vVersion = urlSplit[1];
+                        l = urlSplit[0]
+                        lVersion = urlSplit[2];
+                    } else {
+                        vVersion = url.split("/").pop();
+                    }
+                    let thisIs = await whatIsThis(vVersion, vanMan, lodMan, lVersion);
+                    console.log(thisIs);
+                    let expectedPath;
+                    if (typeof thisIs === 'object') {
+                        expectedPath = path.join(CAULDRON_PATH, `versions`, `${l}-${thisIs.v}-${thisIs.lv}`, `${l}-${thisIs.v}-${thisIs.lv}.json`)
+                    } else {
+                        expectedPath = path.join(CAULDRON_PATH, `versions`, thisIs, `${thisIs}.json`)
+                    }
+                    if (fs.existsSync(expectedPath)) {
+                        return resolve(JSON.parse(fs.readFileSync(expectedPath).toString()));
+                    }
+                }
                 reject(`This Profile Cannot be launched offline. Please Launch it Online first`);
             }
         }
@@ -76,7 +100,7 @@ async function downloadManifest(url, dir, type, noSave) {
             let fileData = file.data;
             if (dir.includes("release")) {
                 let CAULDRON_PATH = grabPath();
-        
+
                 let version = fileData.id
                 let newPath;
                 if (!url.includes("post.json")) {
@@ -120,11 +144,17 @@ async function getCEObject(installObject) {
                 post: false,
             }
             let installQueue = [];
-
             let specPath = l !== 'vanilla' ? `/loaders/${l}/${v}/${lv}` : `/spec/${v}`
             let specLocation = l !== "vanilla" ? `${l}-${v}-${lv}` : v;
+            const grabBigManifest = await checkManifest(path.join('version_manifest.json'), `${RESOURCES_PATH}/version_manifest.json`, 'main');
 
-            const foundManifest = await checkManifest(path.join("versions", specLocation, `${specLocation}.json`), `${RESOURCES_PATH}${specPath}`, 'spec')
+            let lManifest = null;
+            if (l !== 'vanilla') {
+                lManifest = await checkManifest(path.join(l + '_version_manifest.json'), `${RESOURCES_PATH}/loaders/${l}/version_manifest.json`, 'main');
+            };
+
+            const foundManifest = await checkManifest(path.join("versions", specLocation, `${specLocation}.json`), `${RESOURCES_PATH}${specPath}`, 'spec', false, grabBigManifest, lManifest)
+
             if (!foundManifest) {
                 return reject({ message: `Version not ${l === "vanilla" ? "found" : `supported for loader: ${l}`}` });
             }
@@ -210,7 +240,7 @@ async function getCEObject(installObject) {
             ceObject.specName = createdManifest.id;
 
             fs.mkdirSync(path.join(CAULDRON_PATH, 'versions', createdManifest.id), { recursive: true });
-        
+
             const zip = new JSZip();
 
             zip.file(createVersionIdentifier(ceObject.vanillaVersion, ceObject.loader, ceObject.lv, CAULDRON_PATH), JSON.stringify(ceObject, null, 2));
@@ -235,14 +265,40 @@ function createVersionIdentifier(version, loader, lv, root) {
     return btoa(identifierPhrase)
 }
 
-async function whatIsThis(version, vanillaManifest) {
-    if (version === "release" || version === "latest") {
-        return vanillaManifest.latest.release;
-    } else if (version === "snapshot") {
-        return vanillaManifest.latest.snapshot;
+async function whatIsThis(version, vanillaManifest, loaderManifest, lv) {
+    if (loaderManifest) {
+        let returnVersion = undefined;
+        let loaderVerison = undefined;
+        if (version === "release" || version === "latest") {
+            returnVersion = loaderManifest.latest.release.id;
+        } else if (version === "snapshot") {
+            returnVersion = loaderManifest.latest.snapshot.id;
+        } else {
+            returnVersion = version;
+        }
+
+        if (lv === 'release') {
+            console.log(returnVersion)
+            let foundVersion = loaderManifest.versions.find(obj => obj.id === returnVersion);
+            if (!foundVersion) {
+                return false;
+            };
+            loaderVerison = foundVersion.loaderVersion;
+        }
+
+        return { v: returnVersion, lv: loaderVerison }
+
     } else {
-        return version;
+        if (version === "release" || version === "latest") {
+            return vanillaManifest.latest.release;
+        } else if (version === "snapshot") {
+            return vanillaManifest.latest.snapshot;
+        } else {
+            return version;
+        }
     }
+
+
 }
 
-module.exports = {  whatIsThis, getCEObject };
+module.exports = { whatIsThis, getCEObject };

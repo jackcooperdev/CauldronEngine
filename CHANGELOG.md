@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Post Processing now reports correct task
+
+
+### Added
+
+- whatIsThis support for loaders
+- Loader Version Manifests now download into main folder
+- Corrupt installation error when verifying offline.
+
+### Removed
+- CauldronLogger Error in queue
+
+
 ## [0.13.1] - 2026-10-19
 
 > Updated README and Small Dependencies
