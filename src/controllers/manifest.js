@@ -16,9 +16,7 @@ const { cauldronLogger } = require("../tools/logger.js");
 const { checkInternet } = require("../tools/checkConnection.js");
 const { getOperatingSystem } = require("../tools/compatibility");
 const JSZip = require('jszip');
-
-// Current Manifest Identifer (Changing this will invalidate files)
-const MANIFEST_IDENTIFIER = 'apple';
+const { generateKey, writeManifestFile, readManifestFile } = require("../tools/ceManager.js");
 
 const osCurrent = os.platform();
 
@@ -146,6 +144,8 @@ async function getCEObject(installObject) {
             let installQueue = [];
             let specPath = l !== 'vanilla' ? `/loaders/${l}/${v}/${lv}` : `/spec/${v}`
             let specLocation = l !== "vanilla" ? `${l}-${v}-${lv}` : v;
+
+
             const grabBigManifest = await checkManifest(path.join('version_manifest.json'), `${RESOURCES_PATH}/version_manifest.json`, 'main');
 
             let lManifest = null;
@@ -166,22 +166,26 @@ async function getCEObject(installObject) {
             }
             lv = foundManifest.loaderVersion || foundManifest.version;
 
-            const createdManifest = await addOSSpecArguments(foundManifest);
-            let potentialCE = path.join(CAULDRON_PATH, 'versions', createdManifest.id, 'version.ce')
-            if (fs.existsSync(potentialCE)) {
-                const data = fs.readFileSync(potentialCE)
-                const zip = await JSZip.loadAsync(data);
-                let contents = Object.keys(zip.files);
-                let expectedFile = createVersionIdentifier(v, l, lv, CAULDRON_PATH);
-                if (contents.includes(expectedFile)) {
-                    const fileBuffer = await zip.files[expectedFile].async('string');
-                    let ceObj = JSON.parse(fileBuffer);
-                    resolve(ceObj);
-                    return;
+
+            // Check For Version CE File
+            let expectedCELocation = path.join(CAULDRON_PATH, 'versions', foundManifest.id, 'version.ce');
+            if (fs.existsSync(expectedCELocation)) {
+                let result = readManifestFile(expectedCELocation, generateKey());
+                if (result.valid) {
+                    return resolve(result.manifest);
+                } else {
+                    cauldronLogger.warn('Current CE Object is Invalid Recreating...')
+                    cauldronLogger.debug(`Reason: ${result.reason}`)
+                    cauldronLogger.debug(`Detail: ${result.detail}`)
                 }
             }
+
+
+
+            const createdManifest = await addOSSpecArguments(foundManifest);
+
             ceObject.vanillaVersion = v;
-            ceObject.lv = lv;
+            ceObject.lv = lv || '';
 
 
             // Append Logging
@@ -241,16 +245,9 @@ async function getCEObject(installObject) {
 
             fs.mkdirSync(path.join(CAULDRON_PATH, 'versions', createdManifest.id), { recursive: true });
 
-            const zip = new JSZip();
+            const outPath = path.join(CAULDRON_PATH, 'versions', createdManifest.id, 'version.ce');
+            writeManifestFile(outPath, ceObject, generateKey());
 
-            zip.file(createVersionIdentifier(ceObject.vanillaVersion, ceObject.loader, ceObject.lv, CAULDRON_PATH), JSON.stringify(ceObject, null, 2));
-
-            const buffer = await zip.generateAsync({
-                type: "nodebuffer",
-                compression: "DEFLATE",
-                compressionOptions: { level: 6 },
-            });
-            fs.writeFileSync(path.join(CAULDRON_PATH, 'versions', createdManifest.id, 'version.ce'), buffer)
             resolve(ceObject)
 
         } catch (e) {
@@ -263,6 +260,22 @@ async function getCEObject(installObject) {
 function createVersionIdentifier(version, loader, lv, root) {
     let identifierPhrase = `${version}-${loader}-${MANIFEST_IDENTIFIER}-${lv}-${root}`;
     return btoa(identifierPhrase)
+}
+
+async function grabCE(potentialCE) {
+    return new Promise(async (resolve, reject) => {
+        const data = fs.readFileSync(potentialCE)
+        const zip = await JSZip.loadAsync(data);
+        let contents = Object.keys(zip.files);
+        let expectedFile = createVersionIdentifier(v, l, lv, CAULDRON_PATH);
+        if (contents.includes(expectedFile)) {
+            const fileBuffer = await zip.files[expectedFile].async('string');
+            let ceObj = JSON.parse(fileBuffer);
+            resolve(ceObj);
+        } else {
+            resolve(false)
+        }
+    })
 }
 
 async function whatIsThis(version, vanillaManifest, loaderManifest, lv) {
@@ -301,4 +314,4 @@ async function whatIsThis(version, vanillaManifest, loaderManifest, lv) {
 
 }
 
-module.exports = { whatIsThis, getCEObject };
+module.exports = { whatIsThis, getCEObject, grabCE };

@@ -26,6 +26,7 @@
   "author": "JackCooper",
   "license": "GPL-3.0-only",
   "dependencies": {
+    "@napi-rs/keyring": "^2.1.2",
     "axios": "^1.20.0",
     "bluebird": "^3.7.2",
     "checksum": "^1.0.0",
