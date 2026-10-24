@@ -56,7 +56,6 @@ async function checkManifest(fileName, url, type, noSave, vanMan, lodMan) {
                         vVersion = url.split("/").pop();
                     }
                     let thisIs = await whatIsThis(vVersion, vanMan, lodMan, lVersion);
-                    console.log(thisIs);
                     let expectedPath;
                     if (typeof thisIs === 'object') {
                         expectedPath = path.join(CAULDRON_PATH, `versions`, `${l}-${thisIs.v}-${thisIs.lv}`, `${l}-${thisIs.v}-${thisIs.lv}.json`)
@@ -124,7 +123,7 @@ async function downloadManifest(url, dir, type, noSave) {
 async function getCEObject(installObject) {
     return new Promise(async (resolve, reject) => {
         try {
-
+            let start = new Date();
             let { version: v, loader: l, lv } = installObject;
             const CAULDRON_PATH = grabPath();
 
@@ -135,15 +134,14 @@ async function getCEObject(installObject) {
                 installQueue: [],
                 jreVersion: '',
                 specPath: '',
+                javaQueue: [],
                 vanillaVersion: v,
                 loader: l,
                 lv: lv,
                 specName: '',
                 post: false,
             }
-            let installQueue = [];
-            let specPath = l !== 'vanilla' ? `/loaders/${l}/${v}/${lv}` : `/spec/${v}`
-            let specLocation = l !== "vanilla" ? `${l}-${v}-${lv}` : v;
+
 
 
             const grabBigManifest = await checkManifest(path.join('version_manifest.json'), `${RESOURCES_PATH}/version_manifest.json`, 'main');
@@ -153,6 +151,14 @@ async function getCEObject(installObject) {
                 lManifest = await checkManifest(path.join(l + '_version_manifest.json'), `${RESOURCES_PATH}/loaders/${l}/version_manifest.json`, 'main');
             };
 
+            let thisIs = await whatIsThis(v, grabBigManifest, lManifest, lv);
+            v = thisIs.v;
+            lv = thisIs.lv;
+
+            let installQueue = [];
+            let specPath = l !== 'vanilla' ? `/loaders/${l}/${v}/${lv}` : `/spec/${v}`
+            let specLocation = l !== "vanilla" ? `${l}-${v}-${lv}` : v;
+   
             const foundManifest = await checkManifest(path.join("versions", specLocation, `${specLocation}.json`), `${RESOURCES_PATH}${specPath}`, 'spec', false, grabBigManifest, lManifest)
 
             if (!foundManifest) {
@@ -172,6 +178,9 @@ async function getCEObject(installObject) {
             if (fs.existsSync(expectedCELocation)) {
                 let result = readManifestFile(expectedCELocation, generateKey());
                 if (result.valid) {
+                    let end = new Date();
+                    let total = end - start;
+                    cauldronLogger.debug(`CE Retrival Took ${total}ms`)
                     return resolve(result.manifest);
                 } else {
                     cauldronLogger.warn('Current CE Object is Invalid Recreating...')
@@ -235,10 +244,11 @@ async function getCEObject(installObject) {
                 ceObject.post = await checkManifest(path.join("versions", specLocation, "post.json"), `${RESOURCES_PATH}/loaders/${l}/${createdManifest.id.split("-")[1]}-${lv}/post.json`, "spec", true)
             }
 
-            const finalQueue = [...installQueue, ...jvmQueue, ...assetsQueue, ...libQueue]
+            const finalQueue = [...installQueue, ...assetsQueue, ...libQueue];
 
             ceObject.installQueue = finalQueue;
             ceObject.libList = libList
+            ceObject.javaQueue = jvmQueue;
             ceObject.nativeList = nativeList;
             ceObject.specPath = path.join("versions", createdManifest.id, createdManifest.id + '.json')
             ceObject.specName = createdManifest.id;
@@ -291,7 +301,6 @@ async function whatIsThis(version, vanillaManifest, loaderManifest, lv) {
         }
 
         if (lv === 'release') {
-            console.log(returnVersion)
             let foundVersion = loaderManifest.versions.find(obj => obj.id === returnVersion);
             if (!foundVersion) {
                 return false;

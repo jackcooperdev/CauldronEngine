@@ -1,13 +1,14 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const zlib = require('zlib');
+const path = require('path');
 const oneOf = (...types) => ({ [ONE_OF]: types }); const ONE_OF = Symbol('oneOf');
-const MANIFEST_VERSION = 1;
+const MANIFEST_VERSION = 7;
 const MAGIC = Buffer.from('CMAN');
 const HEADER_LEN = MAGIC.length + 2;
 const IV_LEN = 12;
 const TAG_LEN = 16;
-const { Entry } = require('@napi-rs/keyring')
+const { grabPath } = require('./compatibility');
 function describe(schema) {
     if (typeof schema === 'string') return schema;
     if (Array.isArray(schema)) return 'array';
@@ -99,6 +100,7 @@ const MANIFEST_SCHEMA = {
     nativeList: ['string'],
     loggingInfo: FILE_ENTRY,
     installQueue: [FILE_ENTRY],
+    javaQueue:[FILE_ENTRY],
     jreVersion: 'string',
     lv: 'string',
     specPath: 'string',
@@ -109,17 +111,34 @@ const MANIFEST_SCHEMA = {
 };
 
 
-function generateKey() {
-    let newKey = crypto.randomBytes(32).toString('base64')
-    const entry = new Entry('cauldronengine', 'ceSigner')
-    let curKey = entry.getPassword();
-    if (!entry.getPassword()) {
-        entry.setPassword(newKey);
-        curKey = newKey;
-    }
-    return curKey;
-};
+/* let cachedKey;
 
+function generateKey() {
+    if (cachedKey) return cachedKey;
+    const entry = new Entry('cauldronengine', 'ceSigner');
+    cachedKey = entry.getPassword();
+    if (!cachedKey) {
+        cachedKey = crypto.randomBytes(32).toString('base64');
+        entry.setPassword(cachedKey);
+    }
+    return cachedKey;
+} */
+
+
+
+let cachedKey;
+
+function generateKey(keyPath = path.join(grabPath(), 'ce.key')) {
+    if (cachedKey) return cachedKey;
+    try {
+        cachedKey = fs.readFileSync(keyPath, 'utf8').trim();
+    } catch {
+        cachedKey = crypto.randomBytes(32).toString('base64');
+        fs.mkdirSync(path.dirname(keyPath), { recursive: true });
+        fs.writeFileSync(keyPath, cachedKey, { mode: 0o600, flag: 'wx' });
+    }
+    return cachedKey;
+}
 function encodeManifest(manifest, key) {
     const err = validate(manifest, MANIFEST_SCHEMA);
     if (err) throw new Error(`Invalid manifest: ${err}`);

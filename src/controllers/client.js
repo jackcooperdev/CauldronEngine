@@ -107,7 +107,7 @@ async function installGame(version, loaderInfo) {
     return new Promise(async (resolve, reject) => {
         try {
 
-
+            let start = new Date();
             if (!loaderInfo) {
                 loaderInfo = { type: 'vanilla' };
             };
@@ -143,6 +143,13 @@ async function installGame(version, loaderInfo) {
 
 
             const CE_OBJECT = await getCEObject(installObject);
+
+            // Check For Java Installation
+            let expectedJavaLoc = path.join(grabPath(),'jvm',CE_OBJECT.jreVersion)
+            if (!fs.existsSync(expectedJavaLoc)) {
+                CE_OBJECT.installQueue = [...CE_OBJECT.installQueue,...CE_OBJECT.javaQueue];
+            }
+
             await verifyInstallation(CE_OBJECT.installQueue);
 
 
@@ -151,6 +158,9 @@ async function installGame(version, loaderInfo) {
                 let additionalLibs = await postProcessing(CE_OBJECT);
                 CE_OBJECT.libList = [...CE_OBJECT.libList, ...additionalLibs]
             }
+            let end = new Date();
+            let time = end - start;
+            cauldronLogger.debug(`Install Took ${time}ms`)
             resolve(CE_OBJECT);
 
         } catch (e) {
