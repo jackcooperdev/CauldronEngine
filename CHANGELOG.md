@@ -8,22 +8,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-- Post Processing now reports correct task
+## [0.14.0] - 2026-10-24
 
 ### Added
 
-- whatIsThis support for loaders
-- Loader Version Manifests now download into main folder
-- Corrupt installation error when verifying offline.
-- New CE Object Verifier
+- Offline booting. Installed versions can be launched without an internet connection, including `release` and
+  `snapshot` aliases
+- `getCEObject` and `installGame` accept `release`, `latest` and `snapshot` as the Minecraft version for loaders as
+  well as vanilla, and `release` as the loader version
+- `whatIsThis` support for loaders. It now takes `(version, vanillaManifest, loaderManifest, lv)` and returns
+  `{ v, lv }` when a loader manifest is passed
+- Version and loader manifests are saved in the Cauldron folder (`version_manifest.json`,
+  `<loader>_version_manifest.json`) for offline use
+- New CE object verifier (`tools/ceManager.js`). `version.ce` files are encrypted (AES-256-GCM), compressed and checked
+  against a schema when read. Invalid files are rebuilt automatically
+- `ce.key` in the Cauldron folder, generated on first run and used to sign `version.ce` files
+- `javaQueue` on the CE object, holding the JVM files separately from `installQueue`
+- `grabCE` export in `manifest`
+- Corrupted installation error when a file is missing and the client is offline
+- Install and CE retrieval times in debug logs
 
 ### Changed
-- Post Processing Actions Now Occur on Install not boot
+
+- **Breaking:** `whatIsThis` has a new signature (see Added)
+- Post processing now runs during `installGame` instead of when the game boots
+- The JVM is only verified and downloaded when its folder is missing, which speeds up installs
+- `download` rejects when offline instead of resolving `true`
+
+### Fixed
+
+- Post processing reporting the wrong job number
 
 ### Removed
-- CauldronLogger Error in queue
-- Old Compression Based CE Object Verifier
+
+- Queue logging errors itself (errors are still rejected to the caller)
+- Old compression-based (ZIP) `version.ce` format. Existing files are rebuilt automatically
 
 
 ## [0.13.1] - 2026-10-19
@@ -442,8 +461,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release
 
-[unreleased]: https://github.com/jackcooperdev/CauldronEngine/compare/0.13.1...HEAD
-[0.13.1]: https://github.com/jackcooperdev/CauldronEngine/compare/0.13.1...0.13.1
+[unreleased]: https://github.com/jackcooperdev/CauldronEngine/compare/0.14.0...HEAD
+[0.14.0]: https://github.com/jackcooperdev/CauldronEngine/compare/0.13.1...0.14.0
+[0.13.1]: https://github.com/jackcooperdev/CauldronEngine/compare/0.13.0...0.13.1
 [0.13.0]: https://github.com/jackcooperdev/CauldronEngine/compare/0.11.3...0.13.0
 [0.11.3]: https://github.com/jackcooperdev/CauldronEngine/compare/0.11.2...0.11.3
 [0.11.2]: https://github.com/jackcooperdev/CauldronEngine/compare/0.11.1...0.11.2
