@@ -20,6 +20,7 @@ async function checkDownloadAndCheck(item) {
         try {
             let validateItem = await validate(item);
 
+
             while (typeof validateItem == "object") {
                 let out = await download(validateItem.origin, validateItem.destination, validateItem.fileName);
                 if (!out) {
@@ -39,7 +40,6 @@ async function checkDownloadAndCheck(item) {
             }
             resolve("pass");
         } catch (e) {
-            cauldronLogger.error(e);
             reject(e);
         }
     });

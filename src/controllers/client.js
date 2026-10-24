@@ -3,7 +3,7 @@ const PATCHES = require('../files/patches.json');
 const { cauldronLogger } = require('../tools/logger');
 const { getOperatingSystem, grabPath } = require('../tools/compatibility');
 const { createUUID } = require('../tools/fileTools');
-const {  getCEObject } = require('./manifest');
+const { getCEObject } = require('./manifest');
 const { verifyInstallation } = require('./queue');
 const { logInjector, buildJVMRules, buildGameRules, buildFile } = require('../tools/launchBuilder');
 const path = require('path')
@@ -51,11 +51,6 @@ async function startGame(version, loaderInfo, authInfo, overrides) {
             };
 
 
-            // Perform Post Actions
-            if (CE_OBJECT.post) {
-                let additionalLibs = await postProcessing(CE_OBJECT);
-                CE_OBJECT.libList = [...CE_OBJECT.libList, ...additionalLibs]
-            }
 
             // Create JVM Rules
             const validRules = await buildJVMRules(SPEC_FILE, CE_OBJECT.libList, { version }, overrides.jvm);
@@ -112,7 +107,7 @@ async function installGame(version, loaderInfo) {
     return new Promise(async (resolve, reject) => {
         try {
 
-
+            let start = new Date();
             if (!loaderInfo) {
                 loaderInfo = { type: 'vanilla' };
             };
@@ -149,11 +144,23 @@ async function installGame(version, loaderInfo) {
 
             const CE_OBJECT = await getCEObject(installObject);
 
-
-
+            // Check For Java Installation
+            let expectedJavaLoc = path.join(grabPath(),'jvm',CE_OBJECT.jreVersion)
+            if (!fs.existsSync(expectedJavaLoc)) {
+                CE_OBJECT.installQueue = [...CE_OBJECT.installQueue,...CE_OBJECT.javaQueue];
+            }
 
             await verifyInstallation(CE_OBJECT.installQueue);
-        
+
+
+            // Perform Post Actions
+            if (CE_OBJECT.post) {
+                let additionalLibs = await postProcessing(CE_OBJECT);
+                CE_OBJECT.libList = [...CE_OBJECT.libList, ...additionalLibs]
+            }
+            let end = new Date();
+            let time = end - start;
+            cauldronLogger.debug(`Install Took ${time}ms`)
             resolve(CE_OBJECT);
 
         } catch (e) {

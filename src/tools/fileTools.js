@@ -20,7 +20,7 @@ let injector = {
 
 
 async function download(url, location, fileName) {
-    return new Promise(async (resolve) => {
+    return new Promise(async (resolve, reject) => {
         if (await checkInternet()) {
             url = injector.create(url,{resourcePath:RESOURCES_PATH})
             const downloader = new Downloader({
@@ -35,7 +35,7 @@ async function download(url, location, fileName) {
                 resolve(false);
             }
         } else {
-            resolve(true);
+            reject(`Version Installation is corrupted! Please Reinstall with a stable internet connection. Issue With: ${url}`);
         }
     });
 }

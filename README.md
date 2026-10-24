@@ -1,6 +1,6 @@
 # Cauldron Engine
 
-> This Documentation is correct for version [0.13.1](https://github.com/jackcooperdev/CauldronEngine)
+> This Documentation is correct for version [0.14.0](https://github.com/jackcooperdev/CauldronEngine)
 > of CauldronEngine
 
 ## What does this do?
@@ -65,6 +65,20 @@ Cauldron Engine is split into multiple exports. They are listed below.
 |-------------------|-----------------------------------------------------------------------------|------------------------------------|
 | `CAULDRON_PATH`   | Root folder used for all installed files. See [grabPath](https://docs.cauldronmc.com/engine/tools/compat#grabpath) | `.cauldron` in the user's home / AppData folder |
 | `RESOURCE_SERVER` | Server used to fetch version specs, loader manifests and post processors    | `https://resources.cauldronmc.com` |
+
+## Offline Use
+
+Versions that have been installed while online can be installed and launched without an internet connection.
+The engine saves the version manifests and a verified copy of each version's install data
+([version.ce](https://docs.cauldronmc.com/engine/controllers/manifest#versionce)) in the Cauldron folder for this.
+
+`release` and `snapshot` resolve to the latest versions that were known the last time the engine was online.
+
+If a file is missing while offline, installing fails with:
+
+```
+Version Installation is corrupted! Please Reinstall with a stable internet connection. Issue With: <url>
+```
 
 ## Migrating from 0.6.x
 

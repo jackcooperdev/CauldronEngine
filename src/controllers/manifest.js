@@ -16,16 +16,14 @@ const { cauldronLogger } = require("../tools/logger.js");
 const { checkInternet } = require("../tools/checkConnection.js");
 const { getOperatingSystem } = require("../tools/compatibility");
 const JSZip = require('jszip');
-
-// Current Manifest Identifer (Changing this will invalidate files)
-const MANIFEST_IDENTIFIER = 'apple';
+const { generateKey, writeManifestFile, readManifestFile } = require("../tools/ceManager.js");
 
 const osCurrent = os.platform();
 
 const RESOURCES_PATH = process.env.RESOURCE_SERVER || "https://resources.cauldronmc.com"
 
 
-async function checkManifest(fileName, url, type, noSave) {
+async function checkManifest(fileName, url, type, noSave, vanMan, lodMan) {
     return new Promise(async (resolve, reject) => {
         let isOnline = await checkInternet();
         let CAULDRON_PATH = grabPath();
@@ -45,6 +43,29 @@ async function checkManifest(fileName, url, type, noSave) {
                     reject(`This Profile either do3es not exist or is not supported`);
                 }
             } else {
+                if (type === 'spec') {
+                    let vVersion;
+                    let l;
+                    let lVersion = false;
+                    if (url.includes('loaders')) {
+                        let urlSplit = url.split("loaders/")[1].split("/");
+                        vVersion = urlSplit[1];
+                        l = urlSplit[0]
+                        lVersion = urlSplit[2];
+                    } else {
+                        vVersion = url.split("/").pop();
+                    }
+                    let thisIs = await whatIsThis(vVersion, vanMan, lodMan, lVersion);
+                    let expectedPath;
+                    if (typeof thisIs === 'object') {
+                        expectedPath = path.join(CAULDRON_PATH, `versions`, `${l}-${thisIs.v}-${thisIs.lv}`, `${l}-${thisIs.v}-${thisIs.lv}.json`)
+                    } else {
+                        expectedPath = path.join(CAULDRON_PATH, `versions`, thisIs, `${thisIs}.json`)
+                    }
+                    if (fs.existsSync(expectedPath)) {
+                        return resolve(JSON.parse(fs.readFileSync(expectedPath).toString()));
+                    }
+                }
                 reject(`This Profile Cannot be launched offline. Please Launch it Online first`);
             }
         }
@@ -76,7 +97,7 @@ async function downloadManifest(url, dir, type, noSave) {
             let fileData = file.data;
             if (dir.includes("release")) {
                 let CAULDRON_PATH = grabPath();
-        
+
                 let version = fileData.id
                 let newPath;
                 if (!url.includes("post.json")) {
@@ -102,7 +123,7 @@ async function downloadManifest(url, dir, type, noSave) {
 async function getCEObject(installObject) {
     return new Promise(async (resolve, reject) => {
         try {
-
+            let start = new Date();
             let { version: v, loader: l, lv } = installObject;
             const CAULDRON_PATH = grabPath();
 
@@ -113,18 +134,37 @@ async function getCEObject(installObject) {
                 installQueue: [],
                 jreVersion: '',
                 specPath: '',
+                javaQueue: [],
                 vanillaVersion: v,
                 loader: l,
                 lv: lv,
                 specName: '',
                 post: false,
             }
-            let installQueue = [];
 
+
+
+            const grabBigManifest = await checkManifest(path.join('version_manifest.json'), `${RESOURCES_PATH}/version_manifest.json`, 'main');
+
+            let lManifest = null;
+            if (l !== 'vanilla') {
+                lManifest = await checkManifest(path.join(l + '_version_manifest.json'), `${RESOURCES_PATH}/loaders/${l}/version_manifest.json`, 'main');
+            };
+
+            let thisIs = await whatIsThis(v, grabBigManifest, lManifest, lv);
+            if (typeof thisIs == 'object') {
+                v = thisIs.v;
+                lv = thisIs.lv;
+            } else {
+                v = thisIs;
+            }
+
+
+            let installQueue = [];
             let specPath = l !== 'vanilla' ? `/loaders/${l}/${v}/${lv}` : `/spec/${v}`
             let specLocation = l !== "vanilla" ? `${l}-${v}-${lv}` : v;
+            const foundManifest = await checkManifest(path.join("versions", specLocation, `${specLocation}.json`), `${RESOURCES_PATH}${specPath}`, 'spec', false, grabBigManifest, lManifest)
 
-            const foundManifest = await checkManifest(path.join("versions", specLocation, `${specLocation}.json`), `${RESOURCES_PATH}${specPath}`, 'spec')
             if (!foundManifest) {
                 return reject({ message: `Version not ${l === "vanilla" ? "found" : `supported for loader: ${l}`}` });
             }
@@ -136,22 +176,29 @@ async function getCEObject(installObject) {
             }
             lv = foundManifest.loaderVersion || foundManifest.version;
 
-            const createdManifest = await addOSSpecArguments(foundManifest);
-            let potentialCE = path.join(CAULDRON_PATH, 'versions', createdManifest.id, 'version.ce')
-            if (fs.existsSync(potentialCE)) {
-                const data = fs.readFileSync(potentialCE)
-                const zip = await JSZip.loadAsync(data);
-                let contents = Object.keys(zip.files);
-                let expectedFile = createVersionIdentifier(v, l, lv, CAULDRON_PATH);
-                if (contents.includes(expectedFile)) {
-                    const fileBuffer = await zip.files[expectedFile].async('string');
-                    let ceObj = JSON.parse(fileBuffer);
-                    resolve(ceObj);
-                    return;
+
+            // Check For Version CE File
+            let expectedCELocation = path.join(CAULDRON_PATH, 'versions', foundManifest.id, 'version.ce');
+            if (fs.existsSync(expectedCELocation)) {
+                let result = readManifestFile(expectedCELocation, generateKey());
+                if (result.valid) {
+                    let end = new Date();
+                    let total = end - start;
+                    cauldronLogger.debug(`CE Retrival Took ${total}ms`)
+                    return resolve(result.manifest);
+                } else {
+                    cauldronLogger.warn('Current CE Object is Invalid Recreating...')
+                    cauldronLogger.debug(`Reason: ${result.reason}`)
+                    cauldronLogger.debug(`Detail: ${result.detail}`)
                 }
             }
+
+
+
+            const createdManifest = await addOSSpecArguments(foundManifest);
+
             ceObject.vanillaVersion = v;
-            ceObject.lv = lv;
+            ceObject.lv = lv || '';
 
 
             // Append Logging
@@ -201,26 +248,20 @@ async function getCEObject(installObject) {
                 ceObject.post = await checkManifest(path.join("versions", specLocation, "post.json"), `${RESOURCES_PATH}/loaders/${l}/${createdManifest.id.split("-")[1]}-${lv}/post.json`, "spec", true)
             }
 
-            const finalQueue = [...installQueue, ...jvmQueue, ...assetsQueue, ...libQueue]
+            const finalQueue = [...installQueue, ...assetsQueue, ...libQueue];
 
             ceObject.installQueue = finalQueue;
             ceObject.libList = libList
+            ceObject.javaQueue = jvmQueue;
             ceObject.nativeList = nativeList;
             ceObject.specPath = path.join("versions", createdManifest.id, createdManifest.id + '.json')
             ceObject.specName = createdManifest.id;
 
             fs.mkdirSync(path.join(CAULDRON_PATH, 'versions', createdManifest.id), { recursive: true });
-        
-            const zip = new JSZip();
 
-            zip.file(createVersionIdentifier(ceObject.vanillaVersion, ceObject.loader, ceObject.lv, CAULDRON_PATH), JSON.stringify(ceObject, null, 2));
+            const outPath = path.join(CAULDRON_PATH, 'versions', createdManifest.id, 'version.ce');
+            writeManifestFile(outPath, ceObject, generateKey());
 
-            const buffer = await zip.generateAsync({
-                type: "nodebuffer",
-                compression: "DEFLATE",
-                compressionOptions: { level: 6 },
-            });
-            fs.writeFileSync(path.join(CAULDRON_PATH, 'versions', createdManifest.id, 'version.ce'), buffer)
             resolve(ceObject)
 
         } catch (e) {
@@ -235,14 +276,55 @@ function createVersionIdentifier(version, loader, lv, root) {
     return btoa(identifierPhrase)
 }
 
-async function whatIsThis(version, vanillaManifest) {
-    if (version === "release" || version === "latest") {
-        return vanillaManifest.latest.release;
-    } else if (version === "snapshot") {
-        return vanillaManifest.latest.snapshot;
-    } else {
-        return version;
-    }
+async function grabCE(expectedCELocation) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let result = readManifestFile(expectedCELocation, generateKey());
+            if (result.valid) {
+                return resolve(result.manifest);
+            } else {
+                resolve(false)
+            }
+        } catch (e) {
+            reject(e)
+        }
+
+    })
 }
 
-module.exports = {  whatIsThis, getCEObject };
+async function whatIsThis(version, vanillaManifest, loaderManifest, lv) {
+    if (loaderManifest) {
+        let returnVersion = undefined;
+        let loaderVerison = undefined;
+        if (version === "release" || version === "latest") {
+            returnVersion = loaderManifest.latest.release.id;
+        } else if (version === "snapshot") {
+            returnVersion = loaderManifest.latest.snapshot.id;
+        } else {
+            returnVersion = version;
+        }
+
+        if (lv === 'release') {
+            let foundVersion = loaderManifest.versions.find(obj => obj.id === returnVersion);
+            if (!foundVersion) {
+                return false;
+            };
+            loaderVerison = foundVersion.loaderVersion;
+        }
+
+        return { v: returnVersion, lv: loaderVerison }
+
+    } else {
+        if (version === "release" || version === "latest") {
+            return vanillaManifest.latest.release;
+        } else if (version === "snapshot") {
+            return vanillaManifest.latest.snapshot;
+        } else {
+            return version;
+        }
+    }
+
+
+}
+
+module.exports = { whatIsThis, getCEObject, grabCE };
