@@ -152,13 +152,17 @@ async function getCEObject(installObject) {
             };
 
             let thisIs = await whatIsThis(v, grabBigManifest, lManifest, lv);
-            v = thisIs.v;
-            lv = thisIs.lv;
+            if (typeof thisIs == 'object') {
+                v = thisIs.v;
+                lv = thisIs.lv;
+            } else {
+                v = thisIs;
+            }
+
 
             let installQueue = [];
             let specPath = l !== 'vanilla' ? `/loaders/${l}/${v}/${lv}` : `/spec/${v}`
             let specLocation = l !== "vanilla" ? `${l}-${v}-${lv}` : v;
-   
             const foundManifest = await checkManifest(path.join("versions", specLocation, `${specLocation}.json`), `${RESOURCES_PATH}${specPath}`, 'spec', false, grabBigManifest, lManifest)
 
             if (!foundManifest) {
@@ -272,19 +276,19 @@ function createVersionIdentifier(version, loader, lv, root) {
     return btoa(identifierPhrase)
 }
 
-async function grabCE(potentialCE) {
+async function grabCE(expectedCELocation) {
     return new Promise(async (resolve, reject) => {
-        const data = fs.readFileSync(potentialCE)
-        const zip = await JSZip.loadAsync(data);
-        let contents = Object.keys(zip.files);
-        let expectedFile = createVersionIdentifier(v, l, lv, CAULDRON_PATH);
-        if (contents.includes(expectedFile)) {
-            const fileBuffer = await zip.files[expectedFile].async('string');
-            let ceObj = JSON.parse(fileBuffer);
-            resolve(ceObj);
-        } else {
-            resolve(false)
+        try {
+            let result = readManifestFile(expectedCELocation, generateKey());
+            if (result.valid) {
+                return resolve(result.manifest);
+            } else {
+                resolve(false)
+            }
+        } catch (e) {
+            reject(e)
         }
+
     })
 }
 
