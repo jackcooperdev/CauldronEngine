@@ -15,7 +15,6 @@ const {
 const { cauldronLogger } = require("../tools/logger.js");
 const { checkInternet } = require("../tools/checkConnection.js");
 const { getOperatingSystem } = require("../tools/compatibility");
-const JSZip = require('jszip');
 const { generateKey, writeManifestFile, readManifestFile } = require("../tools/ceManager.js");
 
 const osCurrent = os.platform();
@@ -150,7 +149,6 @@ async function getCEObject(installObject) {
             if (l !== 'vanilla') {
                 lManifest = await checkManifest(path.join(l + '_version_manifest.json'), `${RESOURCES_PATH}/loaders/${l}/version_manifest.json`, 'main');
             };
-
             let thisIs = await whatIsThis(v, grabBigManifest, lManifest, lv);
             if (typeof thisIs == 'object') {
                 v = thisIs.v;
@@ -271,11 +269,6 @@ async function getCEObject(installObject) {
 
 }
 
-function createVersionIdentifier(version, loader, lv, root) {
-    let identifierPhrase = `${version}-${loader}-${MANIFEST_IDENTIFIER}-${lv}-${root}`;
-    return btoa(identifierPhrase)
-}
-
 async function grabCE(expectedCELocation) {
     return new Promise(async (resolve, reject) => {
         try {
@@ -310,6 +303,8 @@ async function whatIsThis(version, vanillaManifest, loaderManifest, lv) {
                 return false;
             };
             loaderVerison = foundVersion.loaderVersion;
+        } else {
+            loaderVerison = lv;
         }
 
         return { v: returnVersion, lv: loaderVerison }

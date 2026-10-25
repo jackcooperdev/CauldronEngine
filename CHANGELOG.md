@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.1] - 2026-10-25
+
+### Fixed
+
+- Explicit loader versions (e.g. `{ type: 'forge', version: '47.3.0' }`) being ignored. `whatIsThis` now returns the
+  loader version it is given unless it is `release`
+
+### Removed
+
+- Unused internal code in the manifest controller
+
 ## [0.14.0] - 2026-10-24
 
 ### Added
@@ -43,6 +54,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Queue logging errors itself (errors are still rejected to the caller)
 - Old compression-based (ZIP) `version.ce` format. Existing files are rebuilt automatically
+
+### Known Issues
+
+- Explicit loader versions are ignored, so installs fail with an `undefined` loader version. Fixed in 0.14.1
 
 
 ## [0.13.1] - 2026-10-19
@@ -461,7 +476,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release
 
-[unreleased]: https://github.com/jackcooperdev/CauldronEngine/compare/0.14.0...HEAD
+[unreleased]: https://github.com/jackcooperdev/CauldronEngine/compare/0.14.1...HEAD
+[0.14.1]: https://github.com/jackcooperdev/CauldronEngine/compare/0.14.0...0.14.1
 [0.14.0]: https://github.com/jackcooperdev/CauldronEngine/compare/0.13.1...0.14.0
 [0.13.1]: https://github.com/jackcooperdev/CauldronEngine/compare/0.13.0...0.13.1
 [0.13.0]: https://github.com/jackcooperdev/CauldronEngine/compare/0.11.3...0.13.0
