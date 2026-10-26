@@ -37,7 +37,7 @@ async function postProcessing(CE_OBJECT, side = 'client') {
 
                 // Get and Install Post Proc Libraries
                 const { libQueue } = await convertLibraries(nonDeclaredLibs, specName);
-                await verifyInstallation(libQueue);
+                await verifyInstallation(libQueue, false, "Downloading Processor Libraries");
 
                 let forgeData = post.data;
 
@@ -336,6 +336,7 @@ function addManifestToJar(jarPath, javaDir) {
     const jarTool = path.join(javaDir, "jar");
     const osCurrent = os.platform();
     const manifestContent = "Manifest-Version: 1.0\nAutomatic-Module-Name: minecraft\n\n";
+    fs.mkdirSync(path.join(grabPath(),'.temp'))
     const manifestPath = path.join(grabPath(), '.temp', 'cauldron_manifest.mf')
     fs.writeFileSync(manifestPath, manifestContent);
     try {
