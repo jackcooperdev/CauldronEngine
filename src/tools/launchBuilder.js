@@ -46,7 +46,7 @@ async function logInjector(logFile, sessionID) {
     }
 }
 
-async function buildJVMRules(manifest, libraryList, versionData, overrides) {
+async function buildJVMRules(manifest, libraryList, versionData, overrides, useLegacyFix) {
     return new Promise(async (resolve) => {
         let CAULDRON_PATH = grabPath();
         let cusJVM = defaultJVM;
@@ -121,6 +121,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
         }
         let relVariables = {
             natives_directory: nativesPath,
+            assets_root: path.join(CAULDRON_PATH, "assets"),
             launcher_name: cusJVM.launcher_name,
             version_name: manifest.id,
             launcher_version: pkgJSON.version,
@@ -140,6 +141,13 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
                 validRules[rIdx] = injector.create(validRules[rIdx], relVariables);
             }
         }
+
+        if (useLegacyFix) {
+            validRules.push('-javaagent:'+path.join(CAULDRON_PATH,'.temp','legacyfix.jar'));
+            if (useLegacyFix === 2) {
+                 validRules.push('-Djava.util.Arrays.useLegacyMergeSort=true')
+            }
+        }
         resolve(validRules);
     });
 }
@@ -147,6 +155,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
 async function buildGameRules(manifest, loggedUser, overrides) {
     return new Promise(async (resolve) => {
         let CAULDRON_PATH = grabPath();
+
 
         let gameRules = [];
         let allGameRules = manifest.arguments.game;
@@ -207,6 +216,8 @@ async function buildGameRules(manifest, loggedUser, overrides) {
             CLIENT_ID: gameVars.clientId,
             game_assets: path.join(CAULDRON_PATH, "resources"),
             auth_xuid: gameVars.xuid,
+            resolution_width:854,
+            resolution_height:480,
             user_type: "msa",
             version_type: gameVars.version_type,
             user_properties: "{}",
@@ -335,6 +346,29 @@ function getAikarFlags(memGB) {
 
     return [...common, ...tierFlags];
 }
+const quote = (a) => /^[\w@%+=:,./-]+$/.test(a) ? a : `'${a.replace(/'/g, `'\\''`)}'`;
+
+// Keep "-cp <path>" and "--flag <value>" on one line; everything else gets its own line
+function pairArgs(args) {
+  const lines = [];
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i], next = args[i + 1];
+    const takesValue = a === "-cp" || a === "-classpath" || a.startsWith("--");
+    if (takesValue && next !== undefined && !next.startsWith("--")) { lines.push([a, next]); i++; }
+    else lines.push([a]);
+  }
+  return lines;
+}
+
+function formatLaunchCommand(javaPath, jvmArgs, mainClass, gameArgs) {
+  const line = (parts) => parts.map(quote).join(" ");
+  return [
+    quote(javaPath),
+    ...pairArgs(jvmArgs).map((l) => "  " + line(l)),
+    "  " + mainClass,
+    ...pairArgs(gameArgs).map((l) => "  " + line(l)),
+  ].join(" \\\n");
+}
 
 
 async function buildFile(manifest, jreVersion, validRules, gameRules) {
@@ -347,7 +381,7 @@ async function buildFile(manifest, jreVersion, validRules, gameRules) {
         javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "bin", "javaw");
     }
 
-    let launchCommand = `${javaPath} ${validRules.join(" ")} ${mainClass} ${gameRules.join(" ")}`;
+   let launchCommand = formatLaunchCommand(javaPath, validRules, mainClass, gameRules);
     const scriptDir = path.join(CAULDRON_PATH, ".temp");
     fs.mkdirSync(scriptDir, { recursive: true });
 

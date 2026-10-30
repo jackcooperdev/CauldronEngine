@@ -98,11 +98,14 @@ const FILE_ENTRY = {
 const MANIFEST_SCHEMA = {
     libList: ['string'],
     nativeList: ['string'],
-    loggingInfo: FILE_ENTRY,
+    'loggingInfo?': FILE_ENTRY,
     installQueue: [FILE_ENTRY],
     javaQueue:[FILE_ENTRY],
     jreVersion: 'string',
+    type:'string',
     lv: 'string',
+    patches:['object'],
+    patchIdentifier : 'number',
     specPath: 'string',
     vanillaVersion: 'string',
     loader: 'string',
@@ -154,13 +157,16 @@ function encodeManifest(manifest, key) {
     return Buffer.concat([header, iv, cipher.getAuthTag(), ciphertext]);
 }
 
-
+const alwaysFail = true;
 function decodeManifest(data, key) {
     const keyBuf = loadKey(key);
     const buf = Buffer.isBuffer(data) ? data : Buffer.from(data);
 
     if (buf.length < HEADER_LEN + IV_LEN + TAG_LEN || !buf.subarray(0, MAGIC.length).equals(MAGIC)) {
         return { valid: false, reason: 'malformed' };
+    }
+    if (alwaysFail) {
+        return {valid: false, reason: 'override', detail:'manual flag enabled'}
     }
 
     const header = buf.subarray(0, HEADER_LEN);

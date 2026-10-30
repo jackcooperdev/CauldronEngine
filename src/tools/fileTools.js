@@ -62,4 +62,8 @@ async function validate(file) {
     });
 }
 
-module.exports = { download, validate, createUUID };
+function inRange(x, min, max) {
+    return ((x-min)*(x-max) <= 0);
+}
+
+module.exports = { download, validate, createUUID, inRange };

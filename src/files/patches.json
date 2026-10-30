@@ -15,7 +15,7 @@
       "1.2.4",
       "1.2.5"
     ],
-    "affected_operating_systems": ["mac-os-arm64"],
+    "affected_operating_systems": [],
     "patch": {"loader": "ornithe"}
   }
 ]

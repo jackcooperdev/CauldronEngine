@@ -129,7 +129,6 @@ async function getCEObject(installObject) {
             let ceObject = {
                 libList: [],
                 nativeList: [],
-                loggingInfo: {},
                 installQueue: [],
                 jreVersion: '',
                 specPath: '',
@@ -161,7 +160,7 @@ async function getCEObject(installObject) {
             let installQueue = [];
             let specPath = l !== 'vanilla' ? `/loaders/${l}/${v}/${lv}` : `/spec/${v}`
             let specLocation = l !== "vanilla" ? `${l}-${v}-${lv}` : v;
-            const foundManifest = await checkManifest(path.join("versions", specLocation, `${specLocation}.json`), `${RESOURCES_PATH}${specPath}`, 'spec', false, grabBigManifest, lManifest)
+            const foundManifest = await checkManifest(path.join("versions", specLocation, `${specLocation}.json`), `${RESOURCES_PATH}${specPath}?patch=beta`, 'spec', false, grabBigManifest, lManifest)
 
             if (!foundManifest) {
                 return reject({ message: `Version not ${l === "vanilla" ? "found" : `supported for loader: ${l}`}` });
@@ -209,7 +208,7 @@ async function getCEObject(installObject) {
                 createdManifest.logging.client.file.origin = createdManifest.logging.client.file.url.replace(RESOURCES_PATH, '${resourcePath}')
                 installQueue.push(createdManifest.logging.client.file);
                 ceObject.loggingInfo = createdManifest.logging.client.file;
-            };
+            }
 
             // Append Entry File
             let javaEntryObject = {
@@ -252,14 +251,18 @@ async function getCEObject(installObject) {
             ceObject.libList = libList
             ceObject.javaQueue = jvmQueue;
             ceObject.nativeList = nativeList;
+            let maniData = grabBigManifest.versions.find(obj => obj.id === createdManifest.id);
+            ceObject.patchIdentifier = maniData.patchIdentifier;
+            ceObject.type = createdManifest.type;
             ceObject.specPath = path.join("versions", createdManifest.id, createdManifest.id + '.json')
             ceObject.specName = createdManifest.id;
+            ceObject.patches = createdManifest.libraries.filter(obj => obj.isPatch);
 
             fs.mkdirSync(path.join(CAULDRON_PATH, 'versions', createdManifest.id), { recursive: true });
 
             const outPath = path.join(CAULDRON_PATH, 'versions', createdManifest.id, 'version.ce');
+            fs.writeFileSync('out.json',JSON.stringify(ceObject,null,2))
             writeManifestFile(outPath, ceObject, generateKey());
-
             resolve(ceObject)
 
         } catch (e) {

@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Versions without a log4j logging config (such as 1.5.2 and older) failing to install because `version.ce` could
+  not be written. `loggingInfo` is now optional and is left out of the CE Object for these versions, so they launch
+  without the logger (session ID `DETACH`)
+
 ## [0.15.0] - 2026-10-26
 
 ### Added
