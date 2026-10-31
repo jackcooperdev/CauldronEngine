@@ -129,7 +129,6 @@ async function getCEObject(installObject) {
             let ceObject = {
                 libList: [],
                 nativeList: [],
-                loggingInfo: {},
                 installQueue: [],
                 jreVersion: '',
                 specPath: '',
@@ -209,7 +208,7 @@ async function getCEObject(installObject) {
                 createdManifest.logging.client.file.origin = createdManifest.logging.client.file.url.replace(RESOURCES_PATH, '${resourcePath}')
                 installQueue.push(createdManifest.logging.client.file);
                 ceObject.loggingInfo = createdManifest.logging.client.file;
-            };
+            }
 
             // Append Entry File
             let javaEntryObject = {
@@ -252,14 +251,15 @@ async function getCEObject(installObject) {
             ceObject.libList = libList
             ceObject.javaQueue = jvmQueue;
             ceObject.nativeList = nativeList;
+            ceObject.type = createdManifest.type;
             ceObject.specPath = path.join("versions", createdManifest.id, createdManifest.id + '.json')
             ceObject.specName = createdManifest.id;
+            ceObject.patches = createdManifest.libraries.filter(obj => obj.isPatch);
 
             fs.mkdirSync(path.join(CAULDRON_PATH, 'versions', createdManifest.id), { recursive: true });
 
             const outPath = path.join(CAULDRON_PATH, 'versions', createdManifest.id, 'version.ce');
             writeManifestFile(outPath, ceObject, generateKey());
-
             resolve(ceObject)
 
         } catch (e) {

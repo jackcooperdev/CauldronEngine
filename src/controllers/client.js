@@ -1,11 +1,11 @@
 const VERIFIED_LOADERS = require('../files/verifiedLoaders.json');
-const PATCHES = require('../files/patches.json');
 const { cauldronLogger } = require('../tools/logger');
 const { getOperatingSystem, grabPath } = require('../tools/compatibility');
 const { createUUID } = require('../tools/fileTools');
 const { getCEObject } = require('./manifest');
 const { verifyInstallation } = require('./queue');
 const { logInjector, buildJVMRules, buildGameRules, buildFile } = require('../tools/launchBuilder');
+const { startLegacyLogging, EXIT_MARKER } = require('../tools/legacyLogger');
 const path = require('path')
 const JSZip = require('jszip');
 const fs = require('fs')
@@ -21,12 +21,17 @@ async function startGame(version, loaderInfo, authInfo, overrides) {
                 overrides = { jvm: {}, game: {}, additG: {} };
             }
             fs.mkdirSync(path.join(CAULDRON_PATH, '.temp'), { recursive: true })
+
             // Setup Logger
-            if (CE_OBJECT.loggingInfo) {
-                await logInjector(path.join(CAULDRON_PATH, 'assets', 'log_configs', CE_OBJECT.loggingInfo.id), sessionID, true);
+            let rawLog = null;
+            const legacyLogging = !CE_OBJECT.loggingInfo;
+            if (legacyLogging) {
+                const sessionDir = path.join(CAULDRON_PATH, 'sessionLogs', sessionID);
+                fs.mkdirSync(sessionDir, { recursive: true });
+                rawLog = path.join(sessionDir, 'raw.log');
             } else {
-                sessionID = 'DETACH'
-            };
+                await logInjector(path.join(CAULDRON_PATH, 'assets', 'log_configs', CE_OBJECT.loggingInfo.id), sessionID, true);
+            }
 
             // Grab Spec File
             const SPEC_FILE = JSON.parse(fs.readFileSync(path.join(CAULDRON_PATH, CE_OBJECT.specPath)).toString())
@@ -50,17 +55,12 @@ async function startGame(version, loaderInfo, authInfo, overrides) {
                 }
             };
 
-
-
             // Create JVM Rules
             const validRules = await buildJVMRules(SPEC_FILE, CE_OBJECT.libList, { version }, overrides.jvm);
 
             // Build Game Rules
 
             const gameRules = await buildGameRules(SPEC_FILE, authInfo, overrides.game);
-
-            // Build Launch Script
-            const launchPath = await buildFile(SPEC_FILE, CE_OBJECT.jreVersion, validRules, gameRules);
 
             let launchDirectory = `${CAULDRON_PATH}`;
             if (overrides["game"]) {
@@ -69,24 +69,32 @@ async function startGame(version, loaderInfo, authInfo, overrides) {
                 }
             }
 
-
-            //process.exit(0);
+            // Build Launch Script
+            const launchPath = await buildFile(SPEC_FILE, CE_OBJECT.jreVersion, validRules, gameRules);
 
             // Launch Game
             const isWindows = getOperatingSystem() === 'windows';
             const dirToDelete = path.join(CAULDRON_PATH, '.temp')
 
+            const redirect = rawLog ? ` >> "${rawLog}" 2>&1` : '';
+            const exitMark = rawLog
+                ? (isWindows ? ` & echo ${EXIT_MARKER}>> "${rawLog}"` : `; echo "${EXIT_MARKER}" >> "${rawLog}"`)
+                : '';
+
+            const winCommand = `cd /d "${launchDirectory}" && call "${launchPath}"${redirect}${exitMark} & cd /d "%TEMP%" & rmdir /s /q "${dirToDelete}"`;
             const child = isWindows
-                ? spawn('cmd', ['/c', `cd /d "${launchDirectory}" && start "" /wait "${launchPath}" & cd /d "%TEMP%" & rmdir /s /q "${dirToDelete}"`], {
+                ? spawn('cmd', ['/d', '/s', '/c', `"${winCommand}"`], {
+                    windowsVerbatimArguments: true,
                     detached: true,
                     stdio: 'ignore',
-                    windowsHide: true
+                    windowsHide: true,
                 })
-                : spawn('sh', ['-c', `cd "${launchDirectory}" && "${launchPath}"; cd / && rm -rf "${dirToDelete}"`], {
+                : spawn('sh', ['-c', `cd "${launchDirectory}" && "${launchPath}"${redirect}${exitMark}; cd / && rm -rf "${dirToDelete}"`], {
                     detached: true,
                     stdio: 'ignore'
                 });
             child.unref();
+            if (rawLog) startLegacyLogging(rawLog);
             resolve(sessionID);
 
 
@@ -128,14 +136,6 @@ async function installGame(version, loaderInfo) {
                 installObject.lv = 'release'
             }
 
-            const fullOperatingSystem = getOperatingSystem(true);
-
-            let foundPatches = PATCHES.filter(obj => obj.affected_operating_systems.includes(fullOperatingSystem) && obj.affected_versions.includes(installObject.version))
-
-            for (let patch of foundPatches) {
-                cauldronLogger.info(`Applying Patch: ${patch.name}`);
-                installObject = { ...installObject, ...patch.patch }
-            };
 
             let SESSION_ID = createUUID();
 
@@ -145,9 +145,9 @@ async function installGame(version, loaderInfo) {
             const CE_OBJECT = await getCEObject(installObject);
 
             // Check For Java Installation
-            let expectedJavaLoc = path.join(grabPath(),'jvm',CE_OBJECT.jreVersion)
+            let expectedJavaLoc = path.join(grabPath(), 'jvm', CE_OBJECT.jreVersion)
             if (!fs.existsSync(expectedJavaLoc)) {
-                CE_OBJECT.installQueue = [...CE_OBJECT.installQueue,...CE_OBJECT.javaQueue];
+                CE_OBJECT.installQueue = [...CE_OBJECT.installQueue, ...CE_OBJECT.javaQueue];
             }
 
             await verifyInstallation(CE_OBJECT.installQueue);

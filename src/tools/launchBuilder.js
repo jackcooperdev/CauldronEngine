@@ -83,25 +83,6 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
             validRules.push(manifest.logging.client.argument);
         }
 
-        //Check if a version requires proxy
-        let proxyPort = false;
-        let vArray = ["1.0", "1.1", "1.3", "1.4", "1.5"];
-        let splitVersion = `${versionData.version.split(".")[0]}.${versionData.version.split(".")[1]}`;
-        if (versionData.version.startsWith("a1.0.")) {
-            proxyPort = 80;
-        } else if (versionData.version.startsWith("a1.1.")) {
-            proxyPort = 11702;
-        } else if (versionData.version.startsWith("a1.") || versionData.version.startsWith("b1.")) {
-            proxyPort = 11705;
-        } else if (vArray.includes(versionData.version) || versionData.version.startsWith(vArray) || vArray.filter(v => versionData.version.includes(v))) {
-            proxyPort = 11707;
-        }
-        //process.exit(0)
-        if (proxyPort) {
-            //validRules.push("-Dhttp.proxyHost=betacraft.uk");
-            //validRules.push("-Dhttp.proxyPort=" + proxyPort);
-        }
-
 
         let nativesPath = path.join(CAULDRON_PATH, '.temp')
         let logPath = path.join(CAULDRON_PATH, ".temp", "log_config.xml")
@@ -121,6 +102,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
         }
         let relVariables = {
             natives_directory: nativesPath,
+            assets_root: path.join(CAULDRON_PATH, "assets"),
             launcher_name: cusJVM.launcher_name,
             version_name: manifest.id,
             launcher_version: pkgJSON.version,
@@ -147,6 +129,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
 async function buildGameRules(manifest, loggedUser, overrides) {
     return new Promise(async (resolve) => {
         let CAULDRON_PATH = grabPath();
+
 
         let gameRules = [];
         let allGameRules = manifest.arguments.game;
@@ -203,10 +186,13 @@ async function buildGameRules(manifest, loggedUser, overrides) {
             assets_root: path.join(CAULDRON_PATH, "assets"),
             assets_index_name: manifest.assets,
             auth_uuid: gameVars.uuid,
+            profile_name: 'Minecraft',
             auth_access_token: gameVars.access_token,
             CLIENT_ID: gameVars.clientId,
             game_assets: path.join(CAULDRON_PATH, "resources"),
             auth_xuid: gameVars.xuid,
+            resolution_width: 854,
+            resolution_height: 480,
             user_type: "msa",
             version_type: gameVars.version_type,
             user_properties: "{}",
@@ -335,22 +321,48 @@ function getAikarFlags(memGB) {
 
     return [...common, ...tierFlags];
 }
+const quote = (a) => /^[\w@%+=:,./-]+$/.test(a) ? a : `'${a.replace(/'/g, `'\\''`)}'`;
+
+// Keep "-cp <path>" and "--flag <value>" on one line; everything else gets its own line
+function pairArgs(args) {
+    const lines = [];
+    for (let i = 0; i < args.length; i++) {
+        const a = args[i], next = args[i + 1];
+        const takesValue = a === "-cp" || a === "-classpath" || a.startsWith("--");
+        if (takesValue && next !== undefined && !next.startsWith("--")) { lines.push([a, next]); i++; }
+        else lines.push([a]);
+    }
+    return lines;
+}
+
+function formatLaunchCommand(javaPath, jvmArgs, mainClass, gameArgs) {
+    const line = (parts) => parts.map(quote).join(" ");
+    return [
+        quote(javaPath),
+        ...pairArgs(jvmArgs).map((l) => "  " + line(l)),
+        "  " + mainClass,
+        ...pairArgs(gameArgs).map((l) => "  " + line(l)),
+    ].join(" \\\n");
+}
 
 
 async function buildFile(manifest, jreVersion, validRules, gameRules) {
     let CAULDRON_PATH = grabPath();
     let mainClass = manifest.mainClass;
     let javaPath;
+    let launchCommand;
     if (osCurrent === "darwin") {
         javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "jre.bundle", "Contents", "Home", "bin", "java",);
+        launchCommand = formatLaunchCommand(javaPath, validRules, mainClass, gameRules);
+    } else if (osCurrent === 'linux') {
+        javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "bin", "java");
+        launchCommand = `${javaPath} ${validRules.join(" ")} ${mainClass} ${gameRules.join(" ")}`;
     } else {
         javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "bin", "javaw");
+        launchCommand = `${javaPath} ${validRules.join(" ")} ${mainClass} ${gameRules.join(" ")}`;
     }
-
-    let launchCommand = `${javaPath} ${validRules.join(" ")} ${mainClass} ${gameRules.join(" ")}`;
     const scriptDir = path.join(CAULDRON_PATH, ".temp");
     fs.mkdirSync(scriptDir, { recursive: true });
-
     if (osCurrent === "linux" || osCurrent === "darwin") {
         const scriptPath = path.join(scriptDir, "launch.sh");
         fs.writeFileSync(scriptPath, launchCommand);

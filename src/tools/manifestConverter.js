@@ -41,7 +41,6 @@ async function convertAssetsAll(original, type) {
         let objs = original.objects;
         let objsKeys = Object.keys(objs);
         let newData = [];
-
         for (let obj of objsKeys) {
             let item = objs[obj];
             let fileName;
@@ -67,8 +66,12 @@ async function convertAssetsAll(original, type) {
                 default:
                     return reject('Invalid Asset Format');
             };
+            let fileOrigin = `https://resources.download.minecraft.net/${item.hash.substring(0, 2)}/${item.hash}`;
+            if (item.url) {
+                fileOrigin = item.url;
+            }
             let queueItem = {
-                origin: `https://resources.download.minecraft.net/${item.hash.substring(0, 2)}/${item.hash}`,
+                origin: fileOrigin,
                 sha1: item.hash,
                 destination,
                 fileName,
@@ -78,6 +81,24 @@ async function convertAssetsAll(original, type) {
         resolve(newData);
     });
 }
+function mavenToPath(coord) {
+    const [group, artifact, version] = coord.split(':');
+    return `${group.replace(/\./g, '/')}/${artifact}/${version}/${artifact}-${version}.jar`;
+}
+
+const REPOS = [
+    'https://repo.legacyfabric.net/legacyfabric/',
+    'https://libraries.minecraft.net/',
+    'https://maven.fabricmc.net/',
+    'https://repo1.maven.org/maven2/',
+];
+
+function urlToPath(url) {
+    const repo = REPOS.find(r => url.startsWith(r));
+    if (!repo) throw new Error(`Unknown repository: ${url}`);
+    return decodeURIComponent(url.slice(repo.length).split(/[?#]/)[0]);
+}
+
 
 async function convertLibraries(libList) {
     return new Promise(async (resolve, reject) => {
@@ -128,6 +149,9 @@ async function convertLibraries(libList) {
 
                 if (libAllowed) {
                     if (lib.downloads.artifact) {
+                        if (!lib.downloads.artifact.path) {
+                            lib.downloads.artifact.path = mavenToPath(lib.name);
+                        }
                         let libPath = path.join(CAULDRON_PATH, "libraries", path.dirname(lib.downloads.artifact.path));
                         let obj = {
                             origin: lib.downloads.artifact.url,
@@ -152,6 +176,9 @@ async function convertLibraries(libList) {
 
 
                     if (natives) {
+                        if (!natives.path) {
+                            natives.path = urlToPath(natives.url)
+                        }
                         let libPath = path.join(CAULDRON_PATH, "libraries", path.dirname(natives.path));
                         let obj = {
                             origin: natives.url,
@@ -161,7 +188,7 @@ async function convertLibraries(libList) {
                             fileName: path.basename(natives.path),
                         };
                         returnQueue.push(obj)
-                        nativeArray.push(path.join(obj.destination,obj.fileName))
+                        nativeArray.push(path.join(obj.destination, obj.fileName))
                     }
                 }
             }
