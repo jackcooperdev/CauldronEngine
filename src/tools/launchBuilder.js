@@ -212,6 +212,7 @@ async function buildGameRules(manifest, loggedUser, overrides) {
             assets_root: path.join(CAULDRON_PATH, "assets"),
             assets_index_name: manifest.assets,
             auth_uuid: gameVars.uuid,
+            profile_name:'Minecraft',
             auth_access_token: gameVars.access_token,
             CLIENT_ID: gameVars.clientId,
             game_assets: path.join(CAULDRON_PATH, "resources"),

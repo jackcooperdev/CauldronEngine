@@ -63,20 +63,20 @@ async function startGame(version, loaderInfo, authInfo, overrides) {
             // Check if LegacyPatcher is needed
             let patchLegacy = false;
 
-          /*   if (inRange(patchIdent, 1, 84)) {
-                let mode = 1;
-
-                let legacyPatchPath = path.join(CAULDRON_PATH, 'libraries', patchLibrary[0].downloads.artifact.path);
-
-                // Copy LegacyFix to temp dir;
-                fs.copyFileSync(legacyPatchPath, path.join(CAULDRON_PATH, '.temp', 'legacyfix.jar'));
-
-                if (inRange(patchIdent, 1, 56)) {
-                    mode++;
-                }
-                patchLegacy = mode;
-                cauldronLogger.debug(`Applying LegacyPatcher (Mode ${mode})`);
-            }; */
+            /*   if (inRange(patchIdent, 1, 84)) {
+                  let mode = 1;
+  
+                  let legacyPatchPath = path.join(CAULDRON_PATH, 'libraries', patchLibrary[0].downloads.artifact.path);
+  
+                  // Copy LegacyFix to temp dir;
+                  fs.copyFileSync(legacyPatchPath, path.join(CAULDRON_PATH, '.temp', 'legacyfix.jar'));
+  
+                  if (inRange(patchIdent, 1, 56)) {
+                      mode++;
+                  }
+                  patchLegacy = mode;
+                  cauldronLogger.debug(`Applying LegacyPatcher (Mode ${mode})`);
+              }; */
 
             // Create JVM Rules
             const validRules = await buildJVMRules(SPEC_FILE, CE_OBJECT.libList, { version }, overrides.jvm, patchLegacy);
@@ -110,11 +110,6 @@ async function startGame(version, loaderInfo, authInfo, overrides) {
             // Build Launch Script
             const launchPath = await buildFile(SPEC_FILE, CE_OBJECT.jreVersion, validRules, gameRules);
 
-            
-
-
-            //process.exit(0);
-
             // Launch Game
             const isWindows = getOperatingSystem() === 'windows';
             const dirToDelete = path.join(CAULDRON_PATH, '.mode')
@@ -124,11 +119,13 @@ async function startGame(version, loaderInfo, authInfo, overrides) {
                 ? (isWindows ? ` & echo ${EXIT_MARKER}>> "${rawLog}"` : `; echo "${EXIT_MARKER}" >> "${rawLog}"`)
                 : '';
 
+            const winCommand = `cd /d "${launchDirectory}" && call "${launchPath}"${redirect}${exitMark} & cd /d "%TEMP%" & rmdir /s /q "${dirToDelete}"`;
             const child = isWindows
-                ? spawn('cmd', ['/c', `cd /d "${launchDirectory}" && call "${launchPath}"${redirect}${exitMark} & cd /d "%TEMP%" & rmdir /s /q "${dirToDelete}"`], {
+                ? spawn('cmd', ['/d', '/s', '/c', `"${winCommand}"`], {
+                    windowsVerbatimArguments: true,
                     detached: true,
                     stdio: 'ignore',
-                    windowsHide: true
+                    windowsHide: true,
                 })
                 : spawn('sh', ['-c', `cd "${launchDirectory}" && "${launchPath}"${redirect}${exitMark}; cd / && rm -rf "${dirToDelete}"`], {
                     detached: true,
