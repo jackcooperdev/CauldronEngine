@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-10-31
+
 ### Added
 
 - Logging for versions without a log4j config (such as 1.5.2 and older). The game's output is written to
@@ -28,7 +30,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Linux launch scripts use `java` instead of `javaw`
 - macOS launch scripts put each argument on its own line and quote arguments that need it
 - The launch script is built after the game directory override is resolved
-- The `ornithe_patch` no longer applies to any operating system, so b1.7 to 1.2.5 launch as vanilla on Apple Silicon
 - Updated axios to 1.21.0
 
 ### Fixed
@@ -40,6 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- Version patches (`files/patches.json`). `installGame` no longer swaps b1.7 to 1.2.5 to the `ornithe` loader on
+  Apple Silicon, these versions now install and launch as vanilla
 - Unused Betacraft proxy code from the JVM argument builder
 
 ## [0.15.0] - 2026-10-26
@@ -520,6 +523,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release
 
 [unreleased]: https://github.com/jackcooperdev/CauldronEngine/compare/0.15.0...HEAD
+[0.16.0]: https://github.com/jackcooperdev/CauldronEngine/compare/0.15.0...0.16.0
 [0.15.0]: https://github.com/jackcooperdev/CauldronEngine/compare/0.14.1...0.15.0
 [0.14.1]: https://github.com/jackcooperdev/CauldronEngine/compare/0.14.0...0.14.1
 [0.14.0]: https://github.com/jackcooperdev/CauldronEngine/compare/0.13.1...0.14.0
