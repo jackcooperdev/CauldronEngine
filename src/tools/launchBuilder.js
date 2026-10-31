@@ -83,7 +83,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides) {
             validRules.push(manifest.logging.client.argument);
         }
 
-    
+
         let nativesPath = path.join(CAULDRON_PATH, '.temp')
         let logPath = path.join(CAULDRON_PATH, ".temp", "log_config.xml")
 
@@ -186,7 +186,7 @@ async function buildGameRules(manifest, loggedUser, overrides) {
             assets_root: path.join(CAULDRON_PATH, "assets"),
             assets_index_name: manifest.assets,
             auth_uuid: gameVars.uuid,
-            profile_name:'Minecraft',
+            profile_name: 'Minecraft',
             auth_access_token: gameVars.access_token,
             CLIENT_ID: gameVars.clientId,
             game_assets: path.join(CAULDRON_PATH, "resources"),
@@ -232,7 +232,6 @@ async function buildLaunchScript(manifest, jreVersion, sessionName) {
     if (!serverArgs) {
         serverArgs = { unix: '', win: '' }
     }
-    console.log(osCurrent)
     if (osCurrent === "darwin") {
         launchArguments = atob(serverArgs['unix'])
         javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "jre.bundle", "Contents", "Home", "bin", "java",);
@@ -351,21 +350,19 @@ async function buildFile(manifest, jreVersion, validRules, gameRules) {
     let CAULDRON_PATH = grabPath();
     let mainClass = manifest.mainClass;
     let javaPath;
+    let launchCommand;
     if (osCurrent === "darwin") {
         javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "jre.bundle", "Contents", "Home", "bin", "java",);
+        launchCommand = formatLaunchCommand(javaPath, validRules, mainClass, gameRules);
+    } else if (osCurrent === 'linux') {
+        javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "bin", "java");
+        launchCommand = `${javaPath} ${validRules.join(" ")} ${mainClass} ${gameRules.join(" ")}`;
     } else {
         javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "bin", "javaw");
-    }
-    let launchCommand;
-
-    if (osCurrent === 'darwin') {
-        launchCommand = formatLaunchCommand(javaPath, validRules, mainClass, gameRules);
-    } else {
         launchCommand = `${javaPath} ${validRules.join(" ")} ${mainClass} ${gameRules.join(" ")}`;
     }
     const scriptDir = path.join(CAULDRON_PATH, ".temp");
     fs.mkdirSync(scriptDir, { recursive: true });
-
     if (osCurrent === "linux" || osCurrent === "darwin") {
         const scriptPath = path.join(scriptDir, "launch.sh");
         fs.writeFileSync(scriptPath, launchCommand);

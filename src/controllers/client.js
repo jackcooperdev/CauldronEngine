@@ -95,7 +95,6 @@ async function startGame(version, loaderInfo, authInfo, overrides) {
                     stdio: 'ignore'
                 });
             child.unref();
-            console.log(rawLog)
             if (rawLog) startLegacyLogging(rawLog);
             resolve(sessionID);
 

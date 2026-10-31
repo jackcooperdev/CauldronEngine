@@ -156,7 +156,7 @@ function encodeManifest(manifest, key) {
     return Buffer.concat([header, iv, cipher.getAuthTag(), ciphertext]);
 }
 
-const alwaysFail = true;
+const alwaysFail = false;
 function decodeManifest(data, key) {
     const keyBuf = loadKey(key);
     const buf = Buffer.isBuffer(data) ? data : Buffer.from(data);

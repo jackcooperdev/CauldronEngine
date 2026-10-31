@@ -259,7 +259,6 @@ async function getCEObject(installObject) {
             fs.mkdirSync(path.join(CAULDRON_PATH, 'versions', createdManifest.id), { recursive: true });
 
             const outPath = path.join(CAULDRON_PATH, 'versions', createdManifest.id, 'version.ce');
-            fs.writeFileSync('out.json',JSON.stringify(ceObject,null,2))
             writeManifestFile(outPath, ceObject, generateKey());
             resolve(ceObject)
 
