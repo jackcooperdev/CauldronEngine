@@ -8,11 +8,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Logging for versions without a log4j config (such as 1.5.2 and older). The game's output is written to
+  `sessionLogs/<sessionID>/raw.log`, then formatted like log4j output (`[HH:MM:SS] [main/LEVEL]: message`) into
+  `mcLogs.log` and sent to the log listener on ports `9500` / `9501`, so these versions work with
+  `startMCListening` like any other version. The level is guessed from the message (errors, stack traces and warnings)
+- `type` (version type, e.g. `release` or `old_beta`) and `patches` on the CE object
+- `${assets_root}` can be used in JVM arguments
+- `${profile_name}` (`Minecraft`), `${resolution_width}` (`854`) and `${resolution_height}` (`480`) defaults for game
+  arguments
+- Assets with their own `url` in the asset index are downloaded from that URL instead of the Mojang resource server
+- Library artifacts without a `path` have it worked out from their Maven name, and natives without a `path` have it
+  worked out from their URL (Legacy Fabric, Mojang, Fabric and Maven Central repositories are supported)
+
+### Changed
+
+- `startGame` returns a real session ID for versions without a log4j config instead of `DETACH`
+- Linux launch scripts use `java` instead of `javaw`
+- macOS launch scripts put each argument on its own line and quote arguments that need it
+- The launch script is built after the game directory override is resolved
+- The `ornithe_patch` no longer applies to any operating system, so b1.7 to 1.2.5 launch as vanilla on Apple Silicon
+- Updated axios to 1.21.0
+
 ### Fixed
 
 - Versions without a log4j logging config (such as 1.5.2 and older) failing to install because `version.ce` could
-  not be written. `loggingInfo` is now optional and is left out of the CE Object for these versions, so they launch
-  without the logger (session ID `DETACH`)
+  not be written. `loggingInfo` is now optional and is left out of the CE Object for these versions
+- Launching on Windows. The launch command is now passed to `cmd` as is (`/d /s /c`), so quoted paths are no longer
+  escaped in a way `cmd` cannot read, and the launch script is run with `call` so its output can be logged
+
+### Removed
+
+- Unused Betacraft proxy code from the JVM argument builder
 
 ## [0.15.0] - 2026-10-26
 

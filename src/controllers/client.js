@@ -1,8 +1,7 @@
 const VERIFIED_LOADERS = require('../files/verifiedLoaders.json');
-const PATCHES = require('../files/patches.json');
 const { cauldronLogger } = require('../tools/logger');
 const { getOperatingSystem, grabPath } = require('../tools/compatibility');
-const { createUUID, inRange } = require('../tools/fileTools');
+const { createUUID } = require('../tools/fileTools');
 const { getCEObject } = require('./manifest');
 const { verifyInstallation } = require('./queue');
 const { logInjector, buildJVMRules, buildGameRules, buildFile } = require('../tools/launchBuilder');
@@ -75,7 +74,7 @@ async function startGame(version, loaderInfo, authInfo, overrides) {
 
             // Launch Game
             const isWindows = getOperatingSystem() === 'windows';
-            const dirToDelete = path.join(CAULDRON_PATH, '.mode')
+            const dirToDelete = path.join(CAULDRON_PATH, '.temp')
 
             const redirect = rawLog ? ` >> "${rawLog}" 2>&1` : '';
             const exitMark = rawLog
@@ -137,14 +136,6 @@ async function installGame(version, loaderInfo) {
                 installObject.lv = 'release'
             }
 
-            const fullOperatingSystem = getOperatingSystem(true);
-
-            let foundPatches = PATCHES.filter(obj => obj.affected_operating_systems.includes(fullOperatingSystem) && obj.affected_versions.includes(installObject.version))
-
-            for (let patch of foundPatches) {
-                cauldronLogger.info(`Applying Patch: ${patch.name}`);
-                installObject = { ...installObject, ...patch.patch }
-            };
 
             let SESSION_ID = createUUID();
 
