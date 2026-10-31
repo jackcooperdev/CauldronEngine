@@ -350,40 +350,47 @@ function getAikarFlags(memGB) {
 
 
 async function buildFile(manifest, jreVersion, validRules, gameRules) {
-    let CAULDRON_PATH = grabPath();
-    let mainClass = manifest.mainClass;
+    const CAULDRON_PATH = grabPath();
+    const mainClass = manifest.mainClass;
+    const isWindows = osCurrent === "win32";
+
     let javaPath;
     if (osCurrent === "darwin") {
-        javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "jre.bundle", "Contents", "Home", "bin", "java",);
-    } else {
+        javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "jre.bundle", "Contents", "Home", "bin", "java");
+    } else if (isWindows) {
         javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "bin", "javaw");
+    } else {
+        javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "bin", "java");
     }
 
-   let launchCommand = formatLaunchCommand(javaPath, validRules, mainClass, gameRules);
     const scriptDir = path.join(CAULDRON_PATH, ".temp");
     fs.mkdirSync(scriptDir, { recursive: true });
 
-    if (osCurrent === "linux" || osCurrent === "darwin") {
-        const scriptPath = path.join(scriptDir, "launch.sh");
-        fs.writeFileSync(scriptPath, launchCommand);
-        await new Promise((res, rej) => {
-            exec(`chmod +x "${scriptPath}"`, (err) => {
-                if (err) return rej(err);
-                res();
-            });
+    if (isWindows) {
+        // cmd.exe cuts command lines at 8191 chars; modern classpaths exceed that.
+        // "@argfile" needs Java 9+, and jre-legacy (Java 8) classpaths are short anyway.
+        let jvmArgFile;
+        if (jreVersion !== "jre-legacy") {
+            jvmArgFile = path.join(scriptDir, "launch.args");
+            fs.writeFileSync(jvmArgFile, formatArgFile(validRules, "\r\n"));
+        }
+
+        const launchCommand = formatLaunchCommand(javaPath, validRules, mainClass, gameRules, {
+            shell: "cmd",
+            jvmArgFile,
         });
-        await new Promise((res, rej) => {
-            exec(`chmod +x "${javaPath}"`, (err) => {
-                if (err) return rej(err);
-                res();
-            });
-        });
-        return scriptPath;
-    } else if (osCurrent === "win32") {
+
         const scriptPath = path.join(scriptDir, "launch.bat");
-        fs.writeFileSync(scriptPath, launchCommand);
+        fs.writeFileSync(scriptPath, launchCommand + "\r\n");
         return scriptPath;
     }
-}
 
+    // linux / darwin
+    const launchCommand = formatLaunchCommand(javaPath, validRules, mainClass, gameRules, { shell: "posix" });
+    const scriptPath = path.join(scriptDir, "launch.sh");
+    fs.writeFileSync(scriptPath, "#!/bin/sh\n" + launchCommand + "\n");
+    fs.chmodSync(scriptPath, 0o755);
+    fs.chmodSync(javaPath, 0o755);
+    return scriptPath;
+}
 module.exports = { buildJVMRules, buildGameRules, buildFile, logInjector, buildLaunchScript };
