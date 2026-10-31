@@ -5,7 +5,7 @@ const { exec } = require("child_process");
 const { grabPath, getOperatingSystem } = require("./compatibility.js");
 const { jwtDecode } = require("jwt-decode");
 const pkgJSON = require('../../package.json');
-const { formatLaunchCommand } = require("./launchCommandFormatter.js");
+const { formatLaunchCommand, formatArgFile } = require("./launchCommandFormatter.js");
 
 
 const defaultJVM = {
