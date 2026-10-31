@@ -4,8 +4,7 @@ const os = require("os");
 const { exec } = require("child_process");
 const { grabPath, getOperatingSystem } = require("./compatibility.js");
 const { jwtDecode } = require("jwt-decode");
-const pkgJSON = require('../../package.json');
-const { formatLaunchCommand, formatArgFile } = require("./launchCommandFormatter.js");
+const pkgJSON = require('../../package.json')
 
 
 const defaultJVM = {
@@ -144,9 +143,9 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides, useL
         }
 
         if (useLegacyFix) {
-            validRules.push('-javaagent:'+path.join(CAULDRON_PATH,'.temp','legacyfix.jar'));
+            validRules.push('-javaagent:' + path.join(CAULDRON_PATH, '.temp', 'legacyfix.jar'));
             if (useLegacyFix === 2) {
-                 validRules.push('-Djava.util.Arrays.useLegacyMergeSort=true')
+                validRules.push('-Djava.util.Arrays.useLegacyMergeSort=true')
             }
         }
         resolve(validRules);
@@ -217,8 +216,8 @@ async function buildGameRules(manifest, loggedUser, overrides) {
             CLIENT_ID: gameVars.clientId,
             game_assets: path.join(CAULDRON_PATH, "resources"),
             auth_xuid: gameVars.xuid,
-            resolution_width:854,
-            resolution_height:480,
+            resolution_width: 854,
+            resolution_height: 480,
             user_type: "msa",
             version_type: gameVars.version_type,
             user_properties: "{}",
@@ -347,50 +346,71 @@ function getAikarFlags(memGB) {
 
     return [...common, ...tierFlags];
 }
+const quote = (a) => /^[\w@%+=:,./-]+$/.test(a) ? a : `'${a.replace(/'/g, `'\\''`)}'`;
+
+// Keep "-cp <path>" and "--flag <value>" on one line; everything else gets its own line
+function pairArgs(args) {
+    const lines = [];
+    for (let i = 0; i < args.length; i++) {
+        const a = args[i], next = args[i + 1];
+        const takesValue = a === "-cp" || a === "-classpath" || a.startsWith("--");
+        if (takesValue && next !== undefined && !next.startsWith("--")) { lines.push([a, next]); i++; }
+        else lines.push([a]);
+    }
+    return lines;
+}
+
+function formatLaunchCommand(javaPath, jvmArgs, mainClass, gameArgs) {
+    const line = (parts) => parts.map(quote).join(" ");
+    return [
+        quote(javaPath),
+        ...pairArgs(jvmArgs).map((l) => "  " + line(l)),
+        "  " + mainClass,
+        ...pairArgs(gameArgs).map((l) => "  " + line(l)),
+    ].join(" \\\n");
+}
 
 
 async function buildFile(manifest, jreVersion, validRules, gameRules) {
-    const CAULDRON_PATH = grabPath();
-    const mainClass = manifest.mainClass;
-    const isWindows = osCurrent === "win32";
-
+    let CAULDRON_PATH = grabPath();
+    let mainClass = manifest.mainClass;
     let javaPath;
     if (osCurrent === "darwin") {
-        javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "jre.bundle", "Contents", "Home", "bin", "java");
-    } else if (isWindows) {
-        javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "bin", "javaw");
+        javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "jre.bundle", "Contents", "Home", "bin", "java",);
     } else {
-        javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "bin", "java");
+        javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "bin", "javaw");
     }
+    let launchCommand;
 
+    if (osCurrent === 'darwin') {
+        launchCommand = formatLaunchCommand(javaPath, validRules, mainClass, gameRules);
+    } else {
+        launchCommand = `${javaPath} ${validRules.join(" ")} ${mainClass} ${gameRules.join(" ")}`;
+    }
     const scriptDir = path.join(CAULDRON_PATH, ".temp");
     fs.mkdirSync(scriptDir, { recursive: true });
 
-    if (isWindows) {
-        // cmd.exe cuts command lines at 8191 chars; modern classpaths exceed that.
-        // "@argfile" needs Java 9+, and jre-legacy (Java 8) classpaths are short anyway.
-        let jvmArgFile;
-        if (jreVersion !== "jre-legacy") {
-            jvmArgFile = path.join(scriptDir, "launch.args");
-            fs.writeFileSync(jvmArgFile, formatArgFile(validRules, "\r\n"));
-        }
-
-        const launchCommand = formatLaunchCommand(javaPath, validRules, mainClass, gameRules, {
-            shell: "cmd",
-            jvmArgFile,
+    if (osCurrent === "linux" || osCurrent === "darwin") {
+        const scriptPath = path.join(scriptDir, "launch.sh");
+        fs.writeFileSync(scriptPath, launchCommand);
+        await new Promise((res, rej) => {
+            exec(`chmod +x "${scriptPath}"`, (err) => {
+                if (err) return rej(err);
+                res();
+            });
         });
-
+        await new Promise((res, rej) => {
+            exec(`chmod +x "${javaPath}"`, (err) => {
+                if (err) return rej(err);
+                res();
+            });
+        });
+        return scriptPath;
+    } else if (osCurrent === "win32") {
         const scriptPath = path.join(scriptDir, "launch.bat");
-        fs.writeFileSync(scriptPath, launchCommand + "\r\n");
+        fs.writeFileSync(scriptPath, launchCommand);
         return scriptPath;
     }
-
-    // linux / darwin
-    const launchCommand = formatLaunchCommand(javaPath, validRules, mainClass, gameRules, { shell: "posix" });
-    const scriptPath = path.join(scriptDir, "launch.sh");
-    fs.writeFileSync(scriptPath, "#!/bin/sh\n" + launchCommand + "\n");
-    fs.chmodSync(scriptPath, 0o755);
-    fs.chmodSync(javaPath, 0o755);
-    return scriptPath;
 }
+
 module.exports = { buildJVMRules, buildGameRules, buildFile, logInjector, buildLaunchScript };
