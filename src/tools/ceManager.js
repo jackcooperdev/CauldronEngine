@@ -105,7 +105,6 @@ const MANIFEST_SCHEMA = {
     type:'string',
     lv: 'string',
     patches:['object'],
-    patchIdentifier : 'number',
     specPath: 'string',
     vanillaVersion: 'string',
     loader: 'string',

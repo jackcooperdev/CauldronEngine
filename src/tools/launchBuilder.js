@@ -232,6 +232,7 @@ async function buildLaunchScript(manifest, jreVersion, sessionName) {
     if (!serverArgs) {
         serverArgs = { unix: '', win: '' }
     }
+    console.log(osCurrent)
     if (osCurrent === "darwin") {
         launchArguments = atob(serverArgs['unix'])
         javaPath = path.join(CAULDRON_PATH, "jvm", jreVersion, "jre.bundle", "Contents", "Home", "bin", "java",);
