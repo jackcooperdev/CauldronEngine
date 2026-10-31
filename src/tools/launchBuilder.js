@@ -4,7 +4,8 @@ const os = require("os");
 const { exec } = require("child_process");
 const { grabPath, getOperatingSystem } = require("./compatibility.js");
 const { jwtDecode } = require("jwt-decode");
-const pkgJSON = require('../../package.json')
+const pkgJSON = require('../../package.json');
+const { formatLaunchCommand } = require("./launchCommandFormatter.js");
 
 
 const defaultJVM = {
@@ -345,29 +346,6 @@ function getAikarFlags(memGB) {
         ];
 
     return [...common, ...tierFlags];
-}
-const quote = (a) => /^[\w@%+=:,./-]+$/.test(a) ? a : `'${a.replace(/'/g, `'\\''`)}'`;
-
-// Keep "-cp <path>" and "--flag <value>" on one line; everything else gets its own line
-function pairArgs(args) {
-  const lines = [];
-  for (let i = 0; i < args.length; i++) {
-    const a = args[i], next = args[i + 1];
-    const takesValue = a === "-cp" || a === "-classpath" || a.startsWith("--");
-    if (takesValue && next !== undefined && !next.startsWith("--")) { lines.push([a, next]); i++; }
-    else lines.push([a]);
-  }
-  return lines;
-}
-
-function formatLaunchCommand(javaPath, jvmArgs, mainClass, gameArgs) {
-  const line = (parts) => parts.map(quote).join(" ");
-  return [
-    quote(javaPath),
-    ...pairArgs(jvmArgs).map((l) => "  " + line(l)),
-    "  " + mainClass,
-    ...pairArgs(gameArgs).map((l) => "  " + line(l)),
-  ].join(" \\\n");
 }
 
 
