@@ -160,7 +160,7 @@ async function getCEObject(installObject) {
             let installQueue = [];
             let specPath = l !== 'vanilla' ? `/loaders/${l}/${v}/${lv}` : `/spec/${v}`
             let specLocation = l !== "vanilla" ? `${l}-${v}-${lv}` : v;
-            const foundManifest = await checkManifest(path.join("versions", specLocation, `${specLocation}.json`), `${RESOURCES_PATH}${specPath}?patch=beta`, 'spec', false, grabBigManifest, lManifest)
+            const foundManifest = await checkManifest(path.join("versions", specLocation, `${specLocation}.json`), `${RESOURCES_PATH}${specPath}`, 'spec', false, grabBigManifest, lManifest)
 
             if (!foundManifest) {
                 return reject({ message: `Version not ${l === "vanilla" ? "found" : `supported for loader: ${l}`}` });
@@ -251,8 +251,6 @@ async function getCEObject(installObject) {
             ceObject.libList = libList
             ceObject.javaQueue = jvmQueue;
             ceObject.nativeList = nativeList;
-            let maniData = grabBigManifest.versions.find(obj => obj.id === createdManifest.id);
-            ceObject.patchIdentifier = maniData.patchIdentifier;
             ceObject.type = createdManifest.type;
             ceObject.specPath = path.join("versions", createdManifest.id, createdManifest.id + '.json')
             ceObject.specName = createdManifest.id;

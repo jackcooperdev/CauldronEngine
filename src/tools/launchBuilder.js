@@ -46,7 +46,7 @@ async function logInjector(logFile, sessionID) {
     }
 }
 
-async function buildJVMRules(manifest, libraryList, versionData, overrides, useLegacyFix) {
+async function buildJVMRules(manifest, libraryList, versionData, overrides) {
     return new Promise(async (resolve) => {
         let CAULDRON_PATH = grabPath();
         let cusJVM = defaultJVM;
@@ -83,26 +83,7 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides, useL
             validRules.push(manifest.logging.client.argument);
         }
 
-        //Check if a version requires proxy
-        let proxyPort = false;
-        let vArray = ["1.0", "1.1", "1.3", "1.4", "1.5"];
-        let splitVersion = `${versionData.version.split(".")[0]}.${versionData.version.split(".")[1]}`;
-        if (versionData.version.startsWith("a1.0.")) {
-            proxyPort = 80;
-        } else if (versionData.version.startsWith("a1.1.")) {
-            proxyPort = 11702;
-        } else if (versionData.version.startsWith("a1.") || versionData.version.startsWith("b1.")) {
-            proxyPort = 11705;
-        } else if (vArray.includes(versionData.version) || versionData.version.startsWith(vArray) || vArray.filter(v => versionData.version.includes(v))) {
-            proxyPort = 11707;
-        }
-        //process.exit(0)
-        if (proxyPort) {
-            //validRules.push("-Dhttp.proxyHost=betacraft.uk");
-            //validRules.push("-Dhttp.proxyPort=" + proxyPort);
-        }
-
-
+    
         let nativesPath = path.join(CAULDRON_PATH, '.temp')
         let logPath = path.join(CAULDRON_PATH, ".temp", "log_config.xml")
 
@@ -139,13 +120,6 @@ async function buildJVMRules(manifest, libraryList, versionData, overrides, useL
         for (let rIdx in validRules) {
             if (validRules[rIdx]) {
                 validRules[rIdx] = injector.create(validRules[rIdx], relVariables);
-            }
-        }
-
-        if (useLegacyFix) {
-            validRules.push('-javaagent:' + path.join(CAULDRON_PATH, '.temp', 'legacyfix.jar'));
-            if (useLegacyFix === 2) {
-                validRules.push('-Djava.util.Arrays.useLegacyMergeSort=true')
             }
         }
         resolve(validRules);

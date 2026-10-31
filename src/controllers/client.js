@@ -56,30 +56,8 @@ async function startGame(version, loaderInfo, authInfo, overrides) {
                 }
             };
 
-            // Apply Patches
-            let patchIdent = CE_OBJECT.patchIdentifier;
-            let patchLibrary = CE_OBJECT.patches;
-
-            // Check if LegacyPatcher is needed
-            let patchLegacy = false;
-
-            /*   if (inRange(patchIdent, 1, 84)) {
-                  let mode = 1;
-  
-                  let legacyPatchPath = path.join(CAULDRON_PATH, 'libraries', patchLibrary[0].downloads.artifact.path);
-  
-                  // Copy LegacyFix to temp dir;
-                  fs.copyFileSync(legacyPatchPath, path.join(CAULDRON_PATH, '.temp', 'legacyfix.jar'));
-  
-                  if (inRange(patchIdent, 1, 56)) {
-                      mode++;
-                  }
-                  patchLegacy = mode;
-                  cauldronLogger.debug(`Applying LegacyPatcher (Mode ${mode})`);
-              }; */
-
             // Create JVM Rules
-            const validRules = await buildJVMRules(SPEC_FILE, CE_OBJECT.libList, { version }, overrides.jvm, patchLegacy);
+            const validRules = await buildJVMRules(SPEC_FILE, CE_OBJECT.libList, { version }, overrides.jvm);
 
             // Build Game Rules
 
@@ -91,21 +69,6 @@ async function startGame(version, loaderInfo, authInfo, overrides) {
                     launchDirectory = `${overrides["game"]["game_directory"]}`;
                 }
             }
-
-
-            // Patch Launch Arguments
-
-            // Patch Version Type Bug on Early Snapshots (Removes versionType param)
-            if (inRange(patchIdent, 85, 92)) {
-                const i = gameRules.indexOf('--versionType');
-                if (i !== -1) gameRules.splice(i, 2);
-            }
-
-            // Patch Game Dir Being Hardcoded to User Home (Sets Home Dir Flag in Java)
-            if (inRange(patchIdent, 1, 84)) {
-                validRules.push(`-Duser.home=${launchDirectory}`)
-            }
-
 
             // Build Launch Script
             const launchPath = await buildFile(SPEC_FILE, CE_OBJECT.jreVersion, validRules, gameRules);
